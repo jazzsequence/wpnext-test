@@ -15,6 +15,7 @@ if ( isset( $_GET['privacy-notice'] ) ) {
 	exit;
 }
 
+// Used in the HTML title tag.
 $title = __( 'Freedoms' );
 
 list( $display_version ) = explode( '-', get_bloginfo( 'version' ) );
@@ -31,7 +32,7 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 		</div>
 
 		<div class="about__header-text">
-			<?php _e( 'WordPress is free and open source software, built by a distributed community of mostly volunteer developers from around the world' ); ?>
+			<?php _e( 'WordPress is free and open source software' ); ?>
 		</div>
 
 		<nav class="about__header-navigation nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Secondary menu' ); ?>">
