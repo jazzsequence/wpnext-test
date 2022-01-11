@@ -79,29 +79,53 @@
 			],
 			"palette": [
 				{
-					"slug": "foreground",
-					"color": "#000000",
-					"name": "Foreground"
+					"slug": "angular-red",
+					"color": "#dd0531",
+					"name": "Angular Red"
 				},
 				{
-					"slug": "background",
-					"color": "#ffffff",
-					"name": "Background"
+					"slug": "azure-blue",
+					"color": "#007fff",
+					"name": "Azure Blue"
 				},
 				{
-					"slug": "primary",
-					"color": "#1a4548",
-					"name": "Primary"
+					"slug": "javascript-yellow",
+					"color": "#f9e64f",
+					"name": "JavaScript Yellow"
 				},
 				{
-					"slug": "secondary",
-					"color": "#ffe2c7",
-					"name": "Secondary"
+					"slug": "mandalorian-blue",
+					"color": "#1857a4",
+					"name": "Mandalorian Blue"
 				},
 				{
-					"slug": "tertiary",
-					"color": "#F6F6F6",
-					"name": "Tertiary"
+					"slug": "node-green",
+					"color": "#215732",
+					"name": "Node Green"
+				},
+				{
+					"slug": "react-blue",
+					"color": "#61dafb",
+					"name": "React Blue"
+				},
+				{
+					"slug": "svelte-orange",
+					"color": "#ff3d00",
+					"name": "Svelte Orange"
+				},
+				{
+					"slug": "vue-green",
+					"color": "#42b883",
+					"name": "Vue Green"
+				}, {
+					"slug": "solr-red",
+					"color": "#D9411E",
+					"name": "Solr Red"
+				},
+				{
+					"slug": "pantheon-black",
+					"color": "#181d21",
+					"name": "Pantheon Black"
 				}
 			]
 		},
