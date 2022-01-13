@@ -138,7 +138,7 @@
 					"background": "var(--wp--preset--color--javascript-yellow)",
 					"text": "var(--wp--preset--color--pantheon-black)"
 				}
-			},
+			}
 		},
 		"color": {
 			"background": "var(--wp--preset--color--pantheon-black)",
