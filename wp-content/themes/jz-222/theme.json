@@ -138,6 +138,11 @@
 					"background": "var(--wp--preset--color--javascript-yellow)",
 					"text": "var(--wp--preset--color--pantheon-black)"
 				}
+			},
+			"core/image": {
+				"color": {
+					"text": "var(--wp--preset--color--javascript-yellow)"
+				}
 			}
 		},
 		"color": {
