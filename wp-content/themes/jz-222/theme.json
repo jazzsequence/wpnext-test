@@ -139,11 +139,6 @@
 					"text": "var(--wp--preset--color--pantheon-black)"
 				}
 			},
-			"core/image": {
-				"color": {
-					"text": "var(--wp--preset--color--javascript-yellow)"
-				}
-			}
 		},
 		"color": {
 			"background": "var(--wp--preset--color--pantheon-black)",
@@ -153,6 +148,11 @@
 			"link": {
 				"color": {
 					"text": "var(--wp--preset--color--svelte-orange)"
+				}
+			},
+			"figcaption": {
+				"color": {
+					"text": "var(--wp--preset--color--javascript-yellow)"
 				}
 			}
 		}
