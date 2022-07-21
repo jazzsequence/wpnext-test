@@ -1196,7 +1196,8 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 			$rest_url = add_query_arg( $args, rest_url( $this->namespace . '/' . $this->rest_base ) );
 
 			$links['children'] = array(
-				'href' => $rest_url,
+				'href'       => $rest_url,
+				'embeddable' => true,
 			);
 		}
 
@@ -1882,11 +1883,11 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 			$prepared_comment,
 			array(
 				'comment_post_ID'      => 0,
-				'comment_parent'       => 0,
-				'user_ID'              => 0,
 				'comment_author'       => null,
 				'comment_author_email' => null,
 				'comment_author_url'   => null,
+				'comment_parent'       => 0,
+				'user_id'              => 0,
 			)
 		);
 
