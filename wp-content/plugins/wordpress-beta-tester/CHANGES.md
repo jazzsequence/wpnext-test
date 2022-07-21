@@ -1,5 +1,16 @@
 [unreleased]
 
+#### 3.2.2 / 2022-06-23
+* correctly use `sanitize_url()` and `esc_url()`
+* fix `WP_Config_Transformer` to get anchor if wp-config.php has been modified
+
+#### 3.2.1 / 2022-04-13
+* update composer to work with PHP 5.6
+
+#### 3.2.0 / 2022-04-12
+* use `sanitize_key()` for nonces
+* fix for transition from WP x.9 to WP x.0 to display correct next versions
+
 #### 3.1.5 / 2022-01-28
 * use `sanitize_title_with_dashes()` as `sanitize_file_name()` maybe have attached filter that changes output
 * fix variable docblocks

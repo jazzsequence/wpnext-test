@@ -107,8 +107,8 @@ class WPBT_Settings {
 	 */
 	protected function redirect_on_save() {
 		if ( ! isset( $_POST['_wpnonce'] )
-			|| ! ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'wp_beta_tester_core-options' )
-			|| ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_wpnonce'] ) ), 'wp_beta_tester_extras-options' ) )
+			|| ! ( ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'wp_beta_tester_core-options' )
+			|| ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'wp_beta_tester_extras-options' ) )
 		) {
 			return;
 		}
@@ -132,7 +132,7 @@ class WPBT_Settings {
 
 		if ( $update ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
-			$query = isset( $_POST['_wp_http_referer'] ) ? parse_url( esc_url_raw( wp_unslash( $_POST['_wp_http_referer'] ) ), PHP_URL_QUERY ) : null;
+			$query = isset( $_POST['_wp_http_referer'] ) ? parse_url( sanitize_url( wp_unslash( $_POST['_wp_http_referer'] ) ), PHP_URL_QUERY ) : null;
 			parse_str( $query, $arr );
 			$arr['tab'] = ! empty( $arr['tab'] ) ? $arr['tab'] : 'wp_beta_tester_core';
 
@@ -192,7 +192,7 @@ class WPBT_Settings {
 	 * @return void
 	 */
 	private function saved_settings_notice() {
-		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'wpbt_redirect' ) ) {
+		if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'wpbt_redirect' ) ) {
 			return;
 		}
 
