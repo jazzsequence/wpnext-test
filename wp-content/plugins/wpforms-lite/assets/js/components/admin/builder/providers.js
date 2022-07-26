@@ -105,6 +105,7 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 		 * @since 1.4.7
 		 */
 		ajax: {
+
 			/**
 			 * Merge custom AJAX data object with defaults.
 			 *
@@ -112,14 +113,16 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 			 * @since 1.5.9 Added a new parameter - provider
 			 *
 			 * @param {string} provider Current provider slug.
-			 * @param {object} custom AJAX data object with custom settings.
+			 * @param {object} custom Ajax data object with custom settings.
 			 *
-			 * @returns {Object}
+			 * @returns {object} Ajax data.
 			 */
 			_mergeData: function( provider, custom ) {
 
 				var data = {
-					id: $( '#wpforms-builder-form' ).data( 'id' ),
+					id: app.form.data( 'id' ),
+					// eslint-disable-next-line camelcase
+					revision_id: app.form.data( 'revision' ),
 					nonce: wpforms_builder.nonce,
 					action: 'wpforms_builder_provider_ajax_' + provider,
 				};
@@ -397,7 +400,7 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 			// Save a current form fields state.
 			__private.fields = $.extend( {}, wpf.getFields( false, true ) );
 
-			app.panelHolder = $( '#wpforms-panel-providers' );
+			app.panelHolder = $( '#wpforms-panel-providers, #wpforms-panel-settings' );
 
 			app.Templates = WPForms.Admin.Builder.Templates;
 			app.Templates.add( __private.config.templates );
@@ -419,7 +422,7 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 			// On Form save - notify user about required fields.
 			$( document ).on( 'wpformsSaved', function() {
 
-				var $connectionBlocks = $( '#wpforms-panel-providers' ).find( '.wpforms-builder-provider-connection' );
+				var $connectionBlocks = app.panelHolder.find( '.wpforms-builder-provider-connection' );
 
 				if ( ! $connectionBlocks.length ) {
 					return;
@@ -482,10 +485,10 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 			 * This will prevent a please-save-prompt to appear, when navigating
 			 * out and back to Marketing tab without doing any changes anywhere.
 			 */
-			$( '#wpforms-panel-providers' ).on( 'connectionRendered', function() {
+			app.panelHolder.on( 'connectionRendered', function() {
 
 				if ( wpf.initialSave === true ) {
-					wpf.savedState = wpf.getFormState( '#wpforms-builder-form');
+					wpf.savedState = wpf.getFormState( '#wpforms-builder-form' );
 				}
 			} );
 		},
@@ -653,7 +656,7 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 					} );
 
 				// CONNECTION: Generated.
-				$( '#wpforms-panel-providers' ).on( 'connectionGenerated', function( e, data ) {
+				app.panelHolder.on( 'connectionGenerated', function( e, data ) {
 
 					wpf.initTooltips();
 
@@ -666,7 +669,7 @@ WPForms.Admin.Builder.Providers = WPForms.Admin.Builder.Providers || ( function(
 				} );
 
 				// CONNECTION: Rendered.
-				$( '#wpforms-panel-providers' ).on( 'connectionRendered', function( e, provider, connectionId ) {
+				app.panelHolder.on( 'connectionRendered', function( e, provider, connectionId ) {
 
 					wpf.initTooltips();
 

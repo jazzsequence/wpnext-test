@@ -2,6 +2,8 @@
 
 namespace WPForms\Admin;
 
+use WP_Admin_Bar;
+
 /**
  * WPForms admin bar menu.
  *
@@ -88,12 +90,19 @@ class AdminBarMenu {
 			WPFORMS_VERSION
 		);
 
-		// WordPress 5.7 color set.
-		if ( version_compare( get_bloginfo( 'version' ), '5.7', '>=' ) ) {
-			$inline_styles  = '#wpadminbar .wpforms-menu-notification-indicator { background-color: #d63638 !important; }';
-			$inline_styles .= '#wpadminbar .wpforms-menu-notification-counter { background-color: #d63638 !important; }';
-
-			wp_add_inline_style( 'wpforms-admin-bar', $inline_styles );
+		// Apply WordPress pre/post 5.7 accent color, only when admin bar is displayed on the frontend or we're
+		// inside the Form Builder - it does not load some WP core admin styles, including themes.
+		if ( wpforms_is_admin_page( 'builder' ) || ! is_admin() ) {
+			wp_add_inline_style(
+				'wpforms-admin-bar',
+				sprintf(
+					'#wpadminbar .wpforms-menu-notification-counter, #wpadminbar .wpforms-menu-notification-indicator { 
+						background-color: %s !important;
+						color: #ffffff !important; 
+					}',
+					version_compare( get_bloginfo( 'version' ), '5.7', '<' ) ? '#ca4a1f' : '#d63638'
+				)
+			);
 		}
 	}
 
@@ -141,9 +150,9 @@ class AdminBarMenu {
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function register( \WP_Admin_Bar $wp_admin_bar ) {
+	public function register( WP_Admin_Bar $wp_admin_bar ) {
 
 		$items = (array) apply_filters(
 			'wpforms_admin_adminbarmenu_register',
@@ -171,16 +180,16 @@ class AdminBarMenu {
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function main_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function main_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$indicator     = '';
 		$notifications = $this->has_notifications();
 
 		if ( $notifications ) {
 			$count     = $notifications < 10 ? $notifications : '!';
-			$indicator = ' <div class="wpforms-menu-notification-counter"><span>' . $count . '</span></div>';
+			$indicator = ' <div class="wp-core-ui wp-ui-notification wpforms-menu-notification-counter">' . $count . '</div>';
 		}
 
 		$wp_admin_bar->add_menu(
@@ -197,9 +206,9 @@ class AdminBarMenu {
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function notification_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function notification_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		if ( ! $this->has_notifications() ) {
 			return;
@@ -209,7 +218,7 @@ class AdminBarMenu {
 			[
 				'parent' => 'wpforms-menu',
 				'id'     => 'wpforms-notifications',
-				'title'  => esc_html__( 'Notifications', 'wpforms-lite' ) . ' <div class="wpforms-menu-notification-indicator"></div>',
+				'title'  => esc_html__( 'Notifications', 'wpforms-lite' ) . ' <div class="wp-core-ui wp-ui-notification wpforms-menu-notification-indicator"></div>',
 				'href'   => admin_url( 'admin.php?page=wpforms-overview' ),
 			]
 		);
@@ -220,9 +229,9 @@ class AdminBarMenu {
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function all_forms_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function all_forms_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$wp_admin_bar->add_menu(
 			[
@@ -239,9 +248,9 @@ class AdminBarMenu {
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function add_new_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function add_new_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$wp_admin_bar->add_menu(
 			[
@@ -258,9 +267,9 @@ class AdminBarMenu {
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function community_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function community_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$wp_admin_bar->add_menu(
 			[
@@ -280,17 +289,28 @@ class AdminBarMenu {
 	 * Render Support admin bar menu item.
 	 *
 	 * @since 1.6.0
+	 * @since 1.7.4 Update the `Support` item title to `Help Docs`.
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function support_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function support_menu( WP_Admin_Bar $wp_admin_bar ) {
+
+		$href = add_query_arg(
+			[
+				'utm_campaign' => wpforms()->is_pro() ? 'plugin' : 'liteplugin',
+				'utm_medium'   => 'admin-bar',
+				'utm_source'   => 'WordPress',
+				'utm_content'  => 'Documentation',
+			],
+			'https://wpforms.com/docs/'
+		);
 
 		$wp_admin_bar->add_menu(
 			[
 				'parent' => 'wpforms-menu',
-				'id'     => 'wpforms-support',
-				'title'  => esc_html__( 'Support', 'wpforms-lite' ),
-				'href'   => 'https://wpforms.com/docs/',
+				'id'     => 'wpforms-help-docs',
+				'title'  => esc_html__( 'Help Docs', 'wpforms-lite' ),
+				'href'   => $href,
 				'meta'   => [
 					'target' => '_blank',
 					'rel'    => 'noopener noreferrer',

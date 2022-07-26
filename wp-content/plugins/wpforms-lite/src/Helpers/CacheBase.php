@@ -18,7 +18,7 @@ abstract class CacheBase {
 	 *
 	 * @var bool
 	 */
-	private static $updated = false;
+	protected static $updated = false;
 
 	/**
 	 * Settings.
@@ -125,7 +125,9 @@ abstract class CacheBase {
 	protected function get_cache_dir() {
 
 		$upload_dir  = wpforms_upload_dir();
-		$upload_path = ! empty( $upload_dir['path'] ) ? trailingslashit( wp_normalize_path( $upload_dir['path'] ) ) : trailingslashit( UPLOADS ) . 'wpforms/';
+		$upload_path = ! empty( $upload_dir['path'] )
+			? trailingslashit( wp_normalize_path( $upload_dir['path'] ) )
+			: trailingslashit( WP_CONTENT_DIR ) . 'uploads/wpforms/';
 
 		return $upload_path . 'cache/';
 	}
@@ -175,7 +177,19 @@ abstract class CacheBase {
 	 */
 	public function update_cache() {
 
-		$request = wp_remote_get( $this->settings['remote_source'] );
+		$wpforms_key = 'lite';
+
+		if ( wpforms()->is_pro() ) {
+			$wpforms_key = wpforms_get_license_key();
+		}
+
+		$request = wp_remote_get(
+			add_query_arg( 'tgm-updater-key', $wpforms_key, $this->settings['remote_source'] ),
+			[
+				'timeout'    => 10,
+				'user-agent' => wpforms_get_default_user_agent(),
+			]
+		);
 
 		if ( is_wp_error( $request ) ) {
 			return [];
@@ -220,12 +234,14 @@ abstract class CacheBase {
 
 		$tasks = wpforms()->get( 'tasks' );
 
-		if ( empty( $tasks->is_scheduled( $this->settings['update_action'] ) ) ) {
-			$tasks->create( $this->settings['update_action'] )
-				  ->recurring( time() + $this->settings['cache_ttl'], $this->settings['cache_ttl'] )
-				  ->params()
-				  ->register();
+		if ( $tasks->is_scheduled( $this->settings['update_action'] ) !== false ) {
+			return;
 		}
+
+		$tasks->create( $this->settings['update_action'] )
+			  ->recurring( time() + $this->settings['cache_ttl'], $this->settings['cache_ttl'] )
+			  ->params()
+			  ->register();
 	}
 
 	/**

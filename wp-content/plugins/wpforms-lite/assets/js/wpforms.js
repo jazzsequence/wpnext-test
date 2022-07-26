@@ -1,4 +1,4 @@
-/* global wpforms_settings, grecaptcha, hcaptcha, wpformsRecaptchaCallback, wpforms_validate, wpforms_datepicker, wpforms_timepicker, Mailcheck, Choices, WPFormsPasswordField, WPFormsEntryPreview, punycode, tinyMCE */
+/* global wpforms_settings, grecaptcha, hcaptcha, wpformsRecaptchaCallback, wpformsRecaptchaV3Execute, wpforms_validate, wpforms_datepicker, wpforms_timepicker, Mailcheck, Choices, WPFormsPasswordField, WPFormsEntryPreview, punycode, tinyMCE */
 
 'use strict';
 
@@ -115,14 +115,14 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 					$( this ).attr( 'name', 'wpf-temp-' + random );
 				} );
 
-				// Prepend URL field contents with http:// if user input doesn't contain a schema.
+				// Prepend URL field contents with https:// if user input doesn't contain a schema.
 				$( '.wpforms-validate input[type=url]' ).change( function() {
 					var url = $( this ).val();
 					if ( ! url ) {
 						return false;
 					}
 					if ( url.substr( 0, 7 ) !== 'http://' && url.substr( 0, 8 ) !== 'https://' ) {
-						$( this ).val( 'http://' + url );
+						$( this ).val( 'https://' + url );
 					}
 				} );
 
@@ -173,6 +173,38 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				// Validate email addresses.
 				$.validator.methods.email = function( value, element ) {
 
+					// For comments, see wpforms_is_email() function.
+					const isEmail = function( value ) {
+						if ( value.length > 254 ) {
+							return false;
+						}
+
+						const valueArr = value.split( '@' );
+
+						if ( valueArr.length !== 2 ) {
+							return false;
+						}
+
+						const local  = valueArr[ 0 ];
+						const domain = valueArr[ 1 ];
+
+						if ( local.length > 63 ) {
+							return false;
+						}
+
+						const domainArr = domain.split( '.' );
+
+						for ( const domainLabel of domainArr ) {
+							if ( domainLabel.length > 63 ) {
+								return false;
+							}
+						}
+
+						return true;
+					}
+
+					const isEmailTest = isEmail( value );
+
 					// Test email on the multiple @ and spaces:
 					// - no spaces allowed in the local and domain parts
 					// - only one @ after the local part allowed
@@ -183,7 +215,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 					// - two dots in a row not allowed
 					var dotsTest = /^(?!\.)(?!.*?\.\.).*[^.]$/.test( value );
 
-					return this.optional( element ) || ( structureTest && dotsTest );
+					return this.optional( element ) || ( structureTest && dotsTest && isEmailTest );
 				};
 
 				// Validate email by allowlist/blocklist.
@@ -205,7 +237,6 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 						type: 'post',
 						async: false,
 						data: {
-							'token': $form.data( 'token' ),
 							'action': 'wpforms_restricted_email',
 							'form_id': $form.data( 'formid' ),
 							'field_id': $field.data( 'field-id' ),
@@ -234,7 +265,8 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 				// Validate confirmations.
 				$.validator.addMethod( 'confirm', function( value, element, param ) {
-					return value === $( element ).closest( '.wpforms-field' ).find( 'input:first-child' ).val();
+					const field = $( element ).closest( '.wpforms-field' );
+					return $( field.find( 'input' )[ 0 ] ).val() === $( field.find( 'input' )[ 1 ] ).val();
 				}, wpforms_settings.val_confirm );
 
 				// Validate required payments.
@@ -251,6 +283,49 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				$.validator.addMethod( 'time24h', function( value, element ) {
 					return this.optional( element ) || /^(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(\ ?[AP]M)?$/i.test( value );
 				}, wpforms_settings.val_time24h );
+
+				// Validate time limits.
+				$.validator.addMethod( 'time-limit', function( value, element ) { // eslint-disable-line complexity
+
+					var $input = $( element ),
+						minTime = $input.data( 'min-time' ),
+						maxTime = $input.data( 'max-time' ),
+						isRequired = $input.prop( 'required' ),
+						isLimited = typeof minTime !== 'undefined';
+
+					if ( ! isLimited ) {
+						return true;
+					}
+
+					if ( ! isRequired && app.empty( value ) ) {
+						return true;
+					}
+
+					if ( app.compareTimesGreaterThan( maxTime, minTime ) ) {
+						return app.compareTimesGreaterThan( value, minTime ) && app.compareTimesGreaterThan( maxTime, value );
+					}
+
+					return ( app.compareTimesGreaterThan( value, minTime ) && app.compareTimesGreaterThan( value, maxTime ) ) ||
+						( app.compareTimesGreaterThan( minTime, value ) && app.compareTimesGreaterThan( maxTime, value  ) );
+
+				}, function( params, element ) {
+
+					var $input = $( element ),
+						minTime = $input.data( 'min-time' ),
+						maxTime = $input.data( 'max-time' );
+
+					// Replace `00:**pm` with `12:**pm`.
+					minTime = minTime.replace( /^00:([0-9]{2})pm$/, '12:$1pm' );
+					maxTime = maxTime.replace( /^00:([0-9]{2})pm$/, '12:$1pm' );
+
+					// Properly format time: add space before AM/PM, make uppercase.
+					minTime = minTime.replace( /(am|pm)/g, ' $1' ).toUpperCase();
+					maxTime = maxTime.replace( /(am|pm)/g, ' $1' ).toUpperCase();
+
+					return wpforms_settings.val_time_limit
+						.replace( '{minTime}', minTime )
+						.replace( '{maxTime}', maxTime );
+				} );
 
 				// Validate checkbox choice limit.
 				$.validator.addMethod( 'check-limit', function( value, element ) {
@@ -310,7 +385,10 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				// Validate password strength.
 				$.validator.addMethod( 'password-strength', function( value, element ) {
 
-					return WPFormsPasswordField.passwordStrength( value, element ) >= Number( $( element ).data( 'password-strength-level' ) );
+					var $el = $( element );
+
+					return $el.val().trim() === '' && ! $el.hasClass( 'wpforms-field-required' ) || // Don't check the password strength for empty fields which is set as not required.
+						WPFormsPasswordField.passwordStrength( value, element ) >= Number( $el.data( 'password-strength-level' ) );
 				}, wpforms_settings.val_password_strength );
 
 				// Finally load jQuery Validation library for our forms.
@@ -369,41 +447,60 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 							},
 							submitHandler: function( form ) {
 
-								var $form       = $( form ),
-									$submit     = $form.find( '.wpforms-submit' ),
-									altText     = $submit.data( 'alt-text' ),
-									recaptchaID = $submit.get( 0 ).recaptchaID;
+								/**
+								 * Submit handler routine.
+								 *
+								 * @since 1.7.2
+								 *
+								 * @returns {boolean|void} False if form won't submit.
+								 */
+								var submitHandlerRoutine = function() {
 
-								if ( $form.data( 'token' ) && 0 === $( '.wpforms-token', $form ).length ) {
-									$( '<input type="hidden" class="wpforms-token" name="wpforms[token]" />' )
-										.val( $form.data( 'token' ) )
-										.appendTo( $form );
+									var $form = $( form ),
+										$submit = $form.find( '.wpforms-submit' ),
+										altText = $submit.data( 'alt-text' ),
+										recaptchaID = $submit.get( 0 ).recaptchaID;
+
+									if ( $form.data( 'token' ) && 0 === $( '.wpforms-token', $form ).length ) {
+										$( '<input type="hidden" class="wpforms-token" name="wpforms[token]" />' )
+											.val( $form.data( 'token' ) )
+											.appendTo( $form );
+									}
+
+									$submit.prop( 'disabled', true );
+									$form.find( '#wpforms-field_recaptcha-error' ).remove();
+
+									// Display processing text.
+									if ( altText ) {
+										$submit.text( altText );
+									}
+
+									if ( ! app.empty( recaptchaID ) || recaptchaID === 0 ) {
+
+										// Form contains invisible reCAPTCHA.
+										grecaptcha.execute( recaptchaID ).then( null, function( reason ) {
+
+											reason = ( null === reason ) ? '' : '<br>' + reason;
+											$form.find( '.wpforms-recaptcha-container' )
+												.append( '<label id="wpforms-field_recaptcha-error" class="wpforms-error"> ' + wpforms_settings.val_recaptcha_fail_msg + reason + '</label>' );
+											$submit.prop( 'disabled', false );
+										} );
+										return false;
+									}
+
+									// Remove name attributes if needed.
+									$( '.wpforms-input-temp-name' ).removeAttr( 'name' );
+
+									app.formSubmit( $form );
+								};
+
+								// In the case of active Google reCAPTCHA v3, first, we should call `grecaptcha.execute`.
+								// This is needed to obtain proper grecaptcha token before submitting the form.
+								if ( typeof wpformsRecaptchaV3Execute === 'function' ) {
+									return wpformsRecaptchaV3Execute( submitHandlerRoutine );
 								}
 
-								$submit.prop( 'disabled', true );
-								$form.find( '#wpforms-field_recaptcha-error' ).remove();
-
-								// Display processing text.
-								if ( altText ) {
-									$submit.text( altText );
-								}
-
-								if ( ! app.empty( recaptchaID ) || recaptchaID === 0 ) {
-
-									// Form contains invisible reCAPTCHA.
-									grecaptcha.execute( recaptchaID ).then( null, function( reason ) {
-
-										reason = ( null === reason ) ? '' : '<br>' + reason;
-										$form.find( '.wpforms-recaptcha-container' ).append( '<label id="wpforms-field_recaptcha-error" class="wpforms-error"> ' + wpforms_settings.val_recaptcha_fail_msg + reason + '</label>' );
-										$submit.prop( 'disabled', false );
-									} );
-									return false;
-								}
-
-								// Remove name attributes if needed.
-								$( '.wpforms-input-temp-name' ).removeAttr( 'name' );
-
-								app.formSubmit( $form );
+								return submitHandlerRoutine();
 							},
 							invalidHandler: function( event, validator ) {
 
@@ -732,7 +829,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 				// Hidden input allows to include country code into submitted data.
 				inputOptions.hiddenInput = $el.closest( '.wpforms-field-phone' ).data( 'field-id' );
-				inputOptions.utilsScript = wpforms_settings.wpforms_plugin_url + 'pro/assets/js/vendor/jquery.intl-tel-input-utils.js';
+				inputOptions.utilsScript = wpforms_settings.wpforms_plugin_url + 'assets/pro/lib/intl-tel-input/jquery.intl-tel-input-utils.min.js';
 
 				$el.intlTelInput( inputOptions );
 
@@ -812,11 +909,23 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				$input.mailcheck( {
 					suggested: function( $el, suggestion ) {
 
-						if ( suggestion.domain.match( /^xn--/ ) ) {
-							suggestion.full = suggestion.address + '@' + punycode.toUnicode( suggestion.domain );
+						if ( suggestion.address.match( /^xn--/ ) ) {
+							suggestion.full = punycode.toUnicode( decodeURI( suggestion.full ) );
+
+							var parts = suggestion.full.split( '@' );
+
+							suggestion.address = parts[0];
+							suggestion.domain = parts[1];
 						}
 
-						suggestion = '<a href="#" class="mailcheck-suggestion" data-id="' + id + '" title="' + wpforms_settings.val_email_suggestion_title + '">' + decodeURI( suggestion.full.replace( /%[^a-z0-9]/gi, '%25' ) ) + '</a>';
+						if ( suggestion.domain.match( /^xn--/ ) ) {
+							suggestion.domain = punycode.toUnicode( decodeURI( suggestion.domain ) );
+						}
+
+						var address = decodeURI( suggestion.address ).replaceAll( /[<>'"()/\\|:;=@%&\s]/ig, '' ).substr( 0, 64 ),
+							domain = decodeURI( suggestion.domain ).replaceAll( /[<>'"()/\\|:;=@%&+_\s]/ig, '' );
+
+						suggestion = '<a href="#" class="mailcheck-suggestion" data-id="' + id + '" title="' + wpforms_settings.val_email_suggestion_title + '">' + address + '@' + domain + '</a>';
 						suggestion = wpforms_settings.val_email_suggestion.replace( '{suggestion}', suggestion );
 
 						$el.closest( '.wpforms-field' ).find( '#' + id + '_suggestion' ).remove();
@@ -852,11 +961,14 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 			// Loads if function exists.
 			if ( typeof window.Choices !== 'function' ) {
-
 				return;
 			}
 
 			$( '.wpforms-field-select-style-modern .choicesjs-select, .wpforms-field-payment-select .choicesjs-select' ).each( function( idx, el ) {
+
+				if ( $( el ).data( 'choicesjs' ) ) {
+					return;
+				}
 
 				var args          = window.wpforms_choicesjs_config || {},
 					searchEnabled = $( el ).data( 'search-enabled' );
@@ -2171,8 +2283,18 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 			args.complete = function( jqHXR, textStatus ) {
 
-				// Do not make form active if the action is required.
-				if ( jqHXR.responseJSON && jqHXR.responseJSON.data && jqHXR.responseJSON.data.action_required ) {
+				/*
+				 * Do not make form active if the action is required or
+				 * if the ajax request was successful and the form has a redirect.
+				 */
+				if (
+					jqHXR.responseJSON &&
+					jqHXR.responseJSON.data &&
+					(
+						jqHXR.responseJSON.data.action_required ||
+						( textStatus === 'success' && jqHXR.responseJSON.data.redirect_url )
+					)
+				) {
 					return;
 				}
 
@@ -2239,6 +2361,28 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 		isFunction: function( object ) {
 
 			return !! ( object && object.constructor && object.call && object.apply );
+		},
+
+		/**
+		 * Compare times.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param {string} time1 Time 1.
+		 * @param {string} time2 Time 2.
+		 *
+		 * @returns {boolean} True if time1 is greater than time2.
+		 */
+		compareTimesGreaterThan: function( time1, time2 ) {
+
+			// Properly format time: add space before AM/PM, make uppercase.
+			time1 = time1.replace( /(am|pm)/g, ' $1' ).toUpperCase();
+			time2 = time2.replace( /(am|pm)/g, ' $1' ).toUpperCase();
+
+			var time1Date = Date.parse( '01 Jan 2021 ' + time1 ),
+				time2Date = Date.parse( '01 Jan 2021 ' + time2 );
+
+			return time1Date >= time2Date;
 		},
 	};
 

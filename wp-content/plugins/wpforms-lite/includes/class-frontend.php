@@ -84,9 +84,9 @@ class WPForms_Frontend {
 		add_action( 'wpforms_frontend_output', [ $this, 'foot' ], 25, 5 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'assets_header' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'recaptcha_noconflict' ], 9999 );
-		add_action( 'wp_footer', [ $this, 'missing_assets_error_js' ] );
 		add_action( 'wp_footer', [ $this, 'assets_footer' ], 15 );
 		add_action( 'wp_footer', [ $this, 'recaptcha_noconflict' ], 19 );
+		add_action( 'wp_footer', [ $this, 'missing_assets_error_js' ], 20 );
 		add_action( 'wp_footer', [ $this, 'footer_end' ], 99 );
 
 		// Register shortcode.
@@ -125,8 +125,8 @@ class WPForms_Frontend {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param int  $id Form ID.
-	 * @param bool $title Whether to display form title.
+	 * @param int  $id          Form ID.
+	 * @param bool $title       Whether to display form title.
 	 * @param bool $description Whether to display form description.
 	 */
 	public function output( $id, $title = false, $description = false ) {
@@ -136,9 +136,14 @@ class WPForms_Frontend {
 		}
 
 		// Grab the form data, if not found then we bail.
-		$form = wpforms()->form->get( (int) $id );
+		$form = wpforms()->get( 'form' )->get( (int) $id );
 
 		if ( empty( $form ) ) {
+			return;
+		}
+
+		// We should display only the published form.
+		if ( ! empty( $form->post_status ) && $form->post_status !== 'publish' ) {
 			return;
 		}
 
@@ -159,25 +164,56 @@ class WPForms_Frontend {
 		}
 
 		// We need to stop output processing in case we are on AMP page.
-		if ( wpforms_is_amp( false ) && ( ! current_theme_supports( 'amp' ) || apply_filters( 'wpforms_amp_pro', wpforms()->pro ) || ! is_ssl() || ! defined( 'AMP__VERSION' ) || version_compare( AMP__VERSION, '1.2', '<' ) ) ) {
+		if (
+			// phpcs:disable WPForms.PHP.ValidateHooks.InvalidHookName
+			wpforms_is_amp( false ) &&
+			(
+				! current_theme_supports( 'amp' ) ||
+				/**
+				 * Filters the pro status of the plugin.
+				 *
+				 * @since 1.5.4.2
+				 *
+				 * @param bool $pro Pro status..
+				 */
+				apply_filters( 'wpforms_amp_pro', wpforms()->is_pro() ) ||
+				! is_ssl() ||
+				! defined( 'AMP__VERSION' ) ||
+				version_compare( AMP__VERSION, '1.2', '<' )
+			)
+			// phpcs:enable WPForms.PHP.ValidateHooks.InvalidHookName
+		) {
+			$full_page_url = home_url( add_query_arg( 'nonamp', '1' ) . '#wpforms-' . absint( $form->ID ) );
 
-			$text = apply_filters(
+			/**
+			 * Allow modifying the text or url for the full page on the AMP pages.
+			 *
+			 * @since 1.4.1.1
+			 * @since 1.7.1 Added $form_id, $full_page_url, and $form_data arguments.
+			 *
+			 * @param string $text          Text.
+			 * @param int    $form_id       Form id.
+			 * @param string $full_page_url Full page url.
+			 * @param array  $form_data     Form data and settings.
+			 *
+			 * @return string
+			 */
+			$text = (string) apply_filters(
 				'wpforms_frontend_shortcode_amp_text',
-				sprintf(
-					wp_kses(
-						/* translators: %s - URL to a non-amp version of a page with the form. */
-						__( '<a href="%s">Go to the full page</a> to view and submit the form.', 'wpforms-lite' ),
-						array(
-							'a' => array(
-								'href' => array(),
-							),
-						)
-					),
-					esc_url( home_url( add_query_arg( 'nonamp', '1' ) . '#wpforms-' . absint( $form->ID ) ) )
-				)
+				sprintf( /* translators: %s - URL to a non-amp version of a page with the form. */
+					__( '<a href="%s">Go to the full page</a> to view and submit the form.', 'wpforms-lite' ),
+					esc_url( $full_page_url )
+				),
+				$form_id,
+				$full_page_url,
+				$form_data
 			);
 
-			echo '<p class="wpforms-shortcode-amp-text">' . $text . '</p>';
+			printf(
+				'<p class="wpforms-shortcode-amp-text">%s</p>',
+				wp_kses_post( $text )
+			);
+
 			return;
 		}
 
@@ -432,7 +468,7 @@ class WPForms_Frontend {
 				if ( true === $description && ! empty( $settings['form_desc'] ) ) {
 					echo '<div class="wpforms-description">';
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo apply_filters( 'wpforms_process_smart_tags', $settings['form_desc'], $form_data );
+					echo wpforms_process_smart_tags( $settings['form_desc'], $form_data );
 					echo '</div>';
 				}
 
@@ -475,7 +511,11 @@ class WPForms_Frontend {
 			/**
 			 * Core actions on this hook:
 			 * Priority / Description
-			 * 20         Pagebreak markup (open first page)
+			 * 20         Pagebreak markup (open first page).
+			 *
+			 * @since 1.3.7
+			 *
+			 * @param array $form_data Form data.
 			 */
 			do_action( 'wpforms_display_fields_before', $form_data );
 
@@ -491,7 +531,7 @@ class WPForms_Frontend {
 				 *
 				 * @since 1.4.0
 				 *
-				 * @param array $field Current field.
+				 * @param array $field     Current field.
 				 * @param array $form_data Form data and settings.
 				 */
 				$field = apply_filters( 'wpforms_field_data', $field, $form_data );
@@ -513,6 +553,11 @@ class WPForms_Frontend {
 				 * 5          Field opening container markup.
 				 * 15         Field label.
 				 * 20         Field description (depending on position).
+				 *
+				 * @since 1.3.7
+				 *
+				 * @param array $field     Field.
+				 * @param array $form_data Form data.
 				 */
 				do_action( 'wpforms_display_field_before', $field, $form_data );
 
@@ -520,6 +565,12 @@ class WPForms_Frontend {
 				 * Individual field classes use this hook to display the actual
 				 * field form elements.
 				 * See `field_display` methods in /includes/fields.
+				 *
+				 * @since 1.3.7
+				 *
+				 * @param array $field      Field.
+				 * @param array $attributes Field attributes.
+				 * @param array $form_data  Form data.
 				 */
 				do_action( "wpforms_display_field_{$field['type']}", $field, $attributes, $form_data );
 
@@ -529,7 +580,12 @@ class WPForms_Frontend {
 				 * 3          Field error messages.
 				 * 5          Field description (depending on position).
 				 * 15         Field closing container markup.
-				 * 20         Pagebreak markup (close previous page, open next)
+				 * 20         Pagebreak markup (close previous page, open next).
+				 *
+				 * @since 1.3.7
+				 *
+				 * @param array $field     Field.
+				 * @param array $form_data Form data.
 				 */
 				do_action( 'wpforms_display_field_after', $field, $form_data );
 
@@ -538,7 +594,11 @@ class WPForms_Frontend {
 			/**
 			 * Core actions on this hook:
 			 * Priority / Description
-			 * 5          Pagebreak markup (close last page)
+			 * 5          Pagebreak markup (close last page).
+			 *
+			 * @since 1.3.7
+			 *
+			 * @param array $form_data Form data.
 			 */
 			do_action( 'wpforms_display_fields_after', $form_data );
 
@@ -630,13 +690,17 @@ class WPForms_Frontend {
 
 		// This filter is for backwards compatibility purposes.
 		$types = array( 'text', 'textarea', 'name', 'number', 'email', 'hidden', 'url', 'html', 'divider', 'password', 'phone', 'address', 'select', 'checkbox', 'radio' );
+
 		if ( in_array( $field['type'], $types, true ) ) {
-			$field = apply_filters( "wpforms_{$field['type']}_field_display", $field, $attributes, $form_data );
-		} elseif ( 'credit-card' === $field['type'] ) {
-			$field = apply_filters( 'wpforms_creditcard_field_display', $field, $attributes, $form_data );
-		} elseif ( in_array( $field['type'], array( 'payment-multiple', 'payment-single', 'payment-checkbox' ), true ) ) {
+			$filtered_field = apply_filters( "wpforms_{$field['type']}_field_display", $field, $attributes, $form_data );
+			$field          = wpforms_list_intersect_key( (array) $filtered_field, $field );
+		} elseif ( $field['type'] === 'credit-card' ) {
+			$filtered_field = apply_filters( 'wpforms_creditcard_field_display', $field, $attributes, $form_data );
+			$field          = wpforms_list_intersect_key( (array) $filtered_field, $field );
+		} elseif ( in_array( $field['type'], [ 'payment-multiple', 'payment-single', 'payment-checkbox' ], true ) ) {
 			$filter_field_type = str_replace( '-', '_', $field['type'] );
-			$field             = apply_filters( 'wpforms_' . $filter_field_type . '_field_display', $field, $attributes, $form_data );
+			$filtered_field    = apply_filters( 'wpforms_' . $filter_field_type . '_field_display', $field, $attributes, $form_data );
+			$field             = wpforms_list_intersect_key( (array) $filtered_field, $field );
 		}
 
 		$form_id  = absint( $form_data['id'] );
@@ -668,7 +732,7 @@ class WPForms_Frontend {
 				'primary' => array(
 					'attr'     => array(
 						'name'        => "wpforms[fields][{$field_id}]",
-						'value'       => isset( $field['default_value'] ) ? apply_filters( 'wpforms_process_smart_tags', $field['default_value'], $form_data ) : '',
+						'value'       => isset( $field['default_value'] ) ? wpforms_process_smart_tags( $field['default_value'], $form_data ) : '',
 						'placeholder' => isset( $field['placeholder'] ) ? $field['placeholder'] : '',
 					),
 					'class'    => $attributes['input_class'],
@@ -692,7 +756,7 @@ class WPForms_Frontend {
 				'data'     => array(),
 				'id'       => implode( '', array_slice( $attributes['description_id'], 0 ) ),
 				'position' => 'after',
-				'value'    => ! empty( $field['description'] ) ? apply_filters( 'wpforms_process_smart_tags', $field['description'], $form_data ) : '',
+				'value'    => ! empty( $field['description'] ) ? wpforms_process_smart_tags( $field['description'], $form_data ) : '',
 			),
 		);
 
@@ -916,27 +980,35 @@ class WPForms_Frontend {
 				);
 				echo '</div>';
 			}
+
 			return; // Only v3 is supported in AMP.
 		}
 
 		if ( $is_recaptcha_v3 ) {
 			echo '<input type="hidden" name="wpforms[recaptcha]" value="">';
+
 			return;
 		}
 
-		$visible = $this->pages ? 'style="display:none;"' : '';
-		$data    = array(
-			'sitekey' => $captcha_settings['site_key'],
+		$data = apply_filters(
+			'wpforms_frontend_recaptcha',
+			[
+				'sitekey' => $captcha_settings['site_key'],
+			],
+			$form_data
 		);
-		$data    = apply_filters( 'wpforms_frontend_recaptcha', $data, $form_data );
 
 		if ( $captcha_settings['provider'] === 'recaptcha' && $captcha_settings['recaptcha_type'] === 'invisible' ) {
 			$data['size'] = 'invisible';
 		}
 
-		echo '<div class="wpforms-recaptcha-container wpforms-is-' . $captcha_settings['provider'] . '" ' . $visible . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		printf(
+			'<div class="wpforms-recaptcha-container wpforms-is-%s"%s>',
+			sanitize_html_class( $captcha_settings['provider'] ),
+			$this->pages ? ' style="display:none;"' : ''
+		);
 
-		echo '<div ' . wpforms_html_attributes( '', array( 'g-recaptcha' ), $data ) . '></div>';
+		echo '<div ' . wpforms_html_attributes( '', [ 'g-recaptcha' ], $data ) . '></div>';
 
 		if ( $captcha_settings['provider'] === 'hcaptcha' || $captcha_settings['recaptcha_type'] !== 'invisible' ) {
 			echo '<input type="text" name="g-recaptcha-hidden" class="wpforms-recaptcha-hidden" style="position:absolute!important;clip:rect(0,0,0,0)!important;height:1px!important;width:1px!important;border:0!important;overflow:hidden!important;padding:0!important;margin:0!important;" required>';
@@ -964,29 +1036,55 @@ class WPForms_Frontend {
 
 		$form_id  = absint( $form_data['id'] );
 		$settings = $form_data['settings'];
-		$submit   = apply_filters( 'wpforms_field_submit', $settings['submit_text'], $form_data );
-		$process  = 'aria-live="assertive" ';
-		$classes  = '';
-		$visible  = $this->pages ? 'style="display:none;"' : '';
+
+		/**
+		 * Filter form submit button text.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param string $submit_text Submit button text.
+		 * @param array  $form_data   Form data.
+		 */
+		$submit = apply_filters( 'wpforms_field_submit', $settings['submit_text'], $form_data ); // phpcs:ignore WPForms.PHP.ValidateHooks.InvalidHookName
+
+		$attrs      = [
+			'aria-live' => 'assertive',
+			'value'     => 'wpforms-submit',
+		];
+		$data_attrs = [];
+
+		/**
+		 * Filter form submit button classes.
+		 *
+		 * @since 1.7.5.3
+		 *
+		 * @param array $classes   Button classes.
+		 * @param array $form_data Form data.
+		 */
+		$classes = (array) apply_filters( 'wpforms_frontend_foot_submit_classes', [], $form_data );
+
+		// A lot of our frontend logic is dependent on this class, so we need to make sure it's present.
+		$classes = array_merge( $classes, [ 'wpforms-submit' ] );
 
 		// Check for submit button alt-text.
 		if ( ! empty( $settings['submit_text_processing'] ) ) {
 			if ( wpforms_is_amp() ) {
-				$bound_text = sprintf(
+				$attrs['[text]'] = sprintf(
 					'%s.submitting ? %s : %s',
 					$this->get_form_amp_state_id( $form_id ),
 					wp_json_encode( $settings['submit_text_processing'], JSON_UNESCAPED_UNICODE ),
 					wp_json_encode( $submit, JSON_UNESCAPED_UNICODE )
 				);
-				$process   .= '[text]="' . esc_attr( $bound_text ) . '"';
 			} else {
-				$process .= 'data-alt-text="' . esc_attr( $settings['submit_text_processing'] ) . '" data-submit-text="' . esc_attr( $submit ) . '"';
+				$data_attrs['alt-text']    = $settings['submit_text_processing'];
+				$data_attrs['submit-text'] = $submit;
 			}
 		}
 
 		// Check user defined submit button classes.
 		if ( ! empty( $settings['submit_class'] ) ) {
-			$classes = wpforms_sanitize_classes( $settings['submit_class'] );
+			$submit_classes = is_array( $settings['submit_class'] ) ? $settings['submit_class'] : array_filter( explode( ' ', $settings['submit_class'] ) );
+			$classes        = array_merge( $classes, $submit_classes );
 		}
 
 		// AMP submit error template.
@@ -1000,68 +1098,89 @@ class WPForms_Frontend {
 		}
 
 		// Submit button area.
-		echo '<div class="wpforms-submit-container" ' . $visible . '>';
+		printf( '<div class="wpforms-submit-container"%s>', $this->pages ? ' style="display:none;"' : '' );
 
-				echo '<input type="hidden" name="wpforms[id]" value="' . esc_attr( $form_id ) . '">';
+		echo '<input type="hidden" name="wpforms[id]" value="' . absint( $form_id ) . '">';
 
-				echo '<input type="hidden" name="wpforms[author]" value="' . absint( get_the_author_meta( 'ID' ) ) . '">';
+		if ( is_user_logged_in() ) {
+			?>
+			<input
+				type="hidden"
+				name="wpforms[nonce]"
+				value="<?php echo esc_attr( wp_create_nonce( "wpforms::form_{$form_id}" ) ); ?>"
+			/>
+			<?php
+		}
 
-				if ( is_singular() ) {
-					echo '<input type="hidden" name="wpforms[post_id]" value="' . esc_attr( get_the_ID() ) . '">';
-				}
+		echo '<input type="hidden" name="wpforms[author]" value="' . absint( get_the_author_meta( 'ID' ) ) . '">';
 
-				do_action( 'wpforms_display_submit_before', $form_data );
+		if ( is_singular() ) {
+			echo '<input type="hidden" name="wpforms[post_id]" value="' . absint( get_the_ID() ) . '">';
+		}
 
-				printf(
-					'<button type="submit" name="wpforms[submit]" class="wpforms-submit %s" id="wpforms-submit-%d" value="wpforms-submit" %s>%s</button>',
-					esc_attr( $classes ),
-					esc_attr( $form_id ),
-					$process,
-					esc_html( $submit )
-				);
+		do_action( 'wpforms_display_submit_before', $form_data );
 
-				if ( ! empty( $settings['ajax_submit'] ) && ! wpforms_is_amp() ) {
+		printf(
+			'<button type="submit" name="wpforms[submit]" %s>%s</button>',
+			wpforms_html_attributes(
+				sprintf( 'wpforms-submit-%d', absint( $form_id ) ),
+				$classes,
+				$data_attrs,
+				$attrs
+			),
+			esc_html( $submit )
+		);
 
-					/**
-					 * Filter submit spinner image src attribute.
-					 *
-					 * @since      1.5.4.1
-					 * @deprecated 1.6.7.3
-					 *
-					 * @param string $src       Spinner image source.
-					 * @param array  $form_data Form data and settings.
-					 */
-					$src = apply_filters_deprecated(
-						'wpforms_display_sumbit_spinner_src',
-						[
-							WPFORMS_PLUGIN_URL . 'assets/images/submit-spin.svg',
-							$form_data,
-						],
-						'1.6.7.3',
-						'wpforms_display_submit_spinner_src'
-					);
+		if ( ! empty( $settings['ajax_submit'] ) && ! wpforms_is_amp() ) {
 
-					/**
-					 * Filter submit spinner image src attribute.
-					 *
-					 * @since 1.6.7.3
-					 *
-					 * @param string $src       Spinner image source.
-					 * @param array  $form_data Form data and settings.
-					 */
-					$src = apply_filters(
-						'wpforms_display_submit_spinner_src',
-						$src,
-						$form_data
-					);
+			/**
+			 * Filter submit spinner image src attribute.
+			 *
+			 * @since      1.5.4.1
+			 * @deprecated 1.6.7.3
+			 *
+			 * @see This filter is documented in wp-includes/plugin.php
+			 */
+			$src = apply_filters_deprecated(
+				'wpforms_display_sumbit_spinner_src',
+				[
+					WPFORMS_PLUGIN_URL . 'assets/images/submit-spin.svg',
+					$form_data,
+				],
+				'1.6.7.3',
+				'wpforms_display_submit_spinner_src'
+			);
 
-					printf(
-						'<img src="%s" class="wpforms-submit-spinner" style="display: none;" width="26" height="26" alt="">',
-						esc_url( $src )
-					);
-				}
+			/**
+			 * Filter submit spinner image src attribute.
+			 *
+			 * @since 1.6.7.3
+			 *
+			 * @param string $src       Spinner image source.
+			 * @param array  $form_data Form data and settings.
+			 */
+			$src = apply_filters(
+				'wpforms_display_submit_spinner_src',
+				$src,
+				$form_data
+			);
 
-				do_action( 'wpforms_display_submit_after', $form_data );
+			printf(
+				'<img src="%s" class="wpforms-submit-spinner" style="display: none;" width="26" height="26" alt="">',
+				esc_url( $src )
+			);
+		}
+
+		/**
+		 * Runs right after form Submit button rendering.
+		 *
+		 * @since 1.5.0
+		 * @since 1.7.5 Added new parameter for detecting button type.
+		 *
+		 * @param array  $form_data Form data.
+		 * @param string $button    Button type, e.g. `submit`, `next`.
+		 */
+		do_action( 'wpforms_display_submit_after', $form_data, 'submit' ); // phpcs:ignore WPForms.PHP.ValidateHooks.InvalidHookName
 
 		echo '</div>';
 
@@ -1086,6 +1205,7 @@ class WPForms_Frontend {
 			case 'footer':
 				echo '<div class="wpforms-error-container">' . wpforms_sanitize_error( $error ) . '</div>';
 				break;
+
 			case 'recaptcha':
 				echo '<label id="wpforms-field_recaptcha-error" class="wpforms-error">' . wpforms_sanitize_error( $error ) . '</label>';
 				break;
@@ -1148,13 +1268,13 @@ class WPForms_Frontend {
 		) {
 			wp_enqueue_style(
 				'wpforms-jquery-timepicker',
-				WPFORMS_PLUGIN_URL . 'assets/css/jquery.timepicker.css',
+				WPFORMS_PLUGIN_URL . 'assets/lib/jquery.timepicker/jquery.timepicker.min.css',
 				[],
 				'1.11.5'
 			);
 			wp_enqueue_style(
 				'wpforms-flatpickr',
-				WPFORMS_PLUGIN_URL . 'assets/css/flatpickr.min.css',
+				WPFORMS_PLUGIN_URL . 'assets/lib/flatpickr/flatpickr.min.css',
 				[],
 				'4.6.9'
 			);
@@ -1190,6 +1310,13 @@ class WPForms_Frontend {
 			return;
 		}
 
+		/**
+		 * Fire before frontend JS assets are loaded.
+		 *
+		 * @since 1.0.0
+		 *
+		 * @param array $forms Forms on the current page.
+		 */
 		do_action( 'wpforms_frontend_js', $this->forms );
 
 		$min = wpforms_get_min_suffix();
@@ -1197,9 +1324,9 @@ class WPForms_Frontend {
 		// Load jQuery validation library - https://jqueryvalidation.org/.
 		wp_enqueue_script(
 			'wpforms-validation',
-			WPFORMS_PLUGIN_URL . 'assets/js/jquery.validate.min.js',
+			WPFORMS_PLUGIN_URL . 'assets/lib/jquery.validate.min.js',
 			[ 'jquery' ],
-			'1.19.3',
+			'1.19.4',
 			true
 		);
 
@@ -1207,18 +1334,18 @@ class WPForms_Frontend {
 		// TODO: should be moved out of here.
 		if (
 			$this->assets_global() ||
-			true === wpforms_has_field_type( 'date-time', $this->forms, true )
+			wpforms_has_field_type( 'date-time', $this->forms, true )
 		) {
 			wp_enqueue_script(
 				'wpforms-flatpickr',
-				WPFORMS_PLUGIN_URL . 'assets/js/flatpickr.min.js',
+				WPFORMS_PLUGIN_URL . 'assets/lib/flatpickr/flatpickr.min.js',
 				[ 'jquery' ],
 				'4.6.9',
 				true
 			);
 			wp_enqueue_script(
 				'wpforms-jquery-timepicker',
-				WPFORMS_PLUGIN_URL . 'assets/js/jquery.timepicker.min.js',
+				WPFORMS_PLUGIN_URL . 'assets/lib/jquery.timepicker/jquery.timepicker.min.js',
 				[ 'jquery' ],
 				'1.11.5',
 				true
@@ -1228,14 +1355,14 @@ class WPForms_Frontend {
 		// Load jQuery input mask library - https://github.com/RobinHerbots/jquery.inputmask.
 		if (
 			$this->assets_global() ||
-			true === wpforms_has_field_type( [ 'phone', 'address' ], $this->forms, true ) ||
-			true === wpforms_has_field_setting( 'input_mask', $this->forms, true )
+			wpforms_has_field_type( [ 'phone', 'address' ], $this->forms, true ) ||
+			wpforms_has_field_setting( 'input_mask', $this->forms, true )
 		) {
 			wp_enqueue_script(
 				'wpforms-maskedinput',
-				WPFORMS_PLUGIN_URL . 'assets/js/jquery.inputmask.min.js',
+				WPFORMS_PLUGIN_URL . 'assets/lib/jquery.inputmask.min.js',
 				[ 'jquery' ],
-				'5.0.6',
+				'5.0.7-beta.29',
 				true
 			);
 		}
@@ -1243,11 +1370,11 @@ class WPForms_Frontend {
 		// Load mailcheck <https://github.com/mailcheck/mailcheck> and punycode libraries.
 		if (
 			$this->assets_global() ||
-			true === wpforms_has_field_type( [ 'email' ], $this->forms, true )
+			wpforms_has_field_type( [ 'email' ], $this->forms, true )
 		) {
 			wp_enqueue_script(
 				'wpforms-mailcheck',
-				WPFORMS_PLUGIN_URL . 'assets/js/mailcheck.min.js',
+				WPFORMS_PLUGIN_URL . 'assets/lib/mailcheck.min.js',
 				false,
 				'1.1.2',
 				true
@@ -1255,24 +1382,9 @@ class WPForms_Frontend {
 
 			wp_enqueue_script(
 				'wpforms-punycode',
-				WPFORMS_PLUGIN_URL . "assets/js/punycode{$min}.js",
+				WPFORMS_PLUGIN_URL . 'assets/lib/punycode.min.js',
 				[],
 				'1.0.0',
-				true
-			);
-		}
-
-		// Load CC payment library - https://github.com/stripe/jquery.payment/.
-		// TODO: should be moved out of here.
-		if (
-			$this->assets_global() ||
-			true === wpforms_has_field_type( 'credit-card', $this->forms, true )
-		) {
-			wp_enqueue_script(
-				'wpforms-payment',
-				WPFORMS_PLUGIN_URL . 'assets/js/jquery.payment.min.js',
-				[ 'jquery' ],
-				WPFORMS_VERSION,
 				true
 			);
 		}
@@ -1280,7 +1392,7 @@ class WPForms_Frontend {
 		// Load base JS.
 		wp_enqueue_script(
 			'wpforms',
-			WPFORMS_PLUGIN_URL . 'assets/js/wpforms.js',
+			WPFORMS_PLUGIN_URL . "assets/js/wpforms{$min}.js",
 			[ 'jquery' ],
 			WPFORMS_VERSION,
 			true
@@ -1375,40 +1487,40 @@ class WPForms_Frontend {
 	protected function get_captcha_inline_script( $captcha_settings ) {
 
 		// IE11 polyfills for native `matches()` and `closest()` methods.
-		$polyfills = // language=JavaScript PhpStorm.
+		$polyfills = /** @lang JavaScript */
 			'if (!Element.prototype.matches) {
-			    Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
+				Element.prototype.matches = Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
 			}
 			if (!Element.prototype.closest) {
-			    Element.prototype.closest = function (s) {
-			        var el = this;
-			        do {
-			            if (Element.prototype.matches.call(el, s)) { return el; }
-			            el = el.parentElement || el.parentNode;
-			        } while (el !== null && el.nodeType === 1);
-			        return null;
-			    };
+				Element.prototype.closest = function (s) {
+					var el = this;
+					do {
+						if (Element.prototype.matches.call(el, s)) { return el; }
+						el = el.parentElement || el.parentNode;
+					} while (el !== null && el.nodeType === 1);
+					return null;
+				};
 			}
 		';
 
 		// Native equivalent for jQuery's `trigger()` method.
-		$dispatch = // language=JavaScript PhpStorm.
+		$dispatch = /** @lang JavaScript */
 			'var wpformsDispatchEvent = function (el, ev, custom) {
-			    var e = document.createEvent(custom ? "CustomEvent" : "HTMLEvents");
-			    custom ? e.initCustomEvent(ev, true, true, false) : e.initEvent(ev, true, true);
-			    el.dispatchEvent(e);
+				var e = document.createEvent(custom ? "CustomEvent" : "HTMLEvents");
+				custom ? e.initCustomEvent(ev, true, true, false) : e.initEvent(ev, true, true);
+				el.dispatchEvent(e);
 			};
 		';
 
 		// Captcha callback, used by hCaptcha and checkbox reCaptcha v2.
-		$callback = // language=JavaScript PhpStorm.
+		$callback = /** @lang JavaScript */
 			'var wpformsRecaptchaCallback = function (el) {
-			    var hdn = el.parentNode.querySelector(".wpforms-recaptcha-hidden");
-			    var err = el.parentNode.querySelector("#g-recaptcha-hidden-error");
-			    hdn.value = "1";
-			    wpformsDispatchEvent(hdn, "change", false);
-			    hdn.classList.remove("wpforms-error");
-			    err && hdn.parentNode.removeChild(err);
+				var hdn = el.parentNode.querySelector(".wpforms-recaptcha-hidden");
+				var err = el.parentNode.querySelector("#g-recaptcha-hidden-error");
+				hdn.value = "1";
+				wpformsDispatchEvent(hdn, "change", false);
+				hdn.classList.remove("wpforms-error");
+				err && hdn.parentNode.removeChild(err);
 			};
 		';
 
@@ -1417,17 +1529,17 @@ class WPForms_Frontend {
 			$data  = $dispatch;
 			$data .= $callback;
 
-			$data .= // language=JavaScript PhpStorm.
+			$data .= /** @lang JavaScript */
 				'var wpformsRecaptchaLoad = function () {
-				    Array.prototype.forEach.call(document.querySelectorAll(".g-recaptcha"), function (el) {
-				        var captchaID = hcaptcha.render(el, {
-				            callback: function () {
-				                wpformsRecaptchaCallback(el);
-				            }
-				        });
-				        el.setAttribute("data-recaptcha-id", captchaID);
-				    });
-				    wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
+					Array.prototype.forEach.call(document.querySelectorAll(".g-recaptcha"), function (el) {
+						var captchaID = hcaptcha.render(el, {
+							callback: function () {
+								wpformsRecaptchaCallback(el);
+							}
+						});
+						el.setAttribute("data-recaptcha-id", captchaID);
+					});
+					wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
 				};
 			';
 
@@ -1438,45 +1550,49 @@ class WPForms_Frontend {
 
 			$data = $dispatch;
 
-			$data .= // language=JavaScript PhpStorm.
-				'var wpformsRecaptchaLoad = function () {
-				    grecaptcha.execute("' . $captcha_settings['site_key'] . '", {action: "wpforms"}).then(function (token) {
-				        Array.prototype.forEach.call(document.getElementsByName("wpforms[recaptcha]"), function (el) {
-				            el.value = token;
-				        });
-				    });
-				    wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
-				};
-				grecaptcha.ready(wpformsRecaptchaLoad);
-    		';
+			$data .= /** @lang JavaScript */
+				'var wpformsRecaptchaV3Execute = function ( callback ) {
+					grecaptcha.execute( "' . $captcha_settings['site_key'] . '", { action: "wpforms" } ).then( function ( token ) {
+						Array.prototype.forEach.call( document.getElementsByName( "wpforms[recaptcha]" ), function ( el ) {
+							el.value = token;
+						} );
+						if ( typeof callback === "function" ) {
+							return callback();
+						}
+					} );
+				}
+				grecaptcha.ready( function () {
+					wpformsDispatchEvent( document, "wpformsRecaptchaLoaded", true );
+				} );
+			';
 
 		} elseif ( $captcha_settings['recaptcha_type'] === 'invisible' ) {
 
 			$data  = $polyfills;
 			$data .= $dispatch;
 
-			$data .= // language=JavaScript PhpStorm.
+			$data .= /** @lang JavaScript */
 				'var wpformsRecaptchaLoad = function () {
-				    Array.prototype.forEach.call(document.querySelectorAll(".g-recaptcha"), function (el) {
-				        try {
-				            var recaptchaID = grecaptcha.render(el, {
-				                callback: function () {
-				                    wpformsRecaptchaCallback(el);
-				                }
-				            }, true);
-				            el.closest("form").querySelector("button[type=submit]").recaptchaID = recaptchaID;
-				        } catch (error) {}
-				    });
-				    wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
+					Array.prototype.forEach.call(document.querySelectorAll(".g-recaptcha"), function (el) {
+						try {
+							var recaptchaID = grecaptcha.render(el, {
+								callback: function () {
+									wpformsRecaptchaCallback(el);
+								}
+							}, true);
+							el.closest("form").querySelector("button[type=submit]").recaptchaID = recaptchaID;
+						} catch (error) {}
+					});
+					wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
 				};
 				var wpformsRecaptchaCallback = function (el) {
-				    var $form = el.closest("form");
-				    if (typeof wpforms.formSubmit === "function") {
-				        wpforms.formSubmit($form);
-				    } else {
-				        $form.querySelector("button[type=submit]").recaptchaID = false;
-				        $form.submit();
-				    }
+					var $form = el.closest("form");
+					if (typeof wpforms.formSubmit === "function") {
+						wpforms.formSubmit($form);
+					} else {
+						$form.querySelector("button[type=submit]").recaptchaID = false;
+						$form.submit();
+					}
 				};
 			';
 
@@ -1485,19 +1601,19 @@ class WPForms_Frontend {
 			$data  = $dispatch;
 			$data .= $callback;
 
-			$data .= // language=JavaScript PhpStorm.
+			$data .= /** @lang JavaScript */
 				'var wpformsRecaptchaLoad = function () {
-				    Array.prototype.forEach.call(document.querySelectorAll(".g-recaptcha"), function (el) {
-				        try {
-				            var recaptchaID = grecaptcha.render(el, {
-				                callback: function () {
-				                    wpformsRecaptchaCallback(el);
-				                }
-				            });
-				            el.setAttribute("data-recaptcha-id", recaptchaID);
-				        } catch (error) {}
-				    });
-				    wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
+					Array.prototype.forEach.call(document.querySelectorAll(".g-recaptcha"), function (el) {
+						try {
+							var recaptchaID = grecaptcha.render(el, {
+								callback: function () {
+									wpformsRecaptchaCallback(el);
+								}
+							});
+							el.setAttribute("data-recaptcha-id", recaptchaID);
+						} catch (error) {}
+					});
+					wpformsDispatchEvent(document, "wpformsRecaptchaLoaded", true);
 				};
 			';
 
@@ -1529,7 +1645,7 @@ class WPForms_Frontend {
 		if ( ! wpforms_is_amp() ) {
 			wp_enqueue_script(
 				'wpforms-confirmation',
-				WPFORMS_PLUGIN_URL . 'assets/js/wpforms-confirmation.js',
+				WPFORMS_PLUGIN_URL . "assets/js/wpforms-confirmation{$min}.js",
 				[ 'jquery' ],
 				WPFORMS_VERSION,
 				true
@@ -1569,15 +1685,35 @@ class WPForms_Frontend {
 		$strings = [
 			'val_required'               => wpforms_setting( 'validation-required', esc_html__( 'This field is required.', 'wpforms-lite' ) ),
 			'val_email'                  => wpforms_setting( 'validation-email', esc_html__( 'Please enter a valid email address.', 'wpforms-lite' ) ),
-			'val_email_suggestion'       => wpforms_setting( 'validation-email-suggestion', esc_html__( 'Did you mean {suggestion}?', 'wpforms-lite' ) ),
+			'val_email_suggestion'       => wpforms_setting(
+				'validation-email-suggestion',
+				sprintf( /* translators: %s - suggested email address. */
+					esc_html__( 'Did you mean %s?', 'wpforms-lite' ),
+					'{suggestion}'
+				)
+			),
 			'val_email_suggestion_title' => esc_attr__( 'Click to accept this suggestion.', 'wpforms-lite' ),
 			'val_email_restricted'       => wpforms_setting( 'validation-email-restricted', esc_html__( 'This email address is not allowed.', 'wpforms-lite' ) ),
 			'val_number'                 => wpforms_setting( 'validation-number', esc_html__( 'Please enter a valid number.', 'wpforms-lite' ) ),
 			'val_number_positive'        => wpforms_setting( 'validation-number-positive', esc_html__( 'Please enter a valid positive number.', 'wpforms-lite' ) ),
 			'val_confirm'                => wpforms_setting( 'validation-confirm', esc_html__( 'Field values do not match.', 'wpforms-lite' ) ),
 			'val_checklimit'             => wpforms_setting( 'validation-check-limit', esc_html__( 'You have exceeded the number of allowed selections: {#}.', 'wpforms-lite' ) ),
-			'val_limit_characters'       => wpforms_setting( 'validation-character-limit', esc_html__( '{count} of {limit} max characters.', 'wpforms-lite' ) ),
-			'val_limit_words'            => wpforms_setting( 'validation-word-limit', esc_html__( '{count} of {limit} max words.', 'wpforms-lite' ) ),
+			'val_limit_characters'       => wpforms_setting(
+				'validation-character-limit',
+				sprintf( /* translators: %1$s - characters count, %2$s - characters limit. */
+					esc_html__( '%1$s of %2$s max characters.', 'wpforms-lite' ),
+					'{count}',
+					'{limit}'
+				)
+			),
+			'val_limit_words'            => wpforms_setting(
+				'validation-word-limit',
+				sprintf( /* translators: %1$s - words count, %2$s - words limit. */
+					esc_html__( '%1$s of %2$s max words.', 'wpforms-lite' ),
+					'{count}',
+					'{limit}'
+				)
+			),
 			'val_recaptcha_fail_msg'     => wpforms_setting( 'recaptcha-fail-msg', esc_html__( 'Google reCAPTCHA verification failed, please try again later.', 'wpforms-lite' ) ),
 			'val_empty_blanks'           => wpforms_setting( 'validation-input-mask-incomplete', esc_html__( 'Please fill out all blanks.', 'wpforms-lite' ) ),
 			'uuid_cookie'                => false,
@@ -1730,7 +1866,7 @@ class WPForms_Frontend {
 		 *
 		 * @since 1.6.6
 		 *
-		 * @param bool False by default, set to True to disable checking.
+		 * @param bool $skip False by default, set to True to disable checking.
 		 */
 		$skip = (bool) apply_filters( 'wpforms_frontend_missing_assets_error_js_disable', false );
 
@@ -1803,18 +1939,18 @@ class WPForms_Frontend {
 	 */
 	private function get_missing_assets_error_message() {
 
-		$message = wp_kses(
-			sprintf( /* translators: %s - URL to the troubleshooting guide. */
+		$message = sprintf(
+			wp_kses( /* translators: %s - URL to the troubleshooting guide. */
 				__( 'Heads up! WPForms has detected an issue with JavaScript on this page. JavaScript is required for this form to work properly, so this form may not work as expected. See our <a href="%s" target="_blank" rel="noopener noreferrer">troubleshooting guide</a> to learn more or contact support.', 'wpforms-lite' ),
-				'https://wpforms.com/docs/getting-support-wpforms/'
+				[
+					'a' => [
+						'href'   => [],
+						'target' => [],
+						'rel'    => [],
+					],
+				]
 			),
-			[
-				'a' => [
-					'href'   => [],
-					'target' => [],
-					'rel'    => [],
-				],
-			]
+			'https://wpforms.com/docs/getting-support-wpforms/'
 		);
 
 		$message .= '<p>';

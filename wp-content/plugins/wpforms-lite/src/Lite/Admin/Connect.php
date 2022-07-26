@@ -50,7 +50,7 @@ class Connect {
 
 		\wp_enqueue_script(
 			'wpforms-connect',
-			\WPFORMS_PLUGIN_URL . "lite/assets/js/admin/connect{$min}.js",
+			\WPFORMS_PLUGIN_URL . "assets/lite/js/admin/connect{$min}.js",
 			array( 'jquery' ),
 			\WPFORMS_VERSION,
 			true
@@ -78,7 +78,7 @@ class Connect {
 			\wp_send_json_error( [ 'message' => \esc_html__( 'Please enter your license key to connect.', 'wpforms-lite' ) ] );
 		}
 
-		if ( wpforms()->pro ) {
+		if ( wpforms()->is_pro() ) {
 			\wp_send_json_error( [ 'message' => \esc_html__( 'Only the Lite version can be upgraded.', 'wpforms-lite' ) ] );
 		}
 
@@ -178,7 +178,7 @@ class Connect {
 		);
 
 		// Verify pro not activated.
-		if ( wpforms()->pro ) {
+		if ( wpforms()->is_pro() ) {
 			\wp_send_json_success( \esc_html__( 'Plugin installed & activated.', 'wpforms-lite' ) );
 		}
 
