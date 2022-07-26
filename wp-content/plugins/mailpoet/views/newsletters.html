@@ -66,6 +66,7 @@
       var mailpoet_newsletters_count = <%= newsletters_count %>;
       var mailpoet_send_transactional_emails = <%= json_encode(settings.send_transactional_emails == '1') %>;
       var mailpoet_settings = <%= json_encode(settings) %>;
+      var mailpoet_authorized_emails = <%= json_encode(authorized_emails) %>;
 
       <% if not(premium_plugin_active) %>
         var mailpoet_free_premium_subscribers_limit = <%= free_premium_subscribers_limit %>;
@@ -179,7 +180,7 @@
     'resume': __('Resume'),
     'pause': __('Pause'),
     'paused': __('Paused'),
-    'new': __('New Email'),
+    'new': __('New email'),
 
     'excellentBadgeName': __('Excellent'),
     'excellentBadgeTooltip': __('Congrats!'),
@@ -315,6 +316,8 @@
     'websiteTimeIs': __("Your website’s time is"),
     'noScheduledDateError': __('Please enter the scheduled date.'),
     'schedule': __('Schedule'),
+    'youNeedToAuthorizeTheEmail': __('You need to authorize the email address [email] to be able to send with it.'),
+    'authorizeMyEmail': __('Authorize my email address'),
 
     'next': __('Next'),
     'previous': __('Previous'),
@@ -379,10 +382,6 @@
     'beta': __('Beta'),
     'errorWhileTakingScreenshot': __('An error occurred while saving the template in "Recently sent"'),
     'cronNotAccessibleNotice': __('Oops! There seems to be an issue with the sending on your website. [link]See our guide[/link] to solve this yourself.'),
-
-    'whatsNew': __("What’s new"),
-    'updateMailPoetNotice': __('[link]Update MailPoet[/link] to see the latest changes'),
-
     'congratulationsSuccessHeader': __('Congratulations!'),
     'congratulationsSendSuccessBody': __('Your newsletter is being sent!'),
     'congratulationsScheduleSuccessBody': __('Your newsletter is scheduled to be sent.'),
@@ -430,7 +429,6 @@
     'bounces': _x('Bounces', 'A tab title for the list of bounces (w.wiki/45Qc)'),
 
     'premiumBannerCtaFree': __('Upgrade'),
-    'topBarLogoTitle': __('Back to section root'),
 
     'gaCampaignLine': __('Google Analytics Campaign'),
     'gaCampaignTip': __('For example, “Spring email”. [link]Read the guide.[/link]'),

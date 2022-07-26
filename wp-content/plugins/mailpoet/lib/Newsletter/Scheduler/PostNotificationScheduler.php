@@ -8,8 +8,8 @@ if (!defined('ABSPATH')) exit;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\NewsletterOptionEntity;
 use MailPoet\Entities\NewsletterOptionFieldEntity;
+use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Logging\LoggerFactory;
-use MailPoet\Models\SendingQueue;
 use MailPoet\Newsletter\NewsletterPostsRepository;
 use MailPoet\Newsletter\NewslettersRepository;
 use MailPoet\Newsletter\Options\NewsletterOptionFieldsRepository;
@@ -123,7 +123,7 @@ class PostNotificationScheduler {
 
     $sendingTask = SendingTask::create();
     $sendingTask->newsletterId = $newsletter->getId();
-    $sendingTask->status = SendingQueue::STATUS_SCHEDULED;
+    $sendingTask->status = SendingQueueEntity::STATUS_SCHEDULED;
     $sendingTask->scheduledAt = $nextRunDate;
     $sendingTask->save();
     $this->loggerFactory->getLogger(LoggerFactory::TOPIC_POST_NOTIFICATIONS)->info(
@@ -140,7 +140,7 @@ class PostNotificationScheduler {
     $timeOfDayOption = $newsletter->getOption(NewsletterOptionFieldEntity::NAME_TIME_OF_DAY);
     $hour = $timeOfDayOption ? (int)$timeOfDayOption->getValue() / self::SECONDS_IN_HOUR : null;
 
-    $weekDayOption = $newsletter->getOption(NewsletterOptionFieldEntity::NAME_WEK_DAY);
+    $weekDayOption = $newsletter->getOption(NewsletterOptionFieldEntity::NAME_WEEK_DAY);
     $weekDay = $weekDayOption ? $weekDayOption->getValue() : null;
 
     $monthDayOption = $newsletter->getOption(NewsletterOptionFieldEntity::NAME_MONTH_DAY);

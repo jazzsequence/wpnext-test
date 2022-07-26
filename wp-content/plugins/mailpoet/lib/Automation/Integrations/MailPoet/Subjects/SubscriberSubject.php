@@ -13,6 +13,8 @@ use MailPoet\NotFoundException;
 use MailPoet\Subscribers\SubscribersRepository;
 
 class SubscriberSubject implements Subject {
+  const KEY = 'mailpoet:subscriber';
+
   /** @var Field[] */
   private $fields;
 
@@ -36,7 +38,7 @@ class SubscriberSubject implements Subject {
           return $this->getSubscriber()->getId();
         }
       ),
-      
+
       'email' => new Field(
         'mailpoet:subscriber:email',
         Field::TYPE_STRING,
@@ -65,7 +67,7 @@ class SubscriberSubject implements Subject {
   }
 
   public function getKey(): string {
-    return 'mailpoet:subscriber';
+    return self::KEY;
   }
 
   public function getFields(): array {
@@ -85,7 +87,7 @@ class SubscriberSubject implements Subject {
     return ['subscriber_id' => $subscriber->getId()];
   }
 
-  private function getSubscriber(): SubscriberEntity {
+  public function getSubscriber(): SubscriberEntity {
     if (!$this->subscriber) {
       throw InvalidStateException::create()->withMessage(__('Subscriber was not loaded.', 'mailpoet'));
     }

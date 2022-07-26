@@ -6,6 +6,8 @@ if (!defined('ABSPATH')) exit;
 
 
 use DateTimeImmutable;
+use MailPoet\Automation\Engine\Exceptions;
+use MailPoet\Automation\Engine\Exceptions\InvalidStateException;
 use MailPoet\Automation\Engine\Utils\Json;
 
 class WorkflowRun {
@@ -35,14 +37,29 @@ class WorkflowRun {
   /** @var Subject[] */
   private $subjects;
 
+  /** @var array<class-string, string> */
+  private $subjectKeyClassMap = [];
+
+  /**
+   * @param Subject[] $subjects
+   */
   public function __construct(
     int $workflowId,
     string $triggerKey,
-    array $subjects
+    array $subjects,
+    int $id = null
   ) {
     $this->workflowId = $workflowId;
     $this->triggerKey = $triggerKey;
     $this->subjects = $subjects;
+
+    foreach ($subjects as $subject) {
+      $this->subjectKeyClassMap[get_class($subject)] = $subject->getKey();
+    }
+
+    if ($id) {
+      $this->id = $id;
+    }
 
     $now = new DateTimeImmutable();
     $this->createdAt = $now;
@@ -74,8 +91,42 @@ class WorkflowRun {
   }
 
   /** @return Subject[] */
-  public function getSubjects(): array {
+  public function getSubjects(string $key = null): array {
+    if ($key) {
+      return array_values(
+        array_filter($this->subjects, function (Subject $subject) use ($key) {
+          return $subject->getKey() === $key;
+        })
+      );
+    }
     return $this->subjects;
+  }
+
+  /**
+   * @template T of Subject
+   * @param class-string<T> $class
+   * @return T
+   */
+  public function requireSingleSubject(string $class): Subject {
+    $key = $this->subjectKeyClassMap[$class] ?? null;
+    if (!$key) {
+      throw Exceptions::subjectClassNotFound($class);
+    }
+
+    $subjects = $this->getSubjects($key);
+    if (count($subjects) === 0) {
+      throw Exceptions::subjectNotFound($key);
+    }
+    if (count($subjects) > 1) {
+      throw Exceptions::multipleSubjectsFound($key);
+    }
+
+    // ensure PHPStan we're indeed returning an instance of $class
+    $subject = $subjects[0];
+    if (!$subject instanceof $class) {
+      throw new InvalidStateException();
+    }
+    return $subject;
   }
 
   public function toArray(): array {
@@ -86,16 +137,15 @@ class WorkflowRun {
       'created_at' => $this->createdAt->format(DateTimeImmutable::W3C),
       'updated_at' => $this->updatedAt->format(DateTimeImmutable::W3C),
       'subjects' => Json::encode(
-        array_reduce($this->subjects, function (array $subjects, Subject $subject): array {
-          $subjects[$subject->getKey()] = $subject->pack();
-          return $subjects;
-        }, [])
+        array_map(function (Subject $subject): array {
+          return ['key' => $subject->getKey(), 'args' => $subject->pack()];
+        }, $this->subjects)
       ),
     ];
   }
 
   public static function fromArray(array $data): self {
-    $workflowRun = new WorkflowRun((int)$data['workflow_id'], $data['trigger_key'], Json::decode($data['subjects']));
+    $workflowRun = new WorkflowRun((int)$data['workflow_id'], $data['trigger_key'], $data['subjects']);
     $workflowRun->id = (int)$data['id'];
     $workflowRun->status = $data['status'];
     $workflowRun->createdAt = $data['created_at'];

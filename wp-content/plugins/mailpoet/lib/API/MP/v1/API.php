@@ -14,6 +14,11 @@ use MailPoet\Subscribers\Source;
 use MailPoet\Util\Helpers;
 use MailPoet\WP\Functions as WPFunctions;
 
+/**
+ * API used by other plugins
+ * Do not add bodies of methods into this class. Use other classes. See CustomFields or Subscribers.
+ * This class is under refactor, and we are going to move most of the remaining implementations from here.
+ */
 class API {
 
   /** @var RequiredCustomFieldValidator */
@@ -21,6 +26,9 @@ class API {
 
   /** @var CustomFields */
   private $customFields;
+
+  /** @var Segments */
+  private $segments;
 
   /** @var Subscribers */
   private $subscribers;
@@ -31,11 +39,13 @@ class API {
   public function __construct(
     RequiredCustomFieldValidator $requiredCustomFieldValidator,
     CustomFields $customFields,
+    Segments $segments,
     Subscribers $subscribers,
     Changelog $changelog
   ) {
     $this->requiredCustomFieldValidator = $requiredCustomFieldValidator;
     $this->customFields = $customFields;
+    $this->segments = $segments;
     $this->subscribers = $subscribers;
     $this->changelog = $changelog;
   }
@@ -114,9 +124,8 @@ class API {
     return $subscriber->withCustomFields()->withSubscriptions()->asArray();
   }
 
-  public function getLists() {
-    return Segment::where('type', Segment::TYPE_DEFAULT)
-      ->findArray();
+  public function getLists(): array {
+    return $this->segments->getAll();
   }
 
   public function addSubscriber(array $subscriber, $listIds = [], $options = []) {

@@ -5,10 +5,11 @@ namespace MailPoet\Config;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Cron\CronTrigger;
 use MailPoet\Entities\DynamicSegmentFilterData;
 use MailPoet\Entities\FormEntity;
-use MailPoet\Models\Newsletter;
-use MailPoet\Models\Subscriber;
+use MailPoet\Entities\NewsletterEntity;
+use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Segments\DynamicSegments\Filters\EmailAction;
 use MailPoet\Segments\DynamicSegments\Filters\UserRole;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceCategory;
@@ -74,6 +75,8 @@ class Migrator {
       'feature_flags',
       'dynamic_segment_filters',
       'user_agents',
+      'tags',
+      'subscriber_tag',
     ];
   }
 
@@ -95,6 +98,8 @@ class Migrator {
     $this->migratePurchasedInCategoryDynamicFilters();
     $this->migrateEmailActionsFilters();
     $this->updateDefaultInactiveSubscriberTimeRange();
+    $this->setDefaultValueForLoadingThirdPartyLibrariesForExistingInstalls();
+    $this->disableMailPoetCronTrigger();
     return $output;
   }
 
@@ -190,6 +195,14 @@ class Migrator {
     return $this->sqlify(__FUNCTION__, $attributes);
   }
 
+  public function disableMailPoetCronTrigger() {
+    $method = $this->settings->get(CronTrigger::SETTING_NAME . '.method');
+    if ($method !== 'MailPoet') {
+      return;
+    }
+    $this->settings->set(CronTrigger::SETTING_NAME . '.method', CronTrigger::METHOD_WORDPRESS);
+  }
+
   public function scheduledTaskSubscribers() {
     $attributes = [
       'task_id int(11) unsigned NOT NULL,',
@@ -235,7 +248,7 @@ class Migrator {
       'first_name varchar(255) NOT NULL DEFAULT "",',
       'last_name varchar(255) NOT NULL DEFAULT "",',
       'email varchar(150) NOT NULL,',
-      'status varchar(12) NOT NULL DEFAULT "' . Subscriber::STATUS_UNCONFIRMED . '",',
+      'status varchar(12) NOT NULL DEFAULT "' . SubscriberEntity::STATUS_UNCONFIRMED . '",',
       'subscribed_ip varchar(45) NULL,',
       'confirmed_ip varchar(45) NULL,',
       'confirmed_at timestamp NULL,',
@@ -271,7 +284,7 @@ class Migrator {
       'id int(11) unsigned NOT NULL AUTO_INCREMENT,',
       'subscriber_id int(11) unsigned NOT NULL,',
       'segment_id int(11) unsigned NOT NULL,',
-      'status varchar(12) NOT NULL DEFAULT "' . Subscriber::STATUS_SUBSCRIBED . '",',
+      'status varchar(12) NOT NULL DEFAULT "' . SubscriberEntity::STATUS_SUBSCRIBED . '",',
       'created_at timestamp NULL,', // must be NULL, see comment at the top
       'updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
       'PRIMARY KEY  (id),',
@@ -314,7 +327,7 @@ class Migrator {
       'type varchar(20) NOT NULL DEFAULT "standard",',
       'sender_address varchar(150) NOT NULL DEFAULT "",',
       'sender_name varchar(150) NOT NULL DEFAULT "",',
-      'status varchar(20) NOT NULL DEFAULT "' . Newsletter::STATUS_DRAFT . '",',
+      'status varchar(20) NOT NULL DEFAULT "' . NewsletterEntity::STATUS_DRAFT . '",',
       'reply_to_address varchar(150) NOT NULL DEFAULT "",',
       'reply_to_name varchar(150) NOT NULL DEFAULT "",',
       'preheader varchar(250) NOT NULL DEFAULT "",',
@@ -625,6 +638,33 @@ class Migrator {
       'created_at timestamp NULL,',
       'updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
       'PRIMARY KEY (id)',
+    ];
+    return $this->sqlify(__FUNCTION__, $attributes);
+  }
+
+  public function tags(): string {
+    $attributes = [
+      'id int(11) unsigned NOT NULL AUTO_INCREMENT,',
+      'name varchar(191) NOT NULL,',
+      'description text NOT NULL DEFAULT "",',
+      'created_at timestamp NULL,', // must be NULL, see comment at the top
+      'updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
+      'PRIMARY KEY (id),',
+      'UNIQUE KEY name (name)',
+    ];
+    return $this->sqlify(__FUNCTION__, $attributes);
+  }
+
+  public function subscriberTag(): string {
+    $attributes = [
+      'id int(11) unsigned NOT NULL AUTO_INCREMENT,',
+      'subscriber_id int(11) unsigned NOT NULL,',
+      'tag_id int(11) unsigned NOT NULL,',
+      'created_at timestamp NULL,', // must be NULL, see comment at the top
+      'updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,',
+      'PRIMARY KEY (id),',
+      'UNIQUE KEY subscriber_tag (subscriber_id, tag_id),',
+      'KEY tag_id (tag_id)',
     ];
     return $this->sqlify(__FUNCTION__, $attributes);
   }
@@ -960,6 +1000,21 @@ class Migrator {
     if ($currentValue === 180) {
       $this->settings->set('deactivate_subscriber_after_inactive_days', 365);
       $this->settingsChangeHandler->onInactiveSubscribersIntervalChange();
+    }
+
+    return true;
+  }
+
+  private function setDefaultValueForLoadingThirdPartyLibrariesForExistingInstalls(): bool {
+    // skip the migration if the DB version is higher than 3.91.1 or is not set (a new installation)
+    if (version_compare($this->settings->get('db_version', '3.91.2'), '3.91.1', '>')) {
+      return false;
+    }
+
+    $thirdPartyScriptsEnabled = $this->settings->get('3rd_party_libs');
+    if (is_null($thirdPartyScriptsEnabled)) {
+      // keep loading 3rd party libraries for existing users so the functionality is not broken
+      $this->settings->set('3rd_party_libs.enabled', '1');
     }
 
     return true;

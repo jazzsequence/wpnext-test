@@ -5,8 +5,9 @@ namespace MailPoet\Subscription;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\Models\Subscriber;
+use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Subscribers\SubscriberIPsRepository;
+use MailPoet\Subscribers\SubscribersRepository;
 use MailPoet\Util\Helpers;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Gregwar\Captcha\CaptchaBuilder;
@@ -14,6 +15,7 @@ use MailPoetVendor\Gregwar\Captcha\CaptchaBuilder;
 class Captcha {
   const TYPE_BUILTIN = 'built-in';
   const TYPE_RECAPTCHA = 'recaptcha';
+  const TYPE_RECAPTCHA_INVISIBLE = 'recaptcha-invisible';
   const TYPE_DISABLED = null;
 
   /** @var WPFunctions */
@@ -25,8 +27,16 @@ class Captcha {
   /** @var SubscriberIPsRepository */
   private $subscriberIPsRepository;
 
+  /** @var SubscribersRepository */
+  private $subscribersRepository;
+
+  public static function isReCaptcha(?string $captchaType) {
+    return in_array($captchaType, [self::TYPE_RECAPTCHA, self::TYPE_RECAPTCHA_INVISIBLE]);
+  }
+
   public function __construct(
     SubscriberIPsRepository $subscriberIPsRepository,
+    SubscribersRepository $subscribersRepository,
     WPFunctions $wp = null,
     CaptchaSession $captchaSession = null
   ) {
@@ -39,6 +49,7 @@ class Captcha {
     $this->wp = $wp;
     $this->captchaSession = $captchaSession;
     $this->subscriberIPsRepository = $subscriberIPsRepository;
+    $this->subscribersRepository = $subscribersRepository;
   }
 
   public function isSupported() {
@@ -57,10 +68,10 @@ class Captcha {
 
     // Check limits per recipient if enabled
     if ($subscriberEmail) {
-      $subscriber = Subscriber::where('email', $subscriberEmail)->findOne();
+      $subscriber = $this->subscribersRepository->findOneBy(['email' => $subscriberEmail]);
       if (
-        $subscriber instanceof Subscriber
-        && $subscriber->countConfirmations >= $subscriptionCaptchaRecipientLimit
+        $subscriber instanceof SubscriberEntity
+        && $subscriber->getConfirmationsCount() >= $subscriptionCaptchaRecipientLimit
       ) {
         return true;
       }

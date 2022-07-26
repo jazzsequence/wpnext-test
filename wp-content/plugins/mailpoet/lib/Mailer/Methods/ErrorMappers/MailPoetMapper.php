@@ -89,7 +89,10 @@ class MailPoetMapper {
           $message .= ' ' . $e->getMessage();
         }
         break;
+      case API::RESPONSE_CODE_INTERNAL_SERVER_ERROR:
+      case API::RESPONSE_CODE_BAD_GATEWAY:
       case API::RESPONSE_CODE_TEMPORARY_UNAVAILABLE:
+      case API::RESPONSE_CODE_GATEWAY_TIMEOUT:
         $message = __('Email service is temporarily not available, please try again in a few minutes.', 'mailpoet');
         $retryInterval = self::TEMPORARY_UNAVAILABLE_RETRY_INTERVAL;
         break;
@@ -200,7 +203,7 @@ class MailPoetMapper {
   }
 
   private function getPendingApprovalMessage(): string {
-    $message = __("Your subscription is currently [link]pending approval[/link].You’ll soon be able to send once our team reviews your account. In the meantime, you can send previews to your authorized emails.", 'mailpoet');
+    $message = __("Your subscription is currently [link]pending approval[/link]. You’ll soon be able to send once our team reviews your account. In the meantime, you can send previews to your authorized emails.", 'mailpoet');
     $message = Helpers::replaceLinkTags(
       $message,
       'https://kb.mailpoet.com/article/350-pending-approval-subscription',

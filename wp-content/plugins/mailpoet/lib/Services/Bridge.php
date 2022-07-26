@@ -121,10 +121,25 @@ class Bridge {
     return $this->api;
   }
 
-  public function getAuthorizedEmailAddresses() {
-    return $this
+  public function getAuthorizedEmailAddresses($type = 'authorized'): array {
+    $data = $this
       ->getApi($this->settings->get(self::API_KEY_SETTING_NAME))
       ->getAuthorizedEmailAddresses();
+    if ($data && $type === 'all') {
+      return $data;
+    }
+    return isset($data[$type]) ? $data[$type] : [];
+  }
+
+  /**
+   * Create Authorized Email Address
+   */
+  public function createAuthorizedEmailAddress(string $emailAdress) {
+    $data = $this
+    ->getApi($this->settings->get(self::API_KEY_SETTING_NAME))
+    ->createAuthorizedEmailAddress($emailAdress);
+
+    return $data;
   }
 
   public function checkMSSKey($apiKey) {

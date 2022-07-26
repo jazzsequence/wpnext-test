@@ -2,23 +2,23 @@
 if (!defined('ABSPATH')) exit;
  return array(
  'root' => array(
- 'pretty_version' => 'dev-master',
- 'version' => 'dev-master',
+ 'pretty_version' => 'dev-trunk',
+ 'version' => 'dev-trunk',
  'type' => 'library',
  'install_path' => __DIR__ . '/../../',
  'aliases' => array(),
- 'reference' => '75c1d39d91422b14abfc5de38f01b5cec7823ce3',
+ 'reference' => 'c26f6eff84d26fa1c533407fcf2c4d3142f976fa',
  'name' => '__root__',
  'dev' => false,
  ),
  'versions' => array(
  '__root__' => array(
- 'pretty_version' => 'dev-master',
- 'version' => 'dev-master',
+ 'pretty_version' => 'dev-trunk',
+ 'version' => 'dev-trunk',
  'type' => 'library',
  'install_path' => __DIR__ . '/../../',
  'aliases' => array(),
- 'reference' => '75c1d39d91422b14abfc5de38f01b5cec7823ce3',
+ 'reference' => 'c26f6eff84d26fa1c533407fcf2c4d3142f976fa',
  'dev_requirement' => false,
  ),
  'mtdowling/cron-expression' => array(
@@ -42,12 +42,12 @@ if (!defined('ABSPATH')) exit;
  'dev_requirement' => false,
  ),
  'woocommerce/action-scheduler' => array(
- 'pretty_version' => '3.4.0',
- 'version' => '3.4.0.0',
+ 'pretty_version' => '3.4.2',
+ 'version' => '3.4.2.0',
  'type' => 'wordpress-plugin',
  'install_path' => __DIR__ . '/../woocommerce/action-scheduler',
  'aliases' => array(),
- 'reference' => '3218a33ff14b968f8cb05de9656c2efa1eeb1330',
+ 'reference' => '7d8e830b6387410ccf11708194d3836f01cb2942',
  'dev_requirement' => false,
  ),
  ),

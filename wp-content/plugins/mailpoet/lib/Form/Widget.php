@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\API\JSON\API;
-use MailPoet\Config\Renderer as ConfigRenderer;
+use MailPoet\Config\RendererFactory;
 use MailPoet\DI\ContainerWrapper;
 use MailPoet\Entities\FormEntity;
 use MailPoet\Form\Renderer as FormRenderer;
@@ -38,7 +38,8 @@ class Widget extends \WP_Widget {
       ['description' => WPFunctions::get()->__('Add a newsletter subscription form', 'mailpoet')]
     );
     $this->wp = new WPFunctions;
-    $this->renderer = new \MailPoet\Config\Renderer(!WP_DEBUG, !WP_DEBUG);
+
+    $this->renderer = (new RendererFactory())->getRenderer();
     $this->assetsController = new AssetsController($this->wp, $this->renderer, SettingsController::getInstance());
     $this->formRenderer = ContainerWrapper::getInstance()->get(FormRenderer::class);
     $this->formsRepository = ContainerWrapper::getInstance()->get(FormsRepository::class);
@@ -257,7 +258,7 @@ class Widget extends \WP_Widget {
       $data['api_version'] = API::CURRENT_VERSION;
 
       // render form
-      $renderer = new ConfigRenderer();
+      $renderer = (new RendererFactory())->getRenderer();
       try {
         $output = $renderer->render('form/front_end_form.html', $data);
         $output = WPFunctions::get()->doShortcode($output);

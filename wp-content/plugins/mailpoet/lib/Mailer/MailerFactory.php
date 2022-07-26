@@ -60,7 +60,8 @@ class MailerFactory {
           $sender,
           $replyTo,
           $returnPath,
-          new AmazonSESMapper()
+          new AmazonSESMapper(),
+          $this->wp
         );
         break;
       case Mailer::METHOD_MAILPOET:
@@ -92,7 +93,7 @@ class MailerFactory {
         $mailerMethod = new SMTP(
           $mailerConfig['host'],
           $mailerConfig['port'],
-          $mailerConfig['authentication'],
+          (int)$mailerConfig['authentication'],
           $mailerConfig['encryption'],
           $sender,
           $replyTo,

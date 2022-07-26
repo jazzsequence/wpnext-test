@@ -10,12 +10,15 @@ use MailPoet\Automation\Engine\Control\StepRunner;
 use MailPoet\Automation\Engine\Control\TriggerHandler;
 use MailPoet\Automation\Engine\Endpoints\System\DatabaseDeleteEndpoint;
 use MailPoet\Automation\Engine\Endpoints\System\DatabasePostEndpoint;
+use MailPoet\Automation\Engine\Endpoints\Workflows\WorkflowsCreateFromTemplateEndpoint;
 use MailPoet\Automation\Engine\Endpoints\Workflows\WorkflowsGetEndpoint;
-use MailPoet\Automation\Engine\Endpoints\Workflows\WorkflowsPostEndpoint;
+use MailPoet\Automation\Engine\Endpoints\Workflows\WorkflowsPutEndpoint;
 use MailPoet\Automation\Engine\Storage\WorkflowStorage;
 use MailPoet\Automation\Integrations\Core\CoreIntegration;
 
 class Engine {
+  const CAPABILITY_MANAGE_AUTOMATIONS = 'mailpoet_manage_automations';
+
   /** @var API */
   private $api;
 
@@ -73,7 +76,8 @@ class Engine {
   private function registerApiRoutes(): void {
     $this->wordPress->addAction(Hooks::API_INITIALIZE, function (API $api) {
       $api->registerGetRoute('workflows', WorkflowsGetEndpoint::class);
-      $api->registerPostRoute('workflows', WorkflowsPostEndpoint::class);
+      $api->registerPutRoute('workflows/(?P<id>\d+)', WorkflowsPutEndpoint::class);
+      $api->registerPostRoute('workflows/create-from-template', WorkflowsCreateFromTemplateEndpoint::class);
       $api->registerPostRoute('system/database', DatabasePostEndpoint::class);
       $api->registerDeleteRoute('system/database', DatabaseDeleteEndpoint::class);
     });

@@ -5,14 +5,18 @@ namespace MailPoet\Subscribers;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\ConflictException;
 use MailPoet\CustomFields\CustomFieldsRepository;
+use MailPoet\Doctrine\Validator\ValidationException;
 use MailPoet\Entities\StatisticsUnsubscribeEntity;
 use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Entities\SubscriberSegmentEntity;
+use MailPoet\Entities\SubscriberTagEntity;
 use MailPoet\Newsletter\Scheduler\WelcomeScheduler;
 use MailPoet\Segments\SegmentsRepository;
 use MailPoet\Settings\SettingsController;
 use MailPoet\Statistics\Track\Unsubscribes;
+use MailPoet\Tags\TagRepository;
 use MailPoet\Util\Security;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
@@ -39,6 +43,12 @@ class SubscriberSaveController {
   /** @var SubscriberSegmentRepository */
   private $subscriberSegmentRepository;
 
+  /** @var SubscriberTagRepository */
+  private $subscriberTagRepository;
+
+  /** @var TagRepository */
+  private $tagRepository;
+
   /** @var Unsubscribes */
   private $unsubscribesTracker;
 
@@ -56,6 +66,8 @@ class SubscriberSaveController {
     SubscriberCustomFieldRepository $subscriberCustomFieldRepository,
     SubscribersRepository $subscribersRepository,
     SubscriberSegmentRepository $subscriberSegmentRepository,
+    SubscriberTagRepository $subscriberTagRepository,
+    TagRepository $tagRepository,
     Unsubscribes $unsubscribesTracker,
     WelcomeScheduler $welcomeScheduler,
     WPFunctions $wp
@@ -67,60 +79,11 @@ class SubscriberSaveController {
     $this->subscriberSegmentRepository = $subscriberSegmentRepository;
     $this->subscribersRepository = $subscribersRepository;
     $this->subscriberCustomFieldRepository = $subscriberCustomFieldRepository;
+    $this->tagRepository = $tagRepository;
     $this->unsubscribesTracker = $unsubscribesTracker;
     $this->welcomeScheduler = $welcomeScheduler;
     $this->wp = $wp;
-  }
-
-  public function save(array $data): SubscriberEntity {
-    if (is_array($data) && !empty($data)) {
-      $data = $this->wp->stripslashesDeep($data);
-    }
-
-    if (empty($data['segments'])) {
-      $data['segments'] = [];
-    }
-    $data['segments'] = array_merge($data['segments'], $this->getNonDefaultSubscribedSegments($data));
-    $newSegments = $this->findNewSegments($data);
-
-    $oldSubscriber = $this->findSubscriber($data);
-    $oldStatus = $oldSubscriber ? $oldSubscriber->getStatus() : null;
-    if (
-      $oldSubscriber instanceof SubscriberEntity
-      && isset($data['status'])
-      && ($data['status'] === SubscriberEntity::STATUS_UNSUBSCRIBED)
-      && ($oldSubscriber->getStatus() !== SubscriberEntity::STATUS_UNSUBSCRIBED)
-    ) {
-      $currentUser = $this->wp->wpGetCurrentUser();
-      $this->unsubscribesTracker->track(
-        (int)$oldSubscriber->getId(),
-        StatisticsUnsubscribeEntity::SOURCE_ADMINISTRATOR,
-        null,
-        $currentUser->display_name // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
-      );
-    }
-
-    $subscriber = $this->createOrUpdate($data, $oldSubscriber);
-
-    $this->updateCustomFields($data, $subscriber);
-
-    $segments = isset($data['segments']) ? $this->findSegments($data['segments']) : null;
-    // check for status change
-    if (
-      $oldStatus === SubscriberEntity::STATUS_SUBSCRIBED
-      && $subscriber->getStatus() === SubscriberEntity::STATUS_UNSUBSCRIBED
-    ) {
-      // make sure we unsubscribe the user from all segments
-      $this->subscriberSegmentRepository->unsubscribeFromSegments($subscriber);
-    } elseif ($segments !== null) {
-      $this->subscriberSegmentRepository->resetSubscriptions($subscriber, $segments);
-    }
-
-    if (!empty($newSegments)) {
-      $this->welcomeScheduler->scheduleSubscriberWelcomeNotification($subscriber->getId(), $newSegments);
-    }
-
-    return $subscriber;
+    $this->subscriberTagRepository = $subscriberTagRepository;
   }
 
   public function filterOutReservedColumns(array $subscriberData): array {
@@ -141,6 +104,71 @@ class SubscriberSaveController {
       $subscriberData,
       array_flip($reservedColumns)
     );
+  }
+
+  /**
+   * @throws ConflictException
+   * @throws ValidationException
+   * @throws \Exception
+   */
+  public function save(array $data): SubscriberEntity {
+    if (!empty($data)) {
+      $data = $this->wp->stripslashesDeep($data);
+    }
+
+    if (empty($data['segments'])) {
+      $data['segments'] = [];
+    }
+    $data['segments'] = array_merge($data['segments'], $this->getNonDefaultSubscribedSegments($data));
+    $newSegments = $this->findNewSegments($data);
+
+    if (empty($data['tags'])) {
+      $data['tags'] = [];
+    }
+
+    $oldSubscriber = $this->findSubscriber($data);
+    $oldStatus = $oldSubscriber ? $oldSubscriber->getStatus() : null;
+    if (
+      $oldSubscriber instanceof SubscriberEntity
+      && isset($data['status'])
+      && ($data['status'] === SubscriberEntity::STATUS_UNSUBSCRIBED)
+      && ($oldSubscriber->getStatus() !== SubscriberEntity::STATUS_UNSUBSCRIBED)
+    ) {
+      $currentUser = $this->wp->wpGetCurrentUser();
+      $this->unsubscribesTracker->track(
+        (int)$oldSubscriber->getId(),
+        StatisticsUnsubscribeEntity::SOURCE_ADMINISTRATOR,
+        null,
+        $currentUser->display_name // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+      );
+    }
+
+    if (isset($data['email']) && $this->isNewEmail($data['email'], $oldSubscriber)) {
+      $this->verifyEmailIsUnique($data['email']);
+    }
+
+    $subscriber = $this->createOrUpdate($data, $oldSubscriber);
+
+    $this->updateCustomFields($data, $subscriber);
+    $this->updateTags($data, $subscriber);
+
+    $segments = isset($data['segments']) ? $this->findSegments($data['segments']) : null;
+    // check for status change
+    if (
+      $oldStatus === SubscriberEntity::STATUS_SUBSCRIBED
+      && $subscriber->getStatus() === SubscriberEntity::STATUS_UNSUBSCRIBED
+    ) {
+      // make sure we unsubscribe the user from all segments
+      $this->subscriberSegmentRepository->unsubscribeFromSegments($subscriber);
+    } elseif ($segments !== null) {
+      $this->subscriberSegmentRepository->resetSubscriptions($subscriber, $segments);
+    }
+
+    if (!empty($newSegments)) {
+      $this->welcomeScheduler->scheduleSubscriberWelcomeNotification($subscriber->getId(), $newSegments);
+    }
+
+    return $subscriber;
   }
 
   private function getNonDefaultSubscribedSegments(array $data): array {
@@ -178,6 +206,9 @@ class SubscriberSaveController {
     return array_diff($data['segments'], $oldSegmentIds);
   }
 
+  /**
+   * @throws ValidationException
+   */
   public function createOrUpdate(array $data, ?SubscriberEntity $subscriber): SubscriberEntity {
     if (!$subscriber) {
       $subscriber = $this->createSubscriber();
@@ -205,6 +236,22 @@ class SubscriberSaveController {
     $this->subscribersRepository->flush();
 
     return $subscriber;
+  }
+
+  private function isNewEmail(string $email, ?SubscriberEntity $subscriber): bool {
+    if ($subscriber && ($subscriber->getEmail() === $email)) return false;
+    return true;
+  }
+
+  /**
+   * @throws ConflictException
+   */
+  private function verifyEmailIsUnique(string $email): void {
+    $existingSubscriber = $this->subscribersRepository->findOneBy(['email' => $email]);
+    if ($existingSubscriber) {
+      $exceptionMessage = __(sprintf('A subscriber with E-mail "%s" already exists.', $email), 'mailpoet');
+      throw new ConflictException($exceptionMessage);
+    }
   }
 
   private function createSubscriber(): SubscriberEntity {
@@ -249,5 +296,25 @@ class SubscriberSaveController {
     foreach ($customFields as $customField) {
       $this->subscriberCustomFieldRepository->createOrUpdate($subscriber, $customField, $customFieldsMap[$customField->getId()]);
     }
+  }
+
+  private function updateTags(array $data, SubscriberEntity $subscriber): void {
+    foreach ($subscriber->getSubscriberTags() as $subscriberTag) {
+      $tag = $subscriberTag->getTag();
+      if (!$tag || !in_array($tag->getName(), $data['tags'], true)) {
+        $subscriber->getSubscriberTags()->removeElement($subscriberTag);
+      }
+    }
+
+    foreach ($data['tags'] as $tagName) {
+      $tag = $this->tagRepository->createOrUpdate(['name' => $tagName]);
+      $subscriberTag = $subscriber->getSubscriberTag($tag);
+      if (!$subscriberTag) {
+        $subscriberTag = new SubscriberTagEntity($tag, $subscriber);
+        $subscriber->getSubscriberTags()->add($subscriberTag);
+        $this->subscriberTagRepository->persist($subscriberTag);
+      }
+    }
+    $this->subscriberTagRepository->flush();
   }
 }

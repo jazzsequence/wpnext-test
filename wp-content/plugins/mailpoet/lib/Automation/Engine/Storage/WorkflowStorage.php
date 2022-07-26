@@ -20,7 +20,7 @@ class WorkflowStorage {
 
   public function __construct() {
     global $wpdb;
-    $this->table = $wpdb->prefix . 'mailpoet_automation_workflows';
+    $this->table = $wpdb->prefix . 'mailpoet_workflows';
     $this->wpdb = $wpdb;
   }
 
@@ -32,11 +32,28 @@ class WorkflowStorage {
     return $this->wpdb->insert_id;
   }
 
+  public function updateWorkflow(Workflow $workflow): void {
+    $result = $this->wpdb->update($this->table, $workflow->toArray(), ['id' => $workflow->getId()]);
+    if ($result === false) {
+      throw Exceptions::databaseError($this->wpdb->last_error);
+    }
+  }
+
   public function getWorkflow(int $id): ?Workflow {
     $table = esc_sql($this->table);
     $query = (string)$this->wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id);
     $data = $this->wpdb->get_row($query, ARRAY_A);
     return $data ? Workflow::fromArray((array)$data) : null;
+  }
+
+  /** @return Workflow[] */
+  public function getWorkflows(): array {
+    $table = esc_sql($this->table);
+    $query = "SELECT * FROM $table ORDER BY id DESC";
+    $data = $this->wpdb->get_results($query, ARRAY_A);
+    return array_map(function (array $workflowData) {
+      return Workflow::fromArray($workflowData);
+    }, (array)$data);
   }
 
   /** @return string[] */

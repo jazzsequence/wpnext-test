@@ -13,6 +13,8 @@ use MailPoet\NotFoundException;
 use MailPoet\Segments\SegmentsRepository;
 
 class SegmentSubject implements Subject {
+  const KEY = 'mailpoet:segment';
+
   /** @var Field[] */
   private $fields;
 
@@ -28,7 +30,7 @@ class SegmentSubject implements Subject {
     $this->segmentsRepository = $segmentsRepository;
 
     $this->fields = [
-      'name' => 
+      'name' =>
       new Field(
         'mailpoet:segment:name',
         Field::TYPE_STRING,
@@ -37,7 +39,7 @@ class SegmentSubject implements Subject {
           return $this->getSegment()->getName();
         }
       ),
-      'id' => 
+      'id' =>
       new Field(
         'mailpoet:segment:id',
         Field::TYPE_INTEGER,
@@ -50,7 +52,7 @@ class SegmentSubject implements Subject {
   }
 
   public function getKey(): string {
-    return 'mailpoet:segment';
+    return self::KEY;
   }
 
   public function getFields(): array {
@@ -70,7 +72,7 @@ class SegmentSubject implements Subject {
     return ['segment_id' => $segment->getId()];
   }
 
-  private function getSegment(): SegmentEntity {
+  public function getSegment(): SegmentEntity {
     if (!$this->segment) {
       throw InvalidStateException::create()->withMessage(__('Segment was not loaded.', 'mailpoet'));
     }

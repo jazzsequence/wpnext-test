@@ -7,7 +7,6 @@ if (!defined('ABSPATH')) exit;
 
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\NewsletterPostEntity;
-use MailPoet\Models\Newsletter;
 use MailPoet\Newsletter\AutomatedLatestContent;
 use MailPoet\Newsletter\BlockPostQuery;
 use MailPoet\Newsletter\NewsletterPostsRepository;
@@ -38,7 +37,7 @@ class AutomatedLatestContentBlock {
   public function render(NewsletterEntity $newsletter, $args) {
     $newerThanTimestamp = false;
     $newsletterId = false;
-    if ($newsletter->getType() === Newsletter::TYPE_NOTIFICATION_HISTORY) {
+    if ($newsletter->getType() === NewsletterEntity::TYPE_NOTIFICATION_HISTORY) {
       $parent = $newsletter->getParent();
       if ($parent instanceof NewsletterEntity) {
         $newsletterId = $parent->getId();

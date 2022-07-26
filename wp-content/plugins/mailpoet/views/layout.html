@@ -25,6 +25,7 @@ jQuery('#adminmenu #toplevel_page_mailpoet-newsletters')
 <!-- main container -->
 <% block container %>
 <div class="wrap">
+  <div class="wp-header-end"></div>
   <!-- notices -->
   <div id="mailpoet_notice_error" class="mailpoet_notice" style="display:none;"></div>
   <div id="mailpoet_notice_success" class="mailpoet_notice" style="display:none;"></div>
@@ -34,17 +35,15 @@ jQuery('#adminmenu #toplevel_page_mailpoet-newsletters')
   <!-- Set FROM address modal React root -->
   <div id="mailpoet_set_from_address_modal"></div>
 
+  <!-- Set Authorize sender email React root -->
+  <div id="mailpoet_authorize_sender_email_modal"></div>
+
   <!-- title block -->
   <% block title %><% endblock %>
   <!-- content block -->
   <% block content %><% endblock %>
 </div>
 <% endblock %>
-
-<!-- stylesheets -->
-<%= stylesheet(
-  'mailpoet-plugin.css'
-)%>
 
 <%= do_action('mailpoet_styles_admin_after') %>
 
@@ -83,6 +82,10 @@ jQuery('#adminmenu #toplevel_page_mailpoet-newsletters')
 )%>
 
 <%= localize({
+  'topBarLogoTitle': __('Back to section root'),
+  'topBarUpdates': __('Updates'),
+  'whatsNew': __("What’s new"),
+  'updateMailPoetNotice': __('[link]Update MailPoet[/link] to see the latest changes'),
   'ajaxFailedErrorMessage': __('An error has happened while performing a request, the server has responded with response code %d'),
   'ajaxTimeoutErrorMessage': __('An error has happened while performing a request, the server request has timed out after %d seconds'),
   'senderEmailAddressWarning1': _x('You might not reach the inbox of your subscribers if you use this email address.', 'In the last step, before sending a newsletter. URL: ?page=mailpoet-newsletters#/send/2'),
@@ -99,6 +102,7 @@ jQuery('#adminmenu #toplevel_page_mailpoet-newsletters')
   'youCanDisableWPUsersList': __('If you do not send emails to your WordPress Users list, you can [link]disable it[/link] to lower your number of subscribers.'),
   'upgradeNow': __('Upgrade Now'),
   'refreshMySubscribers': __('I’ve upgraded my subscription, refresh subscriber limit'),
+  'viewFilteredSubscribersMessage': __('View everyone subscribed to "%1$s"'),
 
   'emailVolumeLimitNoticeTitle': __('Congratulations, you sent more than [emailVolumeLimit] emails this month!'),
   'youReachedEmailVolumeLimit': __('You have sent more emails this month than your MailPoet plan includes ([emailVolumeLimit]), and sending has been temporarily paused.'),
@@ -119,12 +123,19 @@ jQuery('#adminmenu #toplevel_page_mailpoet-newsletters')
   'reviewRequestRateUsNow': _x('Rate us now', 'Review our plugin on WordPress.org.'),
   'reviewRequestNotNow': __('Not now'),
 
+  'authorizeSenderEmailModalTitle': __('Authorizing your email address: [senderEmail]', 'mailpoet'),
+  'authorizeSenderEmailModalDescription': __('Check your inbox now to confirm your email address. Please find the email with the subject: [bold]"email address to authorize"[/bold]', 'mailpoet'),
+  'authorizeSenderEmailMessageSuccess': __('The email address has been authorized. You can now send emails using this address with MailPoet.', 'mailpoet'),
+  'authorizeSenderEmailMessageError': __('An error occured when performing the request. Please try again later', 'mailpoet'),
+
   'sent': __('Sent'),
   'notSentYet': __('Not sent yet!'),
 
   'allSendingPausedHeader': __('All sending is currently paused!'),
   'allSendingPausedBody': __('Your [link]API key[/link] to send with MailPoet is invalid.'),
   'allSendingPausedLink': __('Purchase a key'),
+
+  'topBarLogoTitle': __('Back to section root'),
 
   'close': __('Close'),
   'today': __('Today'),

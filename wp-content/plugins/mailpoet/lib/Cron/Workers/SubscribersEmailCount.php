@@ -63,8 +63,8 @@ class SubscribersEmailCount extends SimpleWorker {
     }
 
     $meta = $task->getMeta();
-    $lastSubscriberId = $meta['last_subscriber_id'] ?? 0;
-    $highestSubscriberId = $meta['highest_subscriber_id'] ?? $this->getHighestSubscriberId();
+    $lastSubscriberId = isset($meta['last_subscriber_id']) ? (int)$meta['last_subscriber_id'] : 0;
+    $highestSubscriberId = isset($meta['highest_subscriber_id']) ? (int)$meta['highest_subscriber_id'] : $this->getHighestSubscriberId();
     $meta['highest_subscriber_id'] = $highestSubscriberId;
     $task->setMeta($meta);
 
