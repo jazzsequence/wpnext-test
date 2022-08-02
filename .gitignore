@@ -1,3 +1,5 @@
+.env.lando
+
 # WordPress #
 ############
 wp-config-local.php
