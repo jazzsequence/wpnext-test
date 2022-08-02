@@ -1,6 +1,6 @@
 <?php
 /**
- * Template for displaying 404 pages (Not Found)
+ * The template for displaying 404 pages (Not Found).
  *
  * @package WordPress
  * @subpackage Twenty_Ten
@@ -23,7 +23,7 @@ get_header(); ?>
 		</div><!-- #content -->
 	</div><!-- #container -->
 	<script type="text/javascript">
-		// Focus on search field after it has loaded.
+		// focus on search field after it has loaded
 		document.getElementById('s') && document.getElementById('s').focus();
 	</script>
 

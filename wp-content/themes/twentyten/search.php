@@ -1,6 +1,6 @@
 <?php
 /**
- * Template for displaying Search Results pages
+ * The template for displaying Search Results pages.
  *
  * @package WordPress
  * @subpackage Twenty_Ten
@@ -13,19 +13,13 @@ get_header(); ?>
 			<div id="content" role="main">
 
 <?php if ( have_posts() ) : ?>
-				<h1 class="page-title">
+				<h1 class="page-title"><?php printf( __( 'Search Results for: %s', 'twentyten' ), '<span>' . get_search_query() . '</span>' ); ?></h1>
 				<?php
-				/* translators: %s: Search query. */
-				printf( __( 'Search Results for: %s', 'twentyten' ), '<span>' . get_search_query() . '</span>' );
-				?>
-				</h1>
-				<?php
-				/*
-				 * Run the loop for the search to output the results.
+				/* Run the loop for the search to output the results.
 				 * If you want to overload this in a child theme then include a file
 				 * called loop-search.php and that will be used instead.
 				 */
-				get_template_part( 'loop', 'search' );
+				 get_template_part( 'loop', 'search' );
 				?>
 <?php else : ?>
 				<div id="post-0" class="post no-results not-found">
