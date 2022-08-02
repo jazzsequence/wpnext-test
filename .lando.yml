@@ -4,3 +4,5 @@ config:
   framework: wordpress
   site: wp59-test
   id: 61d28a5a-e18a-4d10-8232-6b7d0034d9a5
+env_file:
+  - .env.lando
