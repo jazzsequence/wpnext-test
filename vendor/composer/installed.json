@@ -67,23 +67,23 @@
         },
         {
             "name": "pantheon-systems/pantheon-mu-plugin",
-            "version": "1.0.0",
-            "version_normalized": "1.0.0.0",
+            "version": "1.0.1",
+            "version_normalized": "1.0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pantheon-systems/pantheon-mu-plugin.git",
-                "reference": "9873f9fc1a6ae57f3200fb7f91d7b6b8d0e5db40"
+                "reference": "1c5bc7153ba948a026936086586a08895839c646"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pantheon-systems/pantheon-mu-plugin/zipball/9873f9fc1a6ae57f3200fb7f91d7b6b8d0e5db40",
-                "reference": "9873f9fc1a6ae57f3200fb7f91d7b6b8d0e5db40",
+                "url": "https://api.github.com/repos/pantheon-systems/pantheon-mu-plugin/zipball/1c5bc7153ba948a026936086586a08895839c646",
+                "reference": "1c5bc7153ba948a026936086586a08895839c646",
                 "shasum": ""
             },
             "require": {
                 "vlucas/phpdotenv": "*"
             },
-            "time": "2022-06-17T22:19:32+00:00",
+            "time": "2022-09-13T17:49:47+00:00",
             "type": "wordpress-muplugin",
             "installation-source": "dist",
             "notification-url": "https://packagist.org/downloads/",
@@ -93,7 +93,7 @@
             "description": "Pantheon mu-plugin for WordPress sites.",
             "support": {
                 "issues": "https://github.com/pantheon-systems/pantheon-mu-plugin/issues",
-                "source": "https://github.com/pantheon-systems/pantheon-mu-plugin/tree/1.0.0"
+                "source": "https://github.com/pantheon-systems/pantheon-mu-plugin/tree/1.0.1"
             },
             "install-path": "../pantheon-systems/pantheon-mu-plugin"
         },
