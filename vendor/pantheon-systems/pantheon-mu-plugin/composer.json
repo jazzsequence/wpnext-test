@@ -1,0 +1,9 @@
+{
+  "name": "pantheon-systems/pantheon-wp-main",
+  "description": "Pantheon mu-plugin for WordPress sites.",
+  "type": "wordpress-muplugin",
+  "license": "MIT",
+  "require": {
+    "vlucas/phpdotenv": "*"
+  }
+}

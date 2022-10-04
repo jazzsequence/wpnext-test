@@ -1,0 +1,24 @@
+{
+    "name": "pantheon/wptest",
+    "description": "Site for testing future versions of WordPress",
+    "type": "project",
+    "require": {
+        "pantheon-systems/pantheon-mu-plugin": "^1.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Chris Reynolds",
+            "email": "chris.reynolds@pantheon.io"
+        }
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "extra": {
+        "installer-paths": {
+            "wp-content/mu-plugins/{$name}/": ["type:wordpress-muplugin", "pantheon-systems/pantheon-mu-plugin"],
+            "wp-content/plugins/{$name}/": ["type:wordpress-plugin"],
+            "wp-content/themes/{$name}/": ["type:wordpress-theme"]
+        }
+    }
+}
