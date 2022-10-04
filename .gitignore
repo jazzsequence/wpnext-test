@@ -4,6 +4,7 @@
 ############
 wp-config-local.php
 wp-cli.local.yml
+wp-cli/*
 wp-content/uploads
 wp-content/blogs.dir/
 wp-content/upgrade/
