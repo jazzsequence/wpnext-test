@@ -22,9 +22,12 @@ if ( isset( $_ENV['PANTHEON_ENVIRONMENT'] ) ) {
 	if ( 'dev' === $_ENV['PANTHEON_ENVIRONMENT'] && function_exists( 'wp_is_writable' ) ) {
 		require_once 'inc/pantheon-plugin-install-notice.php';
 	}
-    if ( defined( 'WP_CLI' ) && WP_CLI ) { var_dump( 'WP_CLI' );
+    if ( defined( 'WP_CLI' ) && WP_CLI ) {
+		var_dump( 'WP_CLI' );
         require_once 'inc/cli.php';
-    }
+    } else {
+		var_dump( 'NOT WP_CLI' );
+	}
 	if ( ! defined( 'FS_METHOD' ) ) {
 		/**
 		 * When this constant is not set, WordPress writes and then deletes a
