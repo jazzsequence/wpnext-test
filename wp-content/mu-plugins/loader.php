@@ -1,3 +1,9 @@
 <?php
 
-require_once dirname( __DIR__, 2 ) . '/vendor/autoload.php';
+$_mu_plugins = [
+	'pantheon-mu-plugin/pantheon.php',
+];
+
+foreach ( $_mu_plugins as $mu_plugin ) {
+	require_once $mu_plugin;
+}
