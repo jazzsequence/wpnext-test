@@ -30,7 +30,7 @@ class WP_Upgrader {
 	/**
 	 * Store options for rollback callbacks.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 * @var array
 	 */
 	private $options = array();
@@ -40,7 +40,7 @@ class WP_Upgrader {
 	 *
 	 * Used by rollback functions.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 * @var array
 	 */
 	private $temp_backups = array();
@@ -50,7 +50,7 @@ class WP_Upgrader {
 	 *
 	 * Used by rollback functions.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 * @var array
 	 */
 	private $temp_restores = array();
@@ -70,10 +70,10 @@ class WP_Upgrader {
 		$this->strings['temp_backup_delete_failed'] = __( 'Could not delete the temporary backup directory for %s.' );
 
 		// Move the plugin/theme being updated to rollback directory.
-		add_filter( 'upgrader_pre_install', array( $this, 'upgrader_pre_install' ), 15, 2 );
+		add_filter( 'upgrader_source_selection', array( $this, 'create_backup' ), 9999, 4 );
 
 		// Restore backup if install_package returns WP_Error.
-		add_filter( 'upgrader_install_package_result', array( $this, 'upgrader_install_package_result' ), 15, 2 );
+		add_filter( 'upgrader_install_package_result', array( $this, 'restore_backup' ), 15, 2 );
 
 		// WP_Upgrader::init.
 		if ( ! wp_installing() ) {
@@ -84,23 +84,23 @@ class WP_Upgrader {
 	/**
 	 * Move the plugin/theme being upgraded into a rollback directory.
 	 *
-	 * @since 6.1.0
-	 * @uses 'upgrader_pre_install' filter.
+	 * @since 6.2.0
+	 * @uses 'upgrader_source_selection' filter.
 	 *
-	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
-	 * @param bool  $response   Boolean response to 'upgrader_pre_install' filter.
-	 *                          Default is true.
-	 * @param array $hook_extra Array of data for plugin/theme being updated.
+	 * @param string      $source        File source location.
+	 * @param string      $remote_source Remote file source location.
+	 * @param WP_Upgrader $upgrader      WP_Upgrader instance.
+	 * @param array       $hook_extra    Array of data for plugin/theme being updated.
 	 *
-	 * @return bool|WP_Error
+	 * @return string|WP_Error
 	 */
-	public function upgrader_pre_install( $response, $hook_extra ) {
+	public function create_backup( $source, $remote_source, $upgrader, $hook_extra ) {
 		$this->options = ( new WP_Plugin_Theme_Upgrader() )->set_callback_options( $hook_extra );
 
 		// Early exit if $hook_extra is empty,
 		// or if this is an installation and not update.
 		if ( empty( $hook_extra ) || ( isset( $hook_extra['action'] ) && 'install' === $hook_extra['action'] ) ) {
-			return $response;
+			return $source;
 		}
 
 		$args = $this->options['hook_extra']['temp_backup'];
@@ -113,13 +113,13 @@ class WP_Upgrader {
 			$this->temp_backups[] = $this->options['hook_extra']['temp_backup'];
 		}
 
-		return $response;
+		return $source;
 	}
 
 	/**
 	 * Restore backup to original location if update failed.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 * @uses 'upgrader_install_package_result' filter.
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
@@ -128,7 +128,7 @@ class WP_Upgrader {
 	 *
 	 * @return bool|WP_Error
 	 */
-	public function upgrader_install_package_result( $result, $hook_extra ) {
+	public function restore_backup( $result, $hook_extra ) {
 		// Early exit if $hook_extra is empty,
 		// or if this is an installation and not update.
 		if ( empty( $hook_extra ) || ( isset( $hook_extra['action'] ) && 'install' === $hook_extra['action'] ) ) {
@@ -165,7 +165,7 @@ class WP_Upgrader {
 	/**
 	 * Schedule cleanup of the temp-backup directory.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 */
 	protected function schedule_temp_backup_cleanup() {
 		if ( false === wp_next_scheduled( 'wp_delete_temp_updater_backups' ) ) {
@@ -176,7 +176,7 @@ class WP_Upgrader {
 	/**
 	 * Move the plugin/theme being upgraded into a temp-backup directory.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
@@ -212,7 +212,7 @@ class WP_Upgrader {
 			return new \WP_Error( 'fs_no_content_dir', $this->strings['fs_no_content_dir'] );
 		}
 
-		$dest_dir = $wp_filesystem->wp_content_dir() . 'upgrade/temp-backup/';
+		$dest_dir = $wp_filesystem->wp_content_dir() . 'temp-backup/';
 		// Create the temp-backup directory if it does not exist.
 		if ( (
 				! $wp_filesystem->is_dir( $dest_dir )
@@ -245,7 +245,7 @@ class WP_Upgrader {
 	/**
 	 * Restore the plugin/theme from the temp-backup directory.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
@@ -266,7 +266,7 @@ class WP_Upgrader {
 				return $errors;
 			}
 
-			$src      = $wp_filesystem->wp_content_dir() . 'upgrade/temp-backup/' . $args['dir'] . '/' . $args['slug'];
+			$src      = $wp_filesystem->wp_content_dir() . 'temp-backup/' . $args['dir'] . '/' . $args['slug'];
 			$dest_dir = $wp_filesystem->find_folder( $args['src'] );
 			$dest     = trailingslashit( $dest_dir ) . $args['slug'];
 
@@ -297,7 +297,7 @@ class WP_Upgrader {
 	/**
 	 * Deletes a temp-backup.
 	 *
-	 * @since 6.1.0
+	 * @since 6.2.0
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
@@ -318,7 +318,7 @@ class WP_Upgrader {
 				return $errors;
 			}
 
-			$temp_backup_dir = $wp_filesystem->wp_content_dir() . "upgrade/temp-backup/{$args['dir']}/{$args['slug']}";
+			$temp_backup_dir = $wp_filesystem->wp_content_dir() . "temp-backup/{$args['dir']}/{$args['slug']}";
 
 			if ( ! $wp_filesystem->delete( $temp_backup_dir, true ) ) {
 				$errors->add(

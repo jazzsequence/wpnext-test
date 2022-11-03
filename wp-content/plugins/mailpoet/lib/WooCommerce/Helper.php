@@ -5,6 +5,11 @@ namespace MailPoet\WooCommerce;
 if (!defined('ABSPATH')) exit;
 
 
+use Automattic\WooCommerce\Admin\API\Reports\Customers\Stats\Query;
+use MailPoet\DI\ContainerWrapper;
+use MailPoet\RuntimeException;
+use MailPoet\WP\Functions as WPFunctions;
+
 class Helper {
   public function isWooCommerceActive() {
     return class_exists('WooCommerce');
@@ -18,6 +23,18 @@ class Helper {
       return version_compare(\Automattic\WooCommerce\Blocks\Package::get_version(), $min_version, '>=');
     }
     return true;
+  }
+
+  public function isWooCommerceCustomOrdersTableEnabled(): bool {
+    if (
+      $this->isWooCommerceActive()
+      && method_exists('\Automattic\WooCommerce\Utilities\OrderUtil', 'custom_orders_table_usage_is_enabled')
+      && \Automattic\WooCommerce\Utilities\OrderUtil::custom_orders_table_usage_is_enabled()
+    ) {
+      return true;
+    }
+
+    return false;
   }
 
   public function WC() {
@@ -34,6 +51,10 @@ class Helper {
 
   public function wcGetOrders(array $args) {
     return wc_get_orders($args);
+  }
+
+  public function wcCreateOrder(array $args) {
+    return wc_create_order($args);
   }
 
   public function wcPrice($price, array $args = []) {
@@ -64,13 +85,16 @@ class Helper {
     return wc_hex_is_light($color);
   }
 
-  public function getOrdersCountCreatedBefore($dateTime) {
-    global $wpdb;
-    $result = $wpdb->get_var($wpdb->prepare("
-        SELECT DISTINCT count(p.ID) FROM {$wpdb->prefix}posts as p
-        WHERE p.post_type = 'shop_order' AND p.post_date < %s
-    ", $dateTime));
-    return (int)$result;
+  public function getOrdersCountCreatedBefore(string $dateTime): int {
+    $ordersCount = $this->wcGetOrders([
+      'status' => 'all',
+      'type' => 'shop_order',
+      'date_created' => '<' . $dateTime,
+      'limit' => 1,
+      'paginate' => true,
+    ])->total;
+
+    return $ordersCount;
   }
 
   public function getRawPrice($price, array $args = []) {
@@ -80,5 +104,50 @@ class Helper {
 
   public function getAllowedCountries(): array {
     return (new \WC_Countries)->get_allowed_countries() ?? [];
+  }
+
+  public function getCustomersCount(): int {
+    if (!class_exists(Query::class)) {
+      return 0;
+    }
+    $query = new Query([
+      'fields' => ['customers_count'],
+    ]);
+    // Query::get_data declares it returns array but the underlying DataStore returns stdClass
+    $result = (array)$query->get_data();
+    return isset($result['customers_count']) ? intval($result['customers_count']) : 0;
+  }
+
+  public function wasMailPoetInstalledViaWooCommerceOnboardingWizard(): bool {
+    $wp = ContainerWrapper::getInstance()->get(WPFunctions::class);
+    $installedViaWooCommerce = false;
+    $wooCommerceOnboardingProfile = $wp->getOption('woocommerce_onboarding_profile');
+
+    if (
+      is_array($wooCommerceOnboardingProfile)
+      && isset($wooCommerceOnboardingProfile['business_extensions'])
+      && is_array($wooCommerceOnboardingProfile['business_extensions'])
+      && in_array('mailpoet', $wooCommerceOnboardingProfile['business_extensions'])
+    ) {
+      $installedViaWooCommerce = true;
+    }
+
+    return $installedViaWooCommerce;
+  }
+
+  public function getOrdersTableName() {
+    if (!method_exists('\Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore', 'get_orders_table_name')) {
+      throw new RuntimeException('Cannot get orders table name when running a WooCommerce version that doesn\'t support custom order tables.');
+    }
+
+    return \Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore::get_orders_table_name();
+  }
+
+  public function getAddressesTableName() {
+    if (!method_exists('\Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore', 'get_addresses_table_name')) {
+      throw new RuntimeException('Cannot get addresses table name when running a WooCommerce version that doesn\'t support custom order tables.');
+    }
+
+    return \Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore::get_addresses_table_name();
   }
 }

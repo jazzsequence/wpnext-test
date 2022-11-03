@@ -135,7 +135,7 @@ class NewsletterEntity {
   private $parent;
 
   /**
-   * @ORM\OneToMany(targetEntity="MailPoet\Entities\NewsletterEntity", mappedBy="parent")
+   * @ORM\OneToMany(targetEntity="MailPoet\Entities\NewsletterEntity", mappedBy="parent", fetch="EXTRA_LAZY")
    * @var ArrayCollection<int, NewsletterEntity>
    */
   private $children;
@@ -180,6 +180,10 @@ class NewsletterEntity {
   public function __clone() {
     // reset ID
     $this->id = null;
+    $this->newsletterSegments = new ArrayCollection();
+    $this->children = new ArrayCollection();
+    $this->options = new ArrayCollection();
+    $this->queues = new ArrayCollection();
   }
 
   /**
@@ -444,6 +448,21 @@ class NewsletterEntity {
       return ($field = $option->getOptionField()) ? $field->getName() === $name : false;
     })->first();
     return $option ?: null;
+  }
+
+  /**
+   * @return array<string, mixed> Associative array of newsletter option values with option names as keys
+   */
+  public function getOptionsAsArray(): array {
+    $optionsArray = [];
+    foreach ($this->options as $option) {
+      $name = $option->getName();
+      if (!$name) {
+        continue;
+      }
+      $optionsArray[$name] = $option->getValue();
+    }
+    return $optionsArray;
   }
 
   public function getOptionValue(string $name) {

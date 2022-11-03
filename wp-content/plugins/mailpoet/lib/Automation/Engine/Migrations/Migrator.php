@@ -28,13 +28,26 @@ class Migrator {
       CREATE TABLE {$this->prefix}workflows (
         id int(11) unsigned NOT NULL AUTO_INCREMENT,
         name varchar(255) NOT NULL,
+        author bigint NOT NULL,
         status varchar(255) NOT NULL,
         created_at timestamp NOT NULL,
         updated_at timestamp NOT NULL,
+        activated_at timestamp NULL,
         deleted_at timestamp NULL,
+        PRIMARY KEY (id)
+      );
+    ");
+
+    $this->runQuery("
+      CREATE TABLE {$this->prefix}workflow_versions (
+        id int(11) unsigned NOT NULL AUTO_INCREMENT,
+        workflow_id int(11) unsigned NOT NULL,
         trigger_keys longtext NOT NULL,
         steps longtext,
-        PRIMARY KEY (id)
+        created_at timestamp NOT NULL,
+        updated_at timestamp NOT NULL,
+        PRIMARY KEY (id),
+        INDEX (workflow_id)
       );
     ");
 
@@ -42,12 +55,30 @@ class Migrator {
       CREATE TABLE {$this->prefix}workflow_runs (
         id int(11) unsigned NOT NULL AUTO_INCREMENT,
         workflow_id int(11) unsigned NOT NULL,
+        version_id int(11) unsigned NOT NULL,
         trigger_key varchar(255) NOT NULL,
         status varchar(255) NOT NULL,
         created_at timestamp NOT NULL,
         updated_at timestamp NOT NULL,
         subjects longtext,
-        PRIMARY KEY (id)
+        PRIMARY KEY (id),
+        INDEX (workflow_id),
+        INDEX (status)
+      );
+    ");
+
+    $this->runQuery("
+      CREATE TABLE {$this->prefix}workflow_run_logs (
+        id int(11) unsigned NOT NULL AUTO_INCREMENT,
+        workflow_run_id int(11) unsigned NOT NULL,
+        step_id varchar(255) NOT NULL,
+        status varchar(255) NOT NULL,
+        started_at timestamp NOT NULL,
+        completed_at timestamp NULL DEFAULT NULL,
+        error longtext,
+        data longtext,
+        PRIMARY KEY (id),
+        INDEX (workflow_run_id)
       );
     ");
   }
@@ -56,6 +87,8 @@ class Migrator {
     $this->removeOldSchema();
     $this->runQuery("DROP TABLE IF EXISTS {$this->prefix}workflows");
     $this->runQuery("DROP TABLE IF EXISTS {$this->prefix}workflow_runs");
+    $this->runQuery("DROP TABLE IF EXISTS {$this->prefix}workflow_run_logs");
+    $this->runQuery("DROP TABLE IF EXISTS {$this->prefix}workflow_versions");
 
     // clean Action Scheduler data
     $this->runQuery("

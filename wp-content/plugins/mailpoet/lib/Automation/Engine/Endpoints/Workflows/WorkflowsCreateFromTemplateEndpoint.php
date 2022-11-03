@@ -5,32 +5,36 @@ namespace MailPoet\Automation\Engine\Endpoints\Workflows;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\API\REST\Request;
+use MailPoet\API\REST\Response;
 use MailPoet\Automation\Engine\API\Endpoint;
-use MailPoet\Automation\Engine\API\Request;
-use MailPoet\Automation\Engine\API\Response;
 use MailPoet\Automation\Engine\Builder\CreateWorkflowFromTemplateController;
+use MailPoet\Automation\Engine\Mappers\WorkflowMapper;
 use MailPoet\Validator\Builder;
 
 class WorkflowsCreateFromTemplateEndpoint extends Endpoint {
   /** @var CreateWorkflowFromTemplateController */
   private $createWorkflowFromTemplateController;
 
+  /** @var WorkflowMapper */
+  private $workflowMapper;
+
   public function __construct(
-    CreateWorkflowFromTemplateController $createWorkflowFromTemplateController
+    CreateWorkflowFromTemplateController $createWorkflowFromTemplateController,
+    WorkflowMapper $workflowMapper
   ) {
     $this->createWorkflowFromTemplateController = $createWorkflowFromTemplateController;
+    $this->workflowMapper = $workflowMapper;
   }
 
   public function handle(Request $request): Response {
-    $data = $request->getParams();
-    $this->createWorkflowFromTemplateController->createWorkflow($data);
-    return new Response();
+    $workflow = $this->createWorkflowFromTemplateController->createWorkflow((string)$request->getParam('slug'));
+    return new Response($this->workflowMapper->buildWorkflow($workflow));
   }
 
   public static function getRequestSchema(): array {
     return [
-      'name' => Builder::string()->required(),
-      'template' => Builder::string()->required(),
+      'slug' => Builder::string()->required(),
     ];
   }
 }

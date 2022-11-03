@@ -1,5 +1,23 @@
 [unreleased]
 
+#### 3.3.1 / 2022-10-25
+* use `array_unique` when saving simulated failure options
+* load failure simulator in `init` hook for WP-CLI
+
+#### 3.3.0 / 2022-10-14
+* use `wp-content/temp-backup` and not `wp-content/upgrade/temp-backup` as `WP_Upgrader::unpack_package` deletes contents of `wp-content-upgrade` at each update
+* add simulated failure into plugin
+
+#### 3.2.1 / 2022-09-23
+* bump auto-deactivation check for WP version
+
+#### 3.2.0 / 2022-09-19
+* backup runs on `upgrader_source_selection` from `upgrader_pre_install` to resolve an edge case
+* rename functions for action not hook
+
+#### 3.1.1 / 2022-07-31
+* update VirtualBox testing URL in readme(s)
+
 #### 3.1.0 / 2022-06-27
 * fix to ensure restore functions correctly during bulk update
 

@@ -5,42 +5,46 @@ namespace MailPoet\Automation\Engine\Builder;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Automation\Engine\Data\Workflow;
+use MailPoet\Automation\Engine\Exceptions;
+use MailPoet\Automation\Engine\Exceptions\InvalidStateException;
 use MailPoet\Automation\Engine\Storage\WorkflowStorage;
-use MailPoet\Automation\Engine\Workflows\Workflow;
-use MailPoet\Automation\Integrations\MailPoet\Templates\WorkflowBuilder;
-use MailPoet\UnexpectedValueException;
+use MailPoet\Automation\Engine\Storage\WorkflowTemplateStorage;
+use MailPoet\Automation\Engine\Validation\WorkflowValidator;
 
 class CreateWorkflowFromTemplateController {
   /** @var WorkflowStorage */
   private $storage;
 
-  /** @var WorkflowBuilder */
-  private $templates;
+  /** @var WorkflowTemplateStorage  */
+  private $templateStorage;
+
+  /** @var WorkflowValidator */
+  private $workflowValidator;
 
   public function __construct(
     WorkflowStorage $storage,
-    WorkflowBuilder $templates
+    WorkflowTemplateStorage $templateStorage,
+    WorkflowValidator $workflowValidator
   ) {
     $this->storage = $storage;
-    $this->templates = $templates;
+    $this->templateStorage = $templateStorage;
+    $this->workflowValidator = $workflowValidator;
   }
 
-  public function createWorkflow(array $data): Workflow {
-    $name = $data['name'];
-    $template = $data['template'];
-
-    switch ($template) {
-      case 'delayed-email-after-signup':
-        $workflow = $this->templates->delayedEmailAfterSignupWorkflow($name);
-        break;
-      case 'welcome-email-sequence':
-        $workflow = $this->templates->welcomeEmailSequence($name);
-        break;
-      default:
-        throw UnexpectedValueException::create()->withMessage('Template not found.');
+  public function createWorkflow(string $slug): Workflow {
+    $template = $this->templateStorage->getTemplateBySlug($slug);
+    if (!$template) {
+      throw Exceptions::workflowTemplateNotFound($slug);
     }
 
-    $this->storage->createWorkflow($workflow);
-    return $workflow;
+    $workflow = $template->getWorkflow();
+    $this->workflowValidator->validate($workflow);
+    $workflowId = $this->storage->createWorkflow($workflow);
+    $savedWorkflow = $this->storage->getWorkflow($workflowId);
+    if (!$savedWorkflow) {
+      throw new InvalidStateException('Workflow not found.');
+    }
+    return $savedWorkflow;
   }
 }

@@ -5,13 +5,15 @@ namespace MailPoet\Tasks;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Cron\Workers\SendingQueue\SendingQueue as SendingQueueAlias;
+use MailPoet\DI\ContainerWrapper;
+use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Logging\LoggerFactory;
 use MailPoet\Models\ScheduledTask;
 use MailPoet\Models\ScheduledTaskSubscriber;
 use MailPoet\Models\SendingQueue;
+use MailPoet\Newsletter\Sending\SendingQueuesRepository;
 use MailPoet\Util\Helpers;
-use MailPoet\WP\Functions as WPFunctions;
-use MailPoetVendor\Carbon\Carbon;
 
 /**
  * A facade class containing all necessary models to work with a sending queue
@@ -26,7 +28,7 @@ use MailPoetVendor\Carbon\Carbon;
  * @property int $priority
  */
 class Sending {
-  const TASK_TYPE = 'sending';
+  const TASK_TYPE = SendingQueueAlias::TASK_TYPE;
   const RESULT_BATCH_SIZE = 5;
 
   /** @var ScheduledTask */
@@ -169,8 +171,8 @@ class Sending {
   }
 
   public function save() {
-    $this->task->save();
     $this->queue->save();
+    $this->task->save();
     $errors = $this->getErrors();
     if ($errors) {
       $loggerFactory = LoggerFactory::getInstance();
@@ -190,6 +192,14 @@ class Sending {
 
   public function queue() {
     return $this->queue;
+  }
+
+  public function getSendingQueueEntity(): SendingQueueEntity {
+    $sendingQueuesRepository = ContainerWrapper::getInstance()->get(SendingQueuesRepository::class);
+    $sendingQueueEntity = $sendingQueuesRepository->findOneById($this->queue->id);
+    $sendingQueuesRepository->refresh($sendingQueueEntity);
+
+    return $sendingQueueEntity;
   }
 
   public function task() {
@@ -300,31 +310,5 @@ class Sending {
 
   private function isCommonProperty($prop) {
     return in_array($prop, $this->commonFields);
-  }
-
-  public static function getScheduledQueues($amount = self::RESULT_BATCH_SIZE) {
-    $wp = new WPFunctions();
-    $tasks = ScheduledTask::tableAlias('tasks')
-      ->select('tasks.*')
-      ->join(SendingQueue::$_table, 'tasks.id = queues.task_id', 'queues')
-      ->whereNull('tasks.deleted_at')
-      ->where('tasks.status', ScheduledTask::STATUS_SCHEDULED)
-      ->whereLte('tasks.scheduled_at', Carbon::createFromTimestamp($wp->currentTime('timestamp')))
-      ->where('tasks.type', 'sending')
-      ->orderByAsc('tasks.updated_at')
-      ->limit($amount)
-      ->findMany();
-    return static::createManyFromTasks($tasks);
-  }
-
-  public static function getRunningQueues($amount = self::RESULT_BATCH_SIZE) {
-    $tasks = ScheduledTask::orderByAsc('priority')
-      ->orderByAsc('updated_at')
-      ->whereNull('deleted_at')
-      ->whereNull('status')
-      ->where('type', 'sending')
-      ->limit($amount)
-      ->findMany();
-    return static::createManyFromTasks($tasks);
   }
 }

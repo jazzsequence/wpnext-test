@@ -5,10 +5,9 @@ namespace MailPoet\Automation\Engine\Storage;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\Automation\Engine\Control\SubjectLoader;
+use MailPoet\Automation\Engine\Data\Workflow;
+use MailPoet\Automation\Engine\Data\WorkflowRun;
 use MailPoet\Automation\Engine\Exceptions;
-use MailPoet\Automation\Engine\Utils\Json;
-use MailPoet\Automation\Engine\Workflows\WorkflowRun;
 use wpdb;
 
 class WorkflowRunStorage {
@@ -18,16 +17,10 @@ class WorkflowRunStorage {
   /** @var wpdb */
   private $wpdb;
 
-  /** @var SubjectLoader */
-  private $subjectLoader;
-
-  public function __construct(
-    SubjectLoader $subjectLoader
-  ) {
+  public function __construct() {
     global $wpdb;
     $this->table = $wpdb->prefix . 'mailpoet_workflow_runs';
     $this->wpdb = $wpdb;
-    $this->subjectLoader = $subjectLoader;
   }
 
   public function createWorkflowRun(WorkflowRun $workflowRun): int {
@@ -42,15 +35,35 @@ class WorkflowRunStorage {
     $table = esc_sql($this->table);
     $query = (string)$this->wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id);
     $result = $this->wpdb->get_row($query, ARRAY_A);
+    return $result ? WorkflowRun::fromArray((array)$result) : null;
+  }
 
-    if ($result) {
-      $data = (array)$result;
-      $data['subjects'] = array_map(function (array $subject) {
-        return $this->subjectLoader->loadSubject($subject['key'], $subject['args']);
-      }, Json::decode($data['subjects']));
-      return WorkflowRun::fromArray($data);
+  /**
+   * @param Workflow $workflow
+   * @return WorkflowRun[]
+   */
+  public function getWorkflowRunsForWorkflow(Workflow $workflow): array {
+    $table = esc_sql($this->table);
+    $query = (string)$this->wpdb->prepare("SELECT * FROM $table WHERE workflow_id = %d", $workflow->getId());
+    $result = $this->wpdb->get_results($query, ARRAY_A);
+    return is_array($result) ? array_map(
+      function(array $runData): WorkflowRun {
+        return WorkflowRun::fromArray($runData);
+      },
+      $result
+    ) : [];
+  }
+
+  public function getCountForWorkflow(Workflow $workflow, string ...$status): int {
+    if (!count($status)) {
+      return 0;
     }
-    return null;
+
+    $table = esc_sql($this->table);
+    $statusSql = (string)$this->wpdb->prepare(implode(',', array_fill(0, count($status), '%s')), ...$status);
+    $query = (string)$this->wpdb->prepare( "SELECT count(id) as count from $table where workflow_id = %d and status IN ($statusSql)", $workflow->getId());
+    $result = $this->wpdb->get_col($query);
+    return $result ? (int)current($result) : 0;
   }
 
   public function updateStatus(int $id, string $status): void {
@@ -60,5 +73,10 @@ class WorkflowRunStorage {
     if ($result === false) {
       throw Exceptions::databaseError($this->wpdb->last_error);
     }
+  }
+
+  public function truncate(): void {
+    $table = esc_sql($this->table);
+    $this->wpdb->query("truncate $table");
   }
 }

@@ -5,6 +5,7 @@ namespace MailPoet\Segments;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Config\SubscriberChangesNotifier;
 use MailPoet\DI\ContainerWrapper;
 use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SubscriberEntity;
@@ -41,18 +42,23 @@ class WP {
   /** @var FeaturesController */
   private $featuresController;
 
+  /** @var SubscriberChangesNotifier */
+  private $subscriberChangesNotifier;
+
   public function __construct(
     WPFunctions $wp,
     WelcomeScheduler $welcomeScheduler,
     WooCommerceHelper $wooHelper,
     SubscribersRepository $subscribersRepository,
-    FeaturesController $featuresController
+    FeaturesController $featuresController,
+    SubscriberChangesNotifier $subscriberChangesNotifier
   ) {
     $this->wp = $wp;
     $this->welcomeScheduler = $welcomeScheduler;
     $this->wooHelper = $wooHelper;
     $this->subscribersRepository = $subscribersRepository;
     $this->featuresController = $featuresController;
+    $this->subscriberChangesNotifier = $subscriberChangesNotifier;
   }
 
   /**
@@ -212,9 +218,15 @@ class WP {
   }
 
   public function synchronizeUsers(): bool {
+    // Save timestamp about changes and update before insert
+    $this->subscriberChangesNotifier->subscribersBatchCreate();
+    $this->subscriberChangesNotifier->subscribersBatchUpdate();
+
     $updatedUsersEmails = $this->updateSubscribersEmails();
     $insertedUsersEmails = $this->insertSubscribers();
     $this->removeUpdatedSubscribersWithInvalidEmail(array_merge($updatedUsersEmails, $insertedUsersEmails));
+    // There is high chance that an update will be made
+    $this->subscriberChangesNotifier->subscribersBatchUpdate();
     unset($updatedUsersEmails);
     unset($insertedUsersEmails);
     $this->updateFirstNames();
@@ -222,6 +234,7 @@ class WP {
     $this->updateFirstNameIfMissing();
     $this->insertUsersToSegment();
     $this->removeOrphanedSubscribers();
+    $this->subscribersRepository->invalidateTotalSubscribersCache();
 
     return true;
   }
@@ -271,7 +284,7 @@ class WP {
       $deletedAt = 'null';
     }
     $subscribersTable = Subscriber::$_table;
-    $inserterdUserIds = ORM::for_table($wpdb->users)->raw_query(sprintf(
+    $insertedUserIds = ORM::for_table($wpdb->users)->raw_query(sprintf(
       'SELECT %2$s.id, %2$s.user_email as email FROM %2$s
         LEFT JOIN %1$s AS mps ON mps.wp_user_id = %2$s.id
         WHERE mps.wp_user_id IS NULL AND %2$s.user_email != ""
@@ -292,7 +305,7 @@ class WP {
       $deletedAt
     ));
 
-    return $inserterdUserIds;
+    return $insertedUserIds;
   }
 
   private function updateFirstNames(): void {

@@ -23,7 +23,11 @@ class AssetsController {
 
   const RECAPTCHA_API_URL = 'https://www.google.com/recaptcha/api.js?render=explicit';
 
-  public function __construct(WPFunctions $wp, BasicRenderer $renderer, SettingsController $settings) {
+  public function __construct(
+    WPFunctions $wp,
+    BasicRenderer $renderer,
+    SettingsController $settings
+  ) {
     $this->wp = $wp;
     $this->renderer = $renderer;
     $this->settings = $settings;
@@ -37,7 +41,7 @@ class AssetsController {
     ob_start();
     $captcha = $this->settings->get('captcha');
     if (!empty($captcha['type']) && Captcha::isReCaptcha($captcha['type'])) {
-      echo '<script src="' . self::RECAPTCHA_API_URL . '" async defer></script>';
+      echo '<script src="' . esc_attr(self::RECAPTCHA_API_URL) . '" async defer></script>';
     }
 
     $this->wp->wpPrintScripts('jquery');
@@ -90,7 +94,7 @@ class AssetsController {
       'is_rtl' => (function_exists('is_rtl') ? (bool)is_rtl() : false),
     ]);
 
-    $ajaxFailedErrorMessage = $this->wp->__('An error has happened while performing a request, please try again later.');
+    $ajaxFailedErrorMessage = __('An error has happened while performing a request, please try again later.', 'mailpoet');
 
     $inlineScript = <<<EOL
 function initMailpoetTranslation() {
@@ -104,7 +108,7 @@ setTimeout(initMailpoetTranslation, 250);
 EOL;
     $this->wp->wpAddInlineScript(
       'mailpoet_public',
-      sprintf($inlineScript, $ajaxFailedErrorMessage),
+      sprintf($inlineScript, esc_js($ajaxFailedErrorMessage)),
       'after'
     );
   }
@@ -125,5 +129,38 @@ EOL;
       Env::$version,
       true
     );
+  }
+
+  public function setupAutomationListingDependencies(): void {
+    $this->wp->wpEnqueueScript(
+      'automation',
+      Env::$assetsUrl . '/dist/js/' . $this->renderer->getJsAsset('automation.js'),
+      [],
+      Env::$version,
+      true
+    );
+    $this->wp->wpSetScriptTranslations('automation', 'mailpoet');
+  }
+
+  public function setupAutomationEditorDependencies(): void {
+    $this->wp->wpEnqueueScript(
+      'automation_editor',
+      Env::$assetsUrl . '/dist/js/' . $this->renderer->getJsAsset('automation_editor.js'),
+      [],
+      Env::$version,
+      true
+    );
+    $this->wp->wpSetScriptTranslations('automation_editor', 'mailpoet');
+  }
+
+  public function setupAutomationTemplatesDependencies(): void {
+    $this->wp->wpEnqueueScript(
+      'automation_templates',
+      Env::$assetsUrl . '/dist/js/' . $this->renderer->getJsAsset('automation_templates.js'),
+      [],
+      Env::$version,
+      true
+    );
+    $this->wp->wpSetScriptTranslations('automation_templates', 'mailpoet');
   }
 }

@@ -83,6 +83,7 @@ class Preview {
 		add_filter( 'get_the_excerpt', [ $this, 'the_content' ], 999 );
 		add_filter( 'home_template_hierarchy', [ $this, 'force_page_template_hierarchy' ] );
 		add_filter( 'frontpage_template_hierarchy', [ $this, 'force_page_template_hierarchy' ] );
+		add_filter( 'wpforms_smarttags_process_page_title_value', [ $this, 'smart_tags_process_page_title_value' ], 10, 5 );
 		add_filter( 'post_thumbnail_html', '__return_empty_string' );
 	}
 
@@ -242,6 +243,27 @@ class Preview {
 	}
 
 	/**
+	 * Adjust value of the {page_title} smart tag.
+	 *
+	 * @since 1.7.7
+	 *
+	 * @param string $content          Content.
+	 * @param array  $form_data        Form data.
+	 * @param array  $fields           List of fields.
+	 * @param string $entry_id         Entry ID.
+	 * @param object $smart_tag_object The smart tag object or the Generic object for those cases when class unregistered.
+	 *
+	 * @return string
+	 */
+	public function smart_tags_process_page_title_value( $content, $form_data, $fields, $entry_id, $smart_tag_object ) {
+
+		return sprintf( /* translators: %s - form title. */
+			esc_html__( '%s Preview', 'wpforms-lite' ),
+			! empty( $form_data['settings']['form_title'] ) ? sanitize_text_field( $form_data['settings']['form_title'] ) : esc_html__( 'Form', 'wpforms-lite' )
+		);
+	}
+
+	/**
 	 * Force page template types.
 	 *
 	 * @since 1.5.1
@@ -251,7 +273,7 @@ class Preview {
 	 */
 	public function template_include() {
 
-		_deprecated_function( __METHOD__, '1.7.2 of WPForms plugin' );
+		_deprecated_function( __METHOD__, '1.7.2 of the WPForms plugin' );
 
 		return locate_template( [ 'page.php', 'single.php', 'index.php' ] );
 	}

@@ -5,13 +5,16 @@ namespace MailPoet\Automation\Engine\Endpoints\System;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\API\REST\Request;
+use MailPoet\API\REST\Response;
 use MailPoet\Automation\Engine\API\Endpoint;
-use MailPoet\Automation\Engine\API\Request;
-use MailPoet\Automation\Engine\API\Response;
 use MailPoet\Automation\Engine\Migrations\Migrator;
 use MailPoet\Features\FeatureFlagsController;
 use MailPoet\Features\FeaturesController;
 
+/**
+ * @ToDo Remove before MVP
+ */
 class DatabaseDeleteEndpoint extends Endpoint {
   /** @var FeatureFlagsController */
   private $featureFlagsController;

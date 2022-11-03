@@ -10,14 +10,10 @@ use MailPoet\Form\FormsRepository;
 use MailPoet\Form\Renderer as FormRenderer;
 use MailPoet\Form\Util\Styles;
 use MailPoet\Util\Url as UrlHelper;
-use MailPoet\WP\Functions as WPFunctions;
 
 class CaptchaRenderer {
   /** @var UrlHelper */
   private $urlHelper;
-
-  /** @var WPFunctions */
-  private $wp;
 
   /** @var CaptchaSession */
   private $captchaSession;
@@ -36,7 +32,6 @@ class CaptchaRenderer {
 
   public function __construct(
     UrlHelper $urlHelper,
-    WPFunctions $wp,
     CaptchaSession $captchaSession,
     SubscriptionUrlFactory $subscriptionUrlFactory,
     FormsRepository $formsRepository,
@@ -44,7 +39,6 @@ class CaptchaRenderer {
     Styles $styles
   ) {
     $this->urlHelper = $urlHelper;
-    $this->wp = $wp;
     $this->captchaSession = $captchaSession;
     $this->subscriptionUrlFactory = $subscriptionUrlFactory;
     $this->formRenderer = $formRenderer;
@@ -53,42 +47,16 @@ class CaptchaRenderer {
   }
 
   public function getCaptchaPageTitle() {
-    return $this->wp->__("Confirm you’re not a robot", 'mailpoet');
+    return __("Confirm you’re not a robot", 'mailpoet');
   }
 
   public function getCaptchaPageContent($sessionId) {
+
     $this->captchaSession->init($sessionId);
-    $fields = [
-      [
-        'id' => 'captcha',
-        'type' => 'text',
-        'params' => [
-          'label' => $this->wp->__('Type in the characters you see in the picture above:', 'mailpoet'),
-          'value' => '',
-          'obfuscate' => false,
-        ],
-      ],
-    ];
-
-    $form = array_merge(
-      $fields,
-      [
-        [
-          'id' => 'submit',
-          'type' => 'submit',
-          'params' => [
-            'label' => $this->wp->__('Subscribe', 'mailpoet'),
-          ],
-        ],
-      ]
-    );
-
     $captchaSessionForm = $this->captchaSession->getFormData();
-    $formId = 0;
-
     $showSuccessMessage = !empty($_GET['mailpoet_success']);
     $showErrorMessage = !empty($_GET['mailpoet_error']);
-
+    $formId = 0;
     if (isset($captchaSessionForm['form_id'])) {
       $formId = (int)$captchaSessionForm['form_id'];
     } elseif ($showSuccessMessage) {
@@ -101,6 +69,33 @@ class CaptchaRenderer {
     if (!$formModel instanceof FormEntity) {
       return false;
     }
+
+    $fields = [
+      [
+        'id' => 'captcha',
+        'type' => 'text',
+        'params' => [
+          'label' => __('Type in the characters you see in the picture above:', 'mailpoet'),
+          'value' => '',
+          'obfuscate' => false,
+        ],
+      ],
+    ];
+
+    $submitBlocks = $formModel->getBlocksByTypes(['submit']);
+    $submitLabel = count($submitBlocks) && $submitBlocks[0]['params']['label'] ? $submitBlocks[0]['params']['label'] : __('Subscribe', 'mailpoet');
+    $form = array_merge(
+      $fields,
+      [
+        [
+          'id' => 'submit',
+          'type' => 'submit',
+          'params' => [
+            'label' => $submitLabel,
+          ],
+        ],
+      ]
+    );
 
     if ($showSuccessMessage) {
       // Display a success message in a no-JS flow
@@ -126,7 +121,7 @@ class CaptchaRenderer {
 
     $formHtml .= '<div class="mailpoet_form_hide_on_success">';
     $formHtml .= '<p class="mailpoet_paragraph">';
-    $formHtml .= '<img class="mailpoet_captcha mailpoet_captcha_update" src="' . $captchaUrl . '" width="' . $width . '" height="' . $height . '" title="' . $this->wp->__('Click to refresh the CAPTCHA', 'mailpoet') . '" />';
+    $formHtml .= '<img class="mailpoet_captcha mailpoet_captcha_update" src="' . $captchaUrl . '" width="' . $width . '" height="' . $height . '" title="' . __('Click to refresh the CAPTCHA', 'mailpoet') . '" />';
     $formHtml .= '</p>';
 
     // subscription form
@@ -149,7 +144,7 @@ class CaptchaRenderer {
     $settings = $formModel->getSettings() ?? [];
     $formHtml = '<div class="mailpoet_message">';
     $formHtml .= '<p class="mailpoet_validate_success" ' . ($showSuccessMessage ? '' : ' style="display:none;"') . '>' . $settings['success_message'] . '</p>';
-    $formHtml .= '<p class="mailpoet_validate_error" ' . ($showErrorMessage ? '' : ' style="display:none;"') . '>' . $this->wp->__('The characters you entered did not match the CAPTCHA image. Please try again with this new image.', 'mailpoet') . '</p>';
+    $formHtml .= '<p class="mailpoet_validate_error" ' . ($showErrorMessage ? '' : ' style="display:none;"') . '>' . __('The characters you entered did not match the CAPTCHA image. Please try again with this new image.', 'mailpoet') . '</p>';
     $formHtml .= '</div>';
     return $formHtml;
   }

@@ -30,7 +30,7 @@ function wpforms_panel_field( $option, $panel, $field, $form_data, $label, $args
 	$subsection       = ! empty( $args['subsection'] ) ? esc_attr( $args['subsection'] ) : '';
 	$index            = isset( $args['index'] ) ? esc_attr( $args['index'] ) : '';
 	$index            = is_numeric( $index ) ? absint( $index ) : $index;
-	$label            = ! empty( $label ) ? esc_html( $label ) : '';
+	$label            = ! empty( $label ) ? wp_kses( $label, [ 'span' => [ 'class' => [] ] ] ) : '';
 	$class            = ! empty( $args['class'] ) ? wpforms_sanitize_classes( $args['class'] ) : '';
 	$input_class      = ! empty( $args['input_class'] ) ? wpforms_sanitize_classes( $args['input_class'] ) : '';
 	$default          = isset( $args['default'] ) ? $args['default'] : '';
@@ -109,6 +109,17 @@ function wpforms_panel_field( $option, $panel, $field, $form_data, $label, $args
 	switch ( $option ) {
 		// Text input.
 		case 'text':
+			// Handle min and max attributes for number fields.
+			if ( ! empty( $args['type'] ) && $args['type'] === 'number' ) {
+				if ( isset( $args['min'] ) && is_int( $args['min'] ) ) {
+					$data_attr .= sprintf( ' min="%1$d" oninput="validity.valid||(value=\'%1$d\');" ', esc_attr( $args['min'] ) );
+				}
+
+				if ( isset( $args['max'] ) && is_int( $args['max'] ) ) {
+					$data_attr .= sprintf( ' max="%1$d" oninput="validity.valid||(value=\'%1$d\');" ', esc_attr( $args['max'] ) );
+				}
+			}
+
 			$output = sprintf(
 				'<input type="%s" id="%s" name="%s" value="%s" placeholder="%s" class="%s" %s>',
 				! empty( $args['type'] ) ? esc_attr( $args['type'] ) : 'text',
@@ -531,10 +542,13 @@ function wpforms_panel_fields_group( $inner, $args = [], $echo = true ) {
 
 	$group      = ! empty( $args['group'] ) ? $args['group'] : '';
 	$unfoldable = ! empty( $args['unfoldable'] );
-	$opened     = ! empty( $_COOKIE[ 'wpforms_fields_group_' . $group ] ) && $_COOKIE[ 'wpforms_fields_group_' . $group ] === 'true' ? ' opened' : '';
+	$default    = ( ! empty( $args['default'] ) && $args['default'] === 'opened' ) ? ' opened' : '';
+	$opened     = ! empty( $_COOKIE[ 'wpforms_fields_group_' . $group ] ) && $_COOKIE[ 'wpforms_fields_group_' . $group ] === 'true' ? ' opened' : $default;
+	$class      = ! empty( $args['class'] ) ? wpforms_sanitize_classes( $args['class'] ) : '';
 
 	$output = sprintf(
-		'<div class="wpforms-panel-fields-group%1$s"%2$s>',
+		'<div class="wpforms-panel-fields-group %1$s%2$s"%3$s>',
+		$class,
 		$unfoldable ? ' unfoldable' . $opened : '',
 		$unfoldable ? ' data-group="' . $group . '"' : ''
 	);

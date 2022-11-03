@@ -11,6 +11,7 @@ use MailPoet\Config\Localizer;
 use MailPoet\CustomFields\CustomFieldsRepository;
 use MailPoet\Entities\FormEntity;
 use MailPoet\Entities\SegmentEntity;
+use MailPoet\Entities\TagEntity;
 use MailPoet\Form\Block;
 use MailPoet\Form\FormsRepository;
 use MailPoet\Form\Renderer as FormRenderer;
@@ -83,6 +84,7 @@ use MailPoet\Router\Router;
 use MailPoet\Segments\SegmentsSimpleListRepository;
 use MailPoet\Settings\Pages;
 use MailPoet\Settings\UserFlagsController;
+use MailPoet\Tags\TagRepository;
 use MailPoet\WP\AutocompletePostListLoader as WPPostListLoader;
 use MailPoet\WP\Functions as WPFunctions;
 
@@ -196,6 +198,9 @@ class FormEditor {
     ],
   ];
 
+  /** @var TagRepository */
+  private $tagRepository;
+
   public function __construct(
     PageRenderer $pageRenderer,
     CustomFieldsRepository $customFieldsRepository,
@@ -208,7 +213,8 @@ class FormEditor {
     WPPostListLoader $wpPostListLoader,
     TemplateRepository $templateRepository,
     FormsRepository $formsRepository,
-    SegmentsSimpleListRepository $segmentsListRepository
+    SegmentsSimpleListRepository $segmentsListRepository,
+    TagRepository $tagRepository
   ) {
     $this->pageRenderer = $pageRenderer;
     $this->customFieldsRepository = $customFieldsRepository;
@@ -222,6 +228,7 @@ class FormEditor {
     $this->wpPostListLoader = $wpPostListLoader;
     $this->segmentsListRepository = $segmentsListRepository;
     $this->formsRepository = $formsRepository;
+    $this->tagRepository = $tagRepository;
   }
 
   public function render() {
@@ -271,6 +278,7 @@ class FormEditor {
       'product_categories' => $this->wpPostListLoader->getWooCommerceCategories(),
       'product_tags' => $this->wpPostListLoader->getWooCommerceTags(),
       'is_administrator' => $this->wp->currentUserCan('administrator'),
+      'subscriber_tags' => $this->getSubscriberTags(),
     ];
     $this->wp->wpEnqueueMedia();
     $this->pageRenderer->displayPage('form/editor.html', $data);
@@ -361,5 +369,14 @@ class FormEditor {
       $form->setSettings($initialFormTemplate->getSettings());
     }
     return $form;
+  }
+
+  private function getSubscriberTags(): array {
+    return array_map(function (TagEntity $tag): array {
+      return [
+        'id' => $tag->getId(),
+        'name' => $tag->getName(),
+      ];
+    }, $this->tagRepository->findAll());
   }
 }

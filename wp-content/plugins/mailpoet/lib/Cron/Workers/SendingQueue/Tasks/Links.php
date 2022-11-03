@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\Cron\Workers\StatsNotifications\NewsletterLinkRepository;
+use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\NewsletterLinkEntity;
 use MailPoet\Newsletter\Links\Links as NewsletterLinks;
 use MailPoet\Router\Endpoints\Track;
@@ -46,8 +47,8 @@ class Links {
     $this->trackingConfig = $trackingConfig;
   }
 
-  public function process($renderedNewsletter, $newsletter, $queue) {
-    [$renderedNewsletter, $links] = $this->hashAndReplaceLinks($renderedNewsletter, $newsletter->id, $queue->id);
+  public function process($renderedNewsletter, NewsletterEntity $newsletter, $queue) {
+    [$renderedNewsletter, $links] = $this->hashAndReplaceLinks($renderedNewsletter, $newsletter->getId(), $queue->id);
     $this->saveLinks($links, $newsletter, $queue);
     return $renderedNewsletter;
   }
@@ -66,8 +67,8 @@ class Links {
     ];
   }
 
-  public function saveLinks($links, $newsletter, $queue) {
-    return $this->newsletterLinks->save($links, $newsletter->id, $queue->id);
+  public function saveLinks($links, NewsletterEntity $newsletter, $queue) {
+    return $this->newsletterLinks->save($links, $newsletter->getId(), $queue->id);
   }
 
   public function getUnsubscribeUrl($queue, $subscriberId) {

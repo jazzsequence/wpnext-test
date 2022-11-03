@@ -53,36 +53,34 @@ class __TwigTemplate_5c71d57f60a0f5a4fc5d48d80259463fe103c80202fce3a75da88803acd
         $macros = $this->macros;
         // line 4
         echo "<div class=\"wrap\">
-  <h1 class=\"wp-heading-inline\">Automation</h1>
-
   <div id=\"mailpoet_automation\"></div>
 </div>
 ";
     }
 
-    // line 11
+    // line 9
     public function block_after_javascript($context, array $blocks = [])
     {
         $macros = $this->macros;
-        // line 12
+        // line 10
         echo "  <script type=\"text/javascript\">
     var mailpoet_automation_api = ";
-        // line 13
+        // line 11
         echo json_encode(($context["api"] ?? null));
         echo ";
+    var mailpoet_workflow_count = ";
+        // line 12
+        echo json_encode(($context["workflowCount"] ?? null));
+        echo ";
   </script>
-  ";
-        // line 15
-        echo $this->extensions['MailPoet\Twig\Assets']->generateJavascript("automation.js");
-        echo "
 ";
     }
 
-    // line 18
+    // line 16
     public function block_after_css($context, array $blocks = [])
     {
         $macros = $this->macros;
-        // line 19
+        // line 17
         echo $this->extensions['MailPoet\Twig\Assets']->generateStylesheet("mailpoet-automation.css");
         echo "
 ";
@@ -100,7 +98,7 @@ class __TwigTemplate_5c71d57f60a0f5a4fc5d48d80259463fe103c80202fce3a75da88803acd
 
     public function getDebugInfo()
     {
-        return array (  83 => 19,  79 => 18,  73 => 15,  68 => 13,  65 => 12,  61 => 11,  52 => 4,  48 => 3,  37 => 1,);
+        return array (  81 => 17,  77 => 16,  70 => 12,  66 => 11,  63 => 10,  59 => 9,  52 => 4,  48 => 3,  37 => 1,);
     }
 
     public function getSourceContext()

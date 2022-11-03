@@ -21,8 +21,17 @@ use MailPoetVendor\Symfony\Component\Validator\Constraints as Assert;
  * @ORM\Entity()
  * @ORM\Table(name="subscribers")
  * @ORM\HasLifecycleCallbacks
+ * @ORM\EntityListeners({"\MailPoet\Doctrine\EventListeners\SubscriberListener"})
  */
 class SubscriberEntity {
+  // hook names
+  public const HOOK_SUBSCRIBER_CREATED = 'mailpoet_subscriber_created';
+  public const HOOK_SUBSCRIBER_DELETED = 'mailpoet_subscriber_deleted';
+  public const HOOK_SUBSCRIBER_UPDATED = 'mailpoet_subscriber_updated';
+  public const HOOK_MULTIPLE_SUBSCRIBERS_CREATED = 'mailpoet_multiple_subscribers_created';
+  public const HOOK_MULTIPLE_SUBSCRIBERS_DELETED = 'mailpoet_multiple_subscribers_deleted';
+  public const HOOK_MULTIPLE_SUBSCRIBERS_UPDATED = 'mailpoet_multiple_subscribers_updated';
+
   // statuses
   const STATUS_BOUNCED = 'bounced';
   const STATUS_INACTIVE = 'inactive';
@@ -438,8 +447,16 @@ class SubscriberEntity {
   /**
    * @return Collection<int, SubscriberSegmentEntity>
    */
-  public function getSubscriberSegments() {
-    return $this->subscriberSegments;
+  public function getSubscriberSegments(?string $status = null) {
+    if (!is_null($status)) {
+      $criteria = Criteria::create()
+        ->where(Criteria::expr()->eq('status', SubscriberEntity::STATUS_SUBSCRIBED));
+      $subscriberSegments = $this->subscriberSegments->matching($criteria);
+    } else {
+      $subscriberSegments = $this->subscriberSegments;
+    }
+
+    return $subscriberSegments;
   }
 
   public function getSegments() {

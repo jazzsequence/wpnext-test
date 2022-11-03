@@ -8,11 +8,11 @@ if (!defined('ABSPATH')) exit;
 use MailPoet\DI\ContainerWrapper;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Newsletter\NewslettersRepository;
+use MailPoet\Newsletter\Options\NewsletterOptionFieldsRepository;
 use MailPoet\Settings\SettingsController;
 use MailPoet\Tasks\Sending as SendingTask;
 use MailPoet\Util\Helpers;
 use MailPoet\Util\Security;
-use MailPoet\WP\Functions as WPFunctions;
 
 /**
  * @property int $id
@@ -65,7 +65,7 @@ class Newsletter extends Model {
   public function __construct() {
     parent::__construct();
     $this->addValidations('type', [
-      'required' => WPFunctions::get()->__('Please specify a type.', 'mailpoet'),
+      'required' => __('Please specify a type.', 'mailpoet'),
     ]);
   }
 
@@ -161,7 +161,7 @@ class Newsletter extends Model {
       if (!$this->body || empty(json_decode($this->getBodyString()))) {
         $this->setError(
           Helpers::replaceLinkTags(
-            __('This is an empty email without any content and it cannot be sent. Please update [link]the email[/link].'),
+            __('This is an empty email without any content and it cannot be sent. Please update [link]the email[/link].', 'mailpoet'),
             'admin.php?page=mailpoet-newsletter-editor&id=' . $this->id
           )
         );
@@ -192,7 +192,13 @@ class Newsletter extends Model {
     return $this;
   }
 
+  /**
+   * @deprecated This method can be removed after 2022-11-11. Make sure it is removed together with
+   * \MailPoet\Models\NewsletterOption and \MailPoet\Models\NewsletterOptionField.
+   */
   public function duplicate($data = []) {
+    self::deprecationError(__METHOD__);
+
     $newsletterData = $this->asArray();
 
     // remove id so that it creates a new record
@@ -261,52 +267,6 @@ class Newsletter extends Model {
     return $duplicate;
   }
 
-  public function createNotificationHistory() {
-    $newsletterData = $this->asArray();
-
-    // remove id so that it creates a new record
-    unset($newsletterData['id']);
-
-    $data = array_merge(
-      $newsletterData,
-      [
-        'parent_id' => $this->id,
-        'type' => self::TYPE_NOTIFICATION_HISTORY,
-        'status' => self::STATUS_SENDING,
-        'unsubscribe_token' => Security::generateUnsubscribeToken(self::class),
-      ]
-    );
-
-    $notificationHistory = self::create();
-    $notificationHistory->hydrate($data);
-
-    // reset timestamps
-    $notificationHistory->set_expr('created_at', 'NOW()');
-    $notificationHistory->set_expr('updated_at', 'NOW()');
-    $notificationHistory->set_expr('deleted_at', 'NULL');
-
-    // reset hash
-    $notificationHistory->set('hash', null);
-
-    $notificationHistory->save();
-
-    if ($notificationHistory->getErrors() === false) {
-      // create relationships between notification history and segments
-      $segments = $this->segments()->findMany();
-
-      if (!empty($segments)) {
-        foreach ($segments as $segment) {
-          $relation = NewsletterSegment::create();
-          $relation->segmentId = $segment->id;
-          $relation->newsletterId = $notificationHistory->id;
-          $relation->save();
-        }
-      }
-    }
-
-    return $notificationHistory;
-  }
-
   public function asArray() {
     $model = parent::asArray();
 
@@ -334,7 +294,7 @@ class Newsletter extends Model {
       foreach ($links as $link) {
         $deletedSegments[] = [
           'id' => $link['segment_id'],
-          'name' => WPFunctions::get()->__('Deleted list', 'mailpoet'),
+          'name' => __('Deleted list', 'mailpoet'),
         ];
       }
       $this->segments = array_merge($this->segments, $deletedSegments);
@@ -379,15 +339,16 @@ class Newsletter extends Model {
 
   public static function filterWithOptions($orm, $type) {
     $orm = $orm->select(MP_NEWSLETTERS_TABLE . '.*');
-    $optionFields = NewsletterOptionField::findArray();
-    foreach ($optionFields as $optionField) {
-      if ($optionField['newsletter_type'] !== $type) {
+    $optionFieldsRepository = ContainerWrapper::getInstance()->get(NewsletterOptionFieldsRepository::class);
+    $optionFieldsEntities = $optionFieldsRepository->findAll();
+    foreach ($optionFieldsEntities as $optionField) {
+      if ($optionField->getNewsletterType() !== $type) {
         continue;
       }
       $orm = $orm->select_expr(
         'IFNULL(GROUP_CONCAT(CASE WHEN ' .
-        MP_NEWSLETTER_OPTION_FIELDS_TABLE . '.id=' . $optionField['id'] . ' THEN ' .
-        MP_NEWSLETTER_OPTION_TABLE . '.value END), NULL) as "' . $optionField['name'] . '"');
+        MP_NEWSLETTER_OPTION_FIELDS_TABLE . '.id=' . $optionField->getId() . ' THEN ' .
+        MP_NEWSLETTER_OPTION_TABLE . '.value END), NULL) as "' . $optionField->getName() . '"');
     }
     $orm = $orm
       ->left_outer_join(
@@ -425,7 +386,13 @@ class Newsletter extends Model {
     return $orm;
   }
 
+  /**
+   * @deprecated This method can be removed after 2022-11-11. Make sure it is removed together with
+   * \MailPoet\Models\NewsletterOption and \MailPoet\Models\NewsletterOptionField.
+   */
   public static function filterType($orm, $type = false, $group = false) {
+    self::deprecationError(__METHOD__);
+
     if (
       in_array($type, [
       self::TYPE_STANDARD,
@@ -496,7 +463,13 @@ class Newsletter extends Model {
     });
   }
 
+  /**
+   * @deprecated This method can be removed after 2022-11-11. Make sure it is removed together with
+   * \MailPoet\Models\NewsletterOption and \MailPoet\Models\NewsletterOptionField.
+   */
   public static function getWelcomeNotificationsForSegments($segments) {
+    self::deprecationError(__METHOD__);
+
     return NewsletterOption::tableAlias('options')
       ->select('options.newsletter_id')
       ->select('options.value', 'segment_id')
@@ -534,5 +507,12 @@ class Newsletter extends Model {
       return false;
     }
     return self::filter('filterWithOptions', $newsletter->type)->findOne($id);
+  }
+
+  private static function deprecationError($methodName) {
+    trigger_error(
+      'Calling ' . esc_html($methodName) . ' is deprecated and will be removed. Use \MailPoet\Newsletter\NewslettersRepository and \MailPoet\Entities\NewsletterEntity instead.',
+      E_USER_DEPRECATED
+    );
   }
 }

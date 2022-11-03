@@ -5,30 +5,33 @@ namespace MailPoet\Automation\Engine\Endpoints\Workflows;
 if (!defined('ABSPATH')) exit;
 
 
-use DateTimeImmutable;
+use MailPoet\API\REST\Request;
+use MailPoet\API\REST\Response;
 use MailPoet\Automation\Engine\API\Endpoint;
-use MailPoet\Automation\Engine\API\Request;
-use MailPoet\Automation\Engine\API\Response;
 use MailPoet\Automation\Engine\Builder\UpdateWorkflowController;
-use MailPoet\Automation\Engine\Workflows\Step;
-use MailPoet\Automation\Engine\Workflows\Workflow;
+use MailPoet\Automation\Engine\Mappers\WorkflowMapper;
+use MailPoet\Automation\Engine\Validation\WorkflowSchema;
 use MailPoet\Validator\Builder;
-use stdClass;
 
 class WorkflowsPutEndpoint extends Endpoint {
   /** @var UpdateWorkflowController */
   private $updateController;
 
+  /** @var WorkflowMapper */
+  private $workflowMapper;
+
   public function __construct(
-    UpdateWorkflowController $updateController
+    UpdateWorkflowController $updateController,
+    WorkflowMapper $workflowMapper
   ) {
     $this->updateController = $updateController;
+    $this->workflowMapper = $workflowMapper;
   }
 
   public function handle(Request $request): Response {
     $data = $request->getParams();
     $workflow = $this->updateController->updateWorkflow(intval($request->getParam('id')), $data);
-    return new Response($this->buildWorkflow($workflow));
+    return new Response($this->workflowMapper->buildWorkflow($workflow));
   }
 
   public static function getRequestSchema(): array {
@@ -36,25 +39,7 @@ class WorkflowsPutEndpoint extends Endpoint {
       'id' => Builder::integer()->required(),
       'name' => Builder::string()->minLength(1),
       'status' => Builder::string(),
-    ];
-  }
-
-  private function buildWorkflow(Workflow $workflow): array {
-    return [
-      'id' => $workflow->getId(),
-      'name' => $workflow->getName(),
-      'status' => $workflow->getStatus(),
-      'created_at' => $workflow->getCreatedAt()->format(DateTimeImmutable::W3C),
-      'updated_at' => $workflow->getUpdatedAt()->format(DateTimeImmutable::W3C),
-      'steps' => array_map(function (Step $step) {
-        return [
-          'id' => $step->getId(),
-          'type' => $step->getType(),
-          'key' => $step->getKey(),
-          'next_step_id' => $step->getNextStepId(),
-          'args' => $step->getArgs() ?: new stdClass(),
-        ];
-      }, $workflow->getSteps()),
+      'steps' => WorkflowSchema::getStepsSchema(),
     ];
   }
 }

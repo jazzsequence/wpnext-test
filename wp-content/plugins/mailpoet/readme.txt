@@ -3,7 +3,7 @@ Contributors: mailpoet
 Tags: email, email marketing, post notification, woocommerce emails, email automation, newsletter, newsletter builder, newsletter subscribers
 Requires at least: 5.6
 Tested up to: 6.0
-Stable tag: 3.93.0
+Stable tag: 3.102.0
 Requires PHP: 7.2
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -218,6 +218,91 @@ Check our [Knowledge Base](https://kb.mailpoet.com) or contact us through our [s
 6. WooCommerce emails
 
 == Changelog ==
+
+= 3.102.0 - 2022-11-01 =
+* Added: new subscribers hooks (https://github.com/mailpoet/mailpoet/pull/4443);
+* Improved: limit cron runs when execution limit exception is thrown;
+* Improved: list(s) are replaced with the site title on the subscription confirmation page.
+
+= 3.101.1 - 2022-10-24 =
+* Improved: simplified privacy and data sharing section in onboarding;
+* Improved: don't require any newsletter settings when saving a draft;
+* Fixed: an error in the checkout, when the shop has multiple automatic emails set up.
+
+= 3.101.0 - 2022-10-17 =
+* Added: new API method getSubscribersCount;
+* Added: new API method getSubscribers;
+* Improved: cron-related tasks;
+* Improved: confirm leaving Settings page when leaving without saving;
+* Improved: messaging when verifying an API key.
+
+= 3.100.2 - 2022-10-10 =
+* Fixed: scheduled newsletters not sending.
+
+= 3.100.1 - 2022-10-06 =
+* Fixed: In some instances the sending stuck because the EntityManager was closed.
+
+= 3.100.0 - 2022-10-03 =
+* Added: tagging subscribers when signed up via a form;
+* Improved: linux cron error message;
+* Fixed: paid MailPoet plan is offered in onboarding instead of a free MailPoet plan.
+
+= 3.99.1 - 2022-09-29 =
+* Fix issue with post notifications in MailPoet 3.99.
+
+= 3.99.0 - 2022-09-27 =
+* Added: any email address from a sender domain is automatically allowed for sending (MailPoet Sending Service only);
+* Fixed: some post notifications may fail to send.
+
+= 3.98.1 - 2022-09-21 =
+* Improved: minor changes and fixes.
+
+= 3.98.0 - 2022-09-19 =
+* Added: filter subscribers by clicking on tag badge;
+* Added: tag imported subscribers;
+* Improved: error handling on the send email page;
+* Fixed: possible memory issue on the segments page.
+
+= 3.97.0 - 2022-09-12 =
+* Improved: added a link to start domain authentication when required;
+* Improved: domain and email verification process;
+* Changed: we are dropping number 3 from the plugin name, so from now on, "MailPoet 3" becomes just "MailPoet";
+* Fixed: lists not available when filtering trashed subscribers;
+* Fixed: broken translations when typography quotes changed.
+
+= 3.96.1 - 2022-08-31 =
+* Fixed: the settings page renders blank in some cases.
+
+= 3.96.0 - 2022-08-29 =
+* Improved: don't show spacer after last item in breadcrumbs;
+* Improved: don't require a list to save email draft.
+
+= 3.95.1 - 2022-08-22 =
+* Added: UTM parameters on the MailPoet logo when sending with a free MailPoet plan;
+* Added: button to play video tutorial in email editor;
+* Added: new SMTP filters;
+* Improved: validate sender email immediately on the send page when using MailPoet Sending Service;
+* Improved: share System Info data when contacting MailPoet Support from the plugin;
+* Fixed: wrong position of tags autocomplete.
+
+= 3.95.0 - 2022-08-15 =
+* Added: the domain verification process can be performed in the plugin;
+* Updated: Gutenberg dependencies;
+* Fixed: emails are labeled as "Preview" on System Status page;
+* Removed support for migration data from MailPoet2.
+
+= 3.94.0 - 2022-08-08 =
+* Added: filter subscribers by a tag;
+* Added: new WordPress cron task scheduler method;
+* Improved: tooltip content when hovering over list name;
+* Improved: extract name from email when used as first name in welcome wizard;
+* Improved: radio buttons and checkboxes accessibility in forms.
+
+= 3.93.1 - 2022-08-02 =
+* Added: link to MailPoet settings from Plugins page;
+* Changed: email signup step removed from the MailPoet setup;
+* Fixed: a notice to send all emails through MailPoet can't be dismissed;
+* Fixed: MailPoet menu icon on WordPress.com.
 
 = 3.93.0 - 2022-07-25 =
 * Added: premium feature: new segment by subscriber tags.

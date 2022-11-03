@@ -6,13 +6,13 @@ if (!defined('ABSPATH')) exit;
 
 
 use DateTime;
+use MailPoet\Config\SubscriberChangesNotifier;
 use MailPoet\Entities\CustomFieldEntity;
 use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SubscriberCustomFieldEntity;
 use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Entities\SubscriberSegmentEntity;
 use MailPoet\Segments\DynamicSegments\FilterHandler;
-use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Doctrine\DBAL\Connection;
 use MailPoetVendor\Doctrine\DBAL\Driver\Statement;
 use MailPoetVendor\Doctrine\DBAL\Query\QueryBuilder;
@@ -49,14 +49,19 @@ class ImportExportRepository {
   /** @var EntityManager */
   protected $entityManager;
 
+  /** @var SubscriberChangesNotifier */
+  private $subscriberChangesNotifier;
+
   /** @var FilterHandler */
   private $filterHandler;
 
   public function __construct(
     EntityManager $entityManager,
+    SubscriberChangesNotifier $changesNotifier,
     FilterHandler $filterHandler
   ) {
     $this->entityManager = $entityManager;
+    $this->subscriberChangesNotifier = $changesNotifier;
     $this->filterHandler = $filterHandler;
   }
 
@@ -99,10 +104,12 @@ class ImportExportRepository {
       $rows[] = "(" . implode(', ', $paramNames) . ")";
     }
 
-    return (int)$this->entityManager->getConnection()->executeStatement("
+    $count = (int)$this->entityManager->getConnection()->executeStatement("
       INSERT IGNORE INTO {$tableName} (`" . implode("`, `", $columns) . "`) VALUES
       " . implode(", \n", $rows) . "
     ", $parameters);
+    $this->notifyCreations($className, $columns, $data);
+    return $count;
   }
 
   public function updateMultiple(
@@ -159,12 +166,14 @@ class ImportExportRepository {
       $updateColumns[] = 'deleted_at = NULL';
     }
 
-    return (int)$this->entityManager->getConnection()->executeStatement("
+    $count = (int)$this->entityManager->getConnection()->executeStatement("
       UPDATE {$tableName} SET
       " . implode(", \n", $updateColumns) . "
       WHERE
       " . implode(' AND ', $keyColumnsConditions) . "
     ", $parameters, $parameterTypes);
+    $this->notifyUpdates($className, $columns, $data);
+    return $count;
   }
 
   public function getSubscribersBatchBySegment(?SegmentEntity $segment, int $limit, int $offset = 0): array {
@@ -185,7 +194,7 @@ class ImportExportRepository {
     if (!$segment) {
       // if there are subscribers who do not belong to any segment, use
       // a CASE function to group them under "Not In Segment"
-      $qb->addSelect("'" . WPFunctions::get()->__('Not In Segment', 'mailpoet') . "' AS segment_name")
+      $qb->addSelect("'" . __('Not In Segment', 'mailpoet') . "' AS segment_name")
         ->leftJoin($subscriberTable, $subscriberTable, 's2', "{$subscriberTable}.id = s2.id")
         ->leftJoin('s2', $subscriberSegmentTable, 'ssg2', "s2.id = ssg2.subscriber_id AND ssg2.status = :statusSubscribed AND {$segmentTable}.id <> ssg2.segment_id")
         ->leftJoin('ssg2', $segmentTable, 'sg2', 'ssg2.segment_id = sg2.id AND sg2.deleted_at IS NULL')
@@ -256,5 +265,37 @@ class ImportExportRepository {
       ->leftJoin($subscriberCustomFieldTable, $customFieldsTable, $customFieldsTable, "{$customFieldsTable}.id = {$subscriberCustomFieldTable}.custom_field_id");
 
     return $qb;
+  }
+
+  private function notifyCreations(string $className, array $columns, array $data): void {
+    if ($className === SubscriberEntity::class) {
+      $ids = $this->getIdsByEmail($className, $columns, $data);
+      $this->subscriberChangesNotifier->subscribersCreated($ids);
+    }
+  }
+
+  private function notifyUpdates(string $className, array $columns, array $data): void {
+    if ($className === SubscriberEntity::class) {
+      $ids = $this->getIdsByEmail($className, $columns, $data);
+      $this->subscriberChangesNotifier->subscribersUpdated($ids);
+    }
+  }
+
+  private function getIdsByEmail(string $className, array $columns, array $data): array {
+    $tableName = $this->getTableName($className);
+    $emailIndex = array_search('email', $columns);
+    if ($emailIndex === false) {
+      return [];
+    }
+    $emails = [];
+    foreach ($data as $item) {
+      $emails[] = $item[$emailIndex];
+    }
+    // get ids for updated/created rows
+    return $this->entityManager->getConnection()->executeQuery("
+      SELECT id
+      FROM {$tableName}
+      WHERE email IN (:emails)
+    ", ['emails' => $emails], ['emails' => Connection::PARAM_STR_ARRAY])->fetchFirstColumn();
   }
 }
