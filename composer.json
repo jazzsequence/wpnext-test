@@ -26,5 +26,10 @@
         "allow-plugins": {
             "composer/installers": true
         }
+    },
+    "scripts": {
+        "wordpress-update": [
+            "bash ./scripts/update-pre-load.sh"
+        ]
     }
 }
