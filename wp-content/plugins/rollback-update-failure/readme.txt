@@ -5,9 +5,9 @@ Contributors: afragen, aristath, costdev, pbiron
 Tags: feature plugin, update, failure
 License: MIT
 Requires PHP: 5.6
-Requires at least: 6.0
-Tested up to: 6.0
-Stable Tag: 3.3.1
+Requires at least: 6.2
+Tested up to: 6.2
+Stable Tag: 5.0.2
 
 This is a feature plugin for testing automatic rollback of a plugin or theme update failure.
 
@@ -15,7 +15,7 @@ This is a feature plugin for testing automatic rollback of a plugin or theme upd
 
 This is a feature plugin for testing automatic rollback of a plugin or theme update failure.
 
-It is based on the [PR](https://github.com/WordPress/wordpress-develop/pull/1492) for [#51857](https://core.trac.wordpress.org/ticket/51857). Current [PR #2225](https://github.com/WordPress/wordpress-develop/pull/2225/) for inclusion to core.
+It is based on the [PR](https://github.com/WordPress/wordpress-develop/pull/1492) for [#51857](https://core.trac.wordpress.org/ticket/51857). Current [PR #2225](https://github.com/WordPress/wordpress-develop/pull/2225/) and [PR #3958](https://github.com/WordPress/wordpress-develop/pull/3958) for inclusion to core.
 
 * When updating a plugin/theme, the old version of the plugin/theme gets moved to a `wp-content/temp-backup/plugins/PLUGINNAME` or `wp-content/temp-backup/themes/THEMENAME` folder. The reason we chose to **move** instead of **zip**, is because zipping/unzipping are very resources-intensive processes, and would increase the risk on low-end, shared hosts. Moving on the other hand is performed instantly and won't be a bottleneck.
 * If the update fails, then the "backup" we kept in the `temp-backup` folder gets restored to its original location
@@ -25,17 +25,6 @@ It is based on the [PR](https://github.com/WordPress/wordpress-develop/pull/1492
   * Check there is enough disk-space available to safely perform updates.
 
 To avoid confusion: The "temp-backup" folder will NOT be used to "roll-back" a plugin to a previous version after an update. This folder will simply contain a **transient backup** of the previous version of a plugins/themes getting updated, and as soon as the update process finishes, the folder will be empty.
-
-This plugin will automatically deactivate itself once the feature has been committed to core.
-
-### VirtualBox
-
-If you are running a virtualized server and using VirtualBox your hosting environment will need to add a [mu-plugin and watcher script](https://github.com/costdev/wp-virtualbox-testing) to overcome VirtualBox's rename() issues. There are some known issues where rename() in VirtualBox can fail on shared folders
-without reporting an error properly.
-
-More details:
-https://www.virtualbox.org/ticket/8761#comment:24
-https://www.virtualbox.org/ticket/17971
 
 ## Testing
 
@@ -64,6 +53,40 @@ Logo from a meme generator. [Original artwork](http://hyperboleandahalf.blogspot
 ## Changelog
 
 Please see the Github repository: [CHANGELOG.md](https://github.com/afragen/rollback-update-failure/blob/main/CHANGELOG.md).
+
+#### 5.0.2 / 2023-02-05
+* make variables static to retain value during auto-updater run
+
+#### 5.0.1 / 2023-02-03
+* ensure `move_dir()` called with 3rd parameter as `move_dir($from, $to, true)`
+
+#### 5.0.0 / 2023-02-02
+* during `WP_Rollback_Auto_Update::restart_updates` remove shutdown hook for `WP_Upgrader::delete_temp_backup`
+* skip second sequential call to `create_backup`
+* now require at least WP 6.2-beta1, deactivate if requirements not met
+* Faster Updates no longer required as [committed to core](https://core.trac.wordpress.org/changeset/55204)
+
+#### 4.1.2 / 2023-01-25
+* update `move_dir()` for new parameter
+
+#### 4.1.1 / 2023-01-20
+* ensure specific functions are loaded to check for Faster Updates
+
+#### 4.1.0 / 2023-01-19
+* change directory name of rollback to distinguish from update.
+* update for `move_dir()` possibly returning `WP_Error`
+* fix `sprintf` error
+
+#### 4.0.0 / 2023-01-10
+* cast `upgrade_plugins` transient to object, overkill but someone reported an error
+* merge Rollback Auto Update
+* require [Faster Updates](https://github.com/afragen/faster-updates) for `move_dir()`, auto-install/activate
+* no longer requires special filter in `WP_Upgrader::install_package`
+* testing only on `update-core.php`
+
+#### 3.3.2 / 2022-12-30
+* update for [new filter hook in WP_Upgrader::install_package](https://github.com/WordPress/wordpress-develop/pull/3791)
+* update nonce verification for failure simulator
 
 #### 3.3.1 / 2022-10-25
 * use `array_unique` when saving simulated failure options

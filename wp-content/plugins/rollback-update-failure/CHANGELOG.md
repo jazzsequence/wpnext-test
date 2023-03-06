@@ -1,5 +1,40 @@
 [unreleased]
 
+#### 5.0.2 / 2023-02-05
+* make variables static to retain value during auto-update run
+
+#### 5.0.1 / 2023-02-03
+* ensure `move_dir()` called with 3rd parameter as `move_dir($from, $to, true)`
+
+#### 5.0.0 / 2023-02-02
+* during `WP_Rollback_Auto_Update::restart_updates` remove shutdown hook for `WP_Upgrader::delete_temp_backup`
+* skip second sequential call to `create_backup`
+* now require at least WP 6.2-beta1, deactivate if requirements not met
+* Faster Updates no longer required as [committed to core](https://core.trac.wordpress.org/changeset/55204)
+
+#### 4.1.2 / 2023-01-25
+* update `move_dir()` for new parameter
+
+#### 4.1.1 / 2023-01-20
+* ensure specific functions are loaded to check for Faster Updates
+
+#### 4.1.0 / 2023-01-20
+* change directory name of rollback to distinguish from update.
+* update for `move_dir()` possibly returning `WP_Error`
+* fix `sprintf` error
+* remove auto-install/activate of Faster Updates
+
+#### 4.0.0 / 2023-01-10
+* cast `upgrade_plugins` transient to object, overkill but someone reported an error
+* merge Rollback Auto Update
+* require [Faster Updates](https://github.com/afragen/faster-updates) for `move_dir()`, auto-install/activate
+* no longer requires special filter in `WP_Upgrader::install_package`
+* testing only on `update-core.php`
+
+#### 3.3.2 / 2022-12-30
+* update for [new filter hook in WP_Upgrader::install_package](https://github.com/WordPress/wordpress-develop/pull/3791)
+* update nonce verification for failure simulator
+
 #### 3.3.1 / 2022-10-25
 * use `array_unique` when saving simulated failure options
 * load failure simulator in `init` hook for WP-CLI

@@ -69,7 +69,7 @@ if ( ! class_exists( '\Rollback_Update_Failure\Testing\Failure_Simulator' ) ) {
 			$simulate_failure_plugins = get_option( 'rollback_simulate_failure_plugins' );
 			if ( empty( static::$updates ) ) {
 				$current         = get_site_transient( 'update_plugins' );
-				static::$updates = property_exists( $current, 'response' ) ? array_keys( $current->response ) : array();
+				static::$updates = property_exists( (object) $current, 'response' ) ? array_keys( $current->response ) : array();
 			}
 
 			if ( ! \in_array( $plugin_file_decoded, static::$updates, true ) ) {
@@ -138,7 +138,13 @@ if ( ! class_exists( '\Rollback_Update_Failure\Testing\Failure_Simulator' ) ) {
 		 * @return void
 		 */
 		public function handle_simulated_failure() {
-			if ( ! isset( $_GET['plugin'] ) || ! isset( $_GET['action'] ) ) {
+			if ( ! isset( $_GET['_wpnonce'], $_GET['plugin'], $_GET['action'] ) ) {
+				return;
+			}
+
+			if ( ! ( wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'simulate_failure_' . sanitize_text_field( wp_unslash( $_GET['plugin'] ) ) )
+				|| wp_verify_nonce( sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ), 'do_not_simulate_failure_' . sanitize_text_field( wp_unslash( $_GET['plugin'] ) ) ) )
+			) {
 				return;
 			}
 
