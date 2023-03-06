@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\AutomaticEmails\WooCommerce\Events;
 
@@ -42,7 +42,7 @@ class FirstPurchase {
     WCHelper $helper = null
   ) {
     if ($helper === null) {
-      $helper = new WCHelper();
+      $helper = ContainerWrapper::getInstance()->get(WCHelper::class);
     }
     $this->helper = $helper;
     $this->scheduler = ContainerWrapper::getInstance()->get(AutomaticEmailScheduler::class);
@@ -78,9 +78,28 @@ class FirstPurchase {
       'title' => __('First Purchase', 'mailpoet'),
       'description' => __('Let MailPoet send an email to customers who make their first purchase.', 'mailpoet'),
       'listingScheduleDisplayText' => __('Email sent when a customer makes their first purchase.', 'mailpoet'),
+      'afterDelayText' => __('after the first purchase', 'mailpoet'),
       'badge' => [
         'text' => __('Must-have', 'mailpoet'),
         'style' => 'red',
+      ],
+      'timeDelayValues' => [
+        'immediate' => [
+          'text' => __('immediately', 'mailpoet'),
+          'displayAfterTimeNumberField' => false,
+        ],
+        'hours' => [
+          'text' => __('hour(s)', 'mailpoet'),
+          'displayAfterTimeNumberField' => true,
+        ],
+        'days' => [
+          'text' => __('day(s)', 'mailpoet'),
+          'displayAfterTimeNumberField' => true,
+        ],
+        'weeks' => [
+          'text' => __('week(s)', 'mailpoet'),
+          'displayAfterTimeNumberField' => true,
+        ],
       ],
       'shortcodes' => [
         [

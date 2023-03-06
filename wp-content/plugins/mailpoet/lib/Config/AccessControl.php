@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Config;
 
@@ -70,6 +70,7 @@ class AccessControl {
         'mailpoet_permission_manage_automations',
         [
           'administrator',
+          'editor',
         ]
       ),
     ];

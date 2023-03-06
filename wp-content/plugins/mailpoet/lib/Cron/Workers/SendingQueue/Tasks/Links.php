@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Cron\Workers\SendingQueue\Tasks;
 
@@ -8,12 +8,12 @@ if (!defined('ABSPATH')) exit;
 use MailPoet\Cron\Workers\StatsNotifications\NewsletterLinkRepository;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\NewsletterLinkEntity;
+use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Newsletter\Links\Links as NewsletterLinks;
 use MailPoet\Router\Endpoints\Track;
 use MailPoet\Router\Router;
 use MailPoet\Settings\TrackingConfig;
 use MailPoet\Subscribers\LinkTokens;
-use MailPoet\Subscribers\SubscribersRepository;
 use MailPoet\Subscription\SubscriptionUrlFactory;
 use MailPoet\Util\Helpers;
 
@@ -24,9 +24,6 @@ class Links {
   /** @var NewsletterLinks */
   private $newsletterLinks;
 
-  /** @var SubscribersRepository */
-  private $subscribersRepository;
-
   /** @var NewsletterLinkRepository */
   private $newsletterLinkRepository;
 
@@ -36,13 +33,11 @@ class Links {
   public function __construct(
     LinkTokens $linkTokens,
     NewsletterLinks $newsletterLinks,
-    SubscribersRepository $subscribersRepository,
     NewsletterLinkRepository $newsletterLinkRepository,
     TrackingConfig $trackingConfig
   ) {
     $this->linkTokens = $linkTokens;
     $this->newsletterLinks = $newsletterLinks;
-    $this->subscribersRepository = $subscribersRepository;
     $this->newsletterLinkRepository = $newsletterLinkRepository;
     $this->trackingConfig = $trackingConfig;
   }
@@ -71,12 +66,11 @@ class Links {
     return $this->newsletterLinks->save($links, $newsletter->getId(), $queue->id);
   }
 
-  public function getUnsubscribeUrl($queue, $subscriberId) {
-    $subscriber = $this->subscribersRepository->findOneById($subscriberId);
+  public function getUnsubscribeUrl($queueId, SubscriberEntity $subscriber = null) {
     if ($this->trackingConfig->isEmailTrackingEnabled() && $subscriber) {
       $linkHash = $this->newsletterLinkRepository->findOneBy(
         [
-          'queue' => $queue->id,
+          'queue' => $queueId,
           'url' => NewsletterLinkEntity::INSTANT_UNSUBSCRIBE_LINK_SHORT_CODE,
         ]
       );
@@ -87,7 +81,7 @@ class Links {
       $data = $this->newsletterLinks->createUrlDataObject(
         $subscriber->getId(),
         $this->linkTokens->getToken($subscriber),
-        $queue->id,
+        $queueId,
         $linkHash->getHash(),
         false
       );
@@ -98,8 +92,13 @@ class Links {
       );
     } else {
       $subscriptionUrlFactory = SubscriptionUrlFactory::getInstance();
-      $url = $subscriptionUrlFactory->getUnsubscribeUrl($subscriber, $queue->id);
+      $url = $subscriptionUrlFactory->getUnsubscribeUrl($subscriber, $queueId);
     }
     return $url;
+  }
+
+  public function getOneClickUnsubscribeUrl($queueId, SubscriberEntity $subscriber): string {
+    $subscriptionUrlFactory = SubscriptionUrlFactory::getInstance();
+    return $subscriptionUrlFactory->getUnsubscribeUrl($subscriber, $queueId);
   }
 }

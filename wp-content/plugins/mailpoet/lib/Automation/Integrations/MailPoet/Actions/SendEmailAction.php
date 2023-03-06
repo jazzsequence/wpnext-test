@@ -25,6 +25,8 @@ use MailPoet\Validator\Schema\ObjectSchema;
 use Throwable;
 
 class SendEmailAction implements Action {
+  const KEY = 'mailpoet:send-email';
+
   /** @var SettingsController */
   private $settings;
 
@@ -55,7 +57,7 @@ class SendEmailAction implements Action {
   }
 
   public function getKey(): string {
-    return 'mailpoet:send-email';
+    return self::KEY;
   }
 
   public function getName(): string {
@@ -63,20 +65,29 @@ class SendEmailAction implements Action {
   }
 
   public function getArgsSchema(): ObjectSchema {
-    // strings are required but some can be empty ('')
-    $string = Builder::string()->required()->default('');
-    $nonEmptyString = Builder::string()->required()->minLength(1);
+    $nameDefault = $this->settings->get('sender.name');
+    $addressDefault = $this->settings->get('sender.address');
+    $replyToNameDefault = $this->settings->get('reply_to.name');
+    $replyToAddressDefault = $this->settings->get('reply_to.address');
 
+    $nonEmptyString = Builder::string()->required()->minLength(1);
     return Builder::object([
+      // required fields
       'email_id' => Builder::integer()->required(),
       'name' => $nonEmptyString->default(__('Send email', 'mailpoet')),
       'subject' => $nonEmptyString->default(__('Subject', 'mailpoet')),
-      'preheader' => $string,
-      'sender_name' => $nonEmptyString->default($this->settings->get('sender.name', '')),
-      'sender_address' => $nonEmptyString->default($this->settings->get('sender.address', '')),
-      'reply_to_name' => $string->default($this->settings->get('reply_to.name', '')),
-      'reply_to_address' => $nonEmptyString->default($this->settings->get('reply_to.address', '')),
-      'ga_campaign' => $string,
+      'preheader' => Builder::string()->required()->default(''),
+      'sender_name' => $nonEmptyString->default($nameDefault),
+      'sender_address' => $nonEmptyString->formatEmail()->default($addressDefault),
+
+      // optional fields
+      'reply_to_name' => ($replyToNameDefault && $replyToNameDefault !== $nameDefault)
+        ? Builder::string()->minLength(1)->default($replyToNameDefault)
+        : Builder::string()->minLength(1),
+      'reply_to_address' => ($replyToAddressDefault && $replyToAddressDefault !== $addressDefault)
+        ? Builder::string()->formatEmail()->default($replyToAddressDefault)
+        : Builder::string()->formatEmail(),
+      'ga_campaign' => Builder::string()->minLength(1),
     ]);
   }
 

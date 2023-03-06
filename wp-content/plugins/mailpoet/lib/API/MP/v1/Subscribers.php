@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\API\MP\v1;
 
@@ -8,7 +8,6 @@ if (!defined('ABSPATH')) exit;
 use MailPoet\API\JSON\ResponseBuilders\SubscribersResponseBuilder;
 use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SubscriberEntity;
-use MailPoet\Features\FeaturesController;
 use MailPoet\Listing\ListingDefinition;
 use MailPoet\Newsletter\Scheduler\WelcomeScheduler;
 use MailPoet\Segments\SegmentsRepository;
@@ -57,9 +56,6 @@ class Subscribers {
   /** @var SubscriberSaveController */
   private $subscriberSaveController;
 
-  /** @var FeaturesController */
-  private $featuresController;
-
   /** @var RequiredCustomFieldValidator */
   private $requiredCustomFieldsValidator;
 
@@ -79,7 +75,6 @@ class Subscribers {
     SubscriberSaveController $subscriberSaveController,
     SubscribersResponseBuilder $subscribersResponseBuilder,
     WelcomeScheduler $welcomeScheduler,
-    FeaturesController $featuresController,
     RequiredCustomFieldValidator $requiredCustomFieldsValidator,
     SubscriberListingRepository $subscriberListingRepository,
     WPFunctions $wp
@@ -93,7 +88,6 @@ class Subscribers {
     $this->subscriberSaveController = $subscriberSaveController;
     $this->subscribersResponseBuilder = $subscribersResponseBuilder;
     $this->welcomeScheduler = $welcomeScheduler;
-    $this->featuresController = $featuresController;
     $this->requiredCustomFieldsValidator = $requiredCustomFieldsValidator;
     $this->wp = $wp;
     $this->subscriberListingRepository = $subscriberListingRepository;
@@ -205,10 +199,7 @@ class Subscribers {
       }
 
       // when global status changes to subscribed, fire subscribed hook for all subscribed segments
-      if (
-        $this->featuresController->isSupported(FeaturesController::AUTOMATION)
-        && $subscriber->getStatus() === SubscriberEntity::STATUS_SUBSCRIBED
-      ) {
+      if ($subscriber->getStatus() === SubscriberEntity::STATUS_SUBSCRIBED) {
         $subscriberSegments = $subscriber->getSubscriberSegments();
         foreach ($subscriberSegments as $subscriberSegment) {
           if ($subscriberSegment->getStatus() === SubscriberEntity::STATUS_SUBSCRIBED) {

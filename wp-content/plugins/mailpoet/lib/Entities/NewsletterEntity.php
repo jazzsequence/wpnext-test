@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Entities;
 
@@ -33,12 +33,21 @@ class NewsletterEntity {
   const TYPE_NOTIFICATION_HISTORY = 'notification_history';
   const TYPE_WC_TRANSACTIONAL_EMAIL = 'wc_transactional';
   const TYPE_RE_ENGAGEMENT = 're_engagement';
+  const TYPE_CONFIRMATION_EMAIL_CUSTOMIZER = 'confirmation_email';
 
   // standard newsletters
   const STATUS_DRAFT = 'draft';
   const STATUS_SCHEDULED = 'scheduled';
   const STATUS_SENDING = 'sending';
   const STATUS_SENT = 'sent';
+
+  /**
+   * Newsletters that their body HTML can get re-generated
+   * @see NewsletterSaveController::updateQueue
+   */
+  const TYPES_WITH_RESETTABLE_BODY = [
+    NewsletterEntity::TYPE_STANDARD,
+  ];
 
   // automatic newsletters status
   const STATUS_ACTIVE = 'active';

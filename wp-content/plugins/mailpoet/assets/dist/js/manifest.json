@@ -16,15 +16,10 @@
   "commons.js": "commons.js",
   "skins/ui/oxide/skin.css": "skins/ui/oxide/skin.css",
   "skins/ui/oxide/skin.min.css": "skins/ui/oxide/skin.min.css",
-  "skins/ui/oxide/skin.mobile.css": "skins/ui/oxide/skin.mobile.css",
   "skins/ui/oxide/content.css": "skins/ui/oxide/content.css",
   "skins/ui/oxide/content.inline.css": "skins/ui/oxide/content.inline.css",
   "skins/ui/oxide/content.min.css": "skins/ui/oxide/content.min.css",
   "skins/ui/oxide/content.inline.min.css": "skins/ui/oxide/content.inline.min.css",
-  "skins/ui/oxide/skin.mobile.min.css": "skins/ui/oxide/skin.mobile.min.css",
-  "skins/ui/oxide/fonts/tinymce-mobile.woff": "skins/ui/oxide/fonts/tinymce-mobile.woff",
   "skins/ui/oxide/skin.shadowdom.css": "skins/ui/oxide/skin.shadowdom.css",
-  "skins/ui/oxide/skin.shadowdom.min.css": "skins/ui/oxide/skin.shadowdom.min.css",
-  "skins/ui/oxide/content.mobile.css": "skins/ui/oxide/content.mobile.css",
-  "skins/ui/oxide/content.mobile.min.css": "skins/ui/oxide/content.mobile.min.css"
+  "skins/ui/oxide/skin.shadowdom.min.css": "skins/ui/oxide/skin.shadowdom.min.css"
 }

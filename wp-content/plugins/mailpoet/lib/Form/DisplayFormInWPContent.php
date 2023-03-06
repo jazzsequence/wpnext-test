@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Form;
 
@@ -10,6 +10,7 @@ use MailPoet\Config\Renderer as TemplateRenderer;
 use MailPoet\Entities\FormEntity;
 use MailPoet\Subscribers\SubscribersRepository;
 use MailPoet\Subscribers\SubscriberSubscribeController;
+use MailPoet\WooCommerce\Helper as WCHelper;
 use MailPoet\WP\Functions as WPFunctions;
 
 class DisplayFormInWPContent {
@@ -56,6 +57,13 @@ class DisplayFormInWPContent {
   /** @var SubscriberSubscribeController */
   private $subscriberSubscribeController;
 
+  /** @var WCHelper */
+  private $woocommerceHelper;
+
+  private $wooShopPageId = null;
+
+  private $inWooProductLoop = false;
+
   public function __construct(
     WPFunctions $wp,
     FormsRepository $formsRepository,
@@ -63,7 +71,8 @@ class DisplayFormInWPContent {
     AssetsController $assetsController,
     TemplateRenderer $templateRenderer,
     SubscriberSubscribeController $subscriberSubscribeController,
-    SubscribersRepository $subscribersRepository
+    SubscribersRepository $subscribersRepository,
+    WCHelper $woocommerceHelper
   ) {
     $this->wp = $wp;
     $this->formsRepository = $formsRepository;
@@ -72,6 +81,7 @@ class DisplayFormInWPContent {
     $this->templateRenderer = $templateRenderer;
     $this->subscriberSubscribeController = $subscriberSubscribeController;
     $this->subscribersRepository = $subscribersRepository;
+    $this->woocommerceHelper = $woocommerceHelper;
   }
 
   /**
@@ -80,7 +90,7 @@ class DisplayFormInWPContent {
    * @param mixed $content
    * @return string|mixed
    */
-  public function display($content = null) {
+  private function display($content = null) {
     if (!is_string($content) || !$this->shouldDisplay()) return $content;
 
     $forms = $this->getForms();
@@ -96,6 +106,16 @@ class DisplayFormInWPContent {
     return $result;
   }
 
+  public function contentDisplay($content = null) {
+    $this->inWooProductLoop = false;
+    return $this->display($content);
+  }
+
+  public function wooProductListDisplay($content = null) {
+    $this->inWooProductLoop = true;
+    return $this->display($content);
+  }
+
   private function shouldDisplay(): bool {
     $result = true;
     // This is a fix Yoast plugin and Shapely theme compatibility
@@ -107,9 +127,26 @@ class DisplayFormInWPContent {
     }
     // this code ensures that we display the form only on a page which is related to single post
     if (!$this->wp->isSingle() && !$this->wp->isPage()) $result = $this->wp->applyFilters('mailpoet_display_form_is_single', false);
+
+    // Ensure form does not show up multiple times when called from the woocommerce_product_loop_end filter
+    if ($this->inWooProductLoop) $result = $this->displayFormInProductListPage();
+
     $noFormsCache = $this->wp->getTransient(DisplayFormInWPContent::NO_FORM_TRANSIENT_KEY);
     if ($noFormsCache === '1') $result = false;
     return $result;
+  }
+
+  private function displayFormInProductListPage(): bool {
+    $displayCheck = $this->wp->applyFilters('mailpoet_display_form_in_product_listing', true);
+
+    $shopPageId = $this->woocommerceHelper->wcGetPageId('shop');
+    $this->wooShopPageId = $shopPageId && $shopPageId > 0 ? $shopPageId : null;
+
+    if ($displayCheck && !is_null($this->wooShopPageId) && $this->wp->isPage($this->wooShopPageId)) {
+      return true;
+    }
+
+    return $displayCheck && $this->wp->isArchive() && $this->wp->isPostTypeArchive('product');
   }
 
   private function saveNoForms() {
@@ -243,17 +280,23 @@ class DisplayFormInWPContent {
       return true;
     }
 
+    if ($this->displayFormInProductListPage()) {
+      // Allow form display on Woo Shop listing page
+      if (is_null($this->wooShopPageId)) return false;
+      if ($this->shouldDisplayFormOnPost($setup, 'pages', $this->wooShopPageId)) return true;
+    }
+
     return false;
   }
 
-  private function shouldDisplayFormOnPost(array $setup, string $postsKey): bool {
+  private function shouldDisplayFormOnPost(array $setup, string $postsKey, $postId = null): bool {
     if (!isset($setup[$postsKey])) {
       return false;
     }
     if (isset($setup[$postsKey]['all']) && $setup[$postsKey]['all'] === '1') {
       return true;
     }
-    $post = $this->wp->getPost(null, ARRAY_A);
+    $post = $this->wp->getPost($postId, ARRAY_A);
     if (isset($setup[$postsKey]['selected']) && in_array($post['ID'], $setup[$postsKey]['selected'])) {
       return true;
     }

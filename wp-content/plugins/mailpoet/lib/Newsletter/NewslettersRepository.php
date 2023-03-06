@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Newsletter;
 
@@ -66,6 +66,37 @@ class NewslettersRepository extends Repository {
       ->orderBy('n.subject')
       ->getQuery()
       ->getResult();
+  }
+
+  public function getCountForStatusAndTypes(string $status, array $types): int {
+    return intval($this->entityManager
+      ->createQueryBuilder()
+      ->select('COUNT(n.id)')
+      ->from(NewsletterEntity::class, 'n')
+      ->where('n.status = :status')
+      ->andWhere('n.deletedAt is null')
+      ->andWhere('n.type IN (:types)')
+      ->setParameter('status', $status)
+      ->setParameter('types', $types)
+      ->getQuery()
+      ->getSingleScalarResult());
+  }
+
+  public function getCountOfActiveAutomaticEmailsForEvent(string $event): int {
+    return intval($this->entityManager->createQueryBuilder()
+      ->select('COUNT(n.id)')
+      ->from(NewsletterEntity::class, 'n')
+      ->where('n.status = :status')
+      ->andWhere('n.deletedAt IS NULL')
+      ->andWhere('n.type = :type')
+      ->join('n.options', 'o', Join::WITH, 'o.value = :event')
+      ->join('o.optionField', 'f', Join::WITH, 'f.name = :nameEvent AND f.newsletterType = :type')
+      ->setParameter('status', NewsletterEntity::STATUS_ACTIVE)
+      ->setParameter('nameEvent', NewsletterOptionFieldEntity::NAME_EVENT)
+      ->setParameter('type', NewsletterEntity::TYPE_AUTOMATIC)
+      ->setParameter('event', $event)
+      ->getQuery()
+      ->getSingleScalarResult());
   }
 
   /**
@@ -161,10 +192,12 @@ class NewslettersRepository extends Repository {
       }
     }
 
-    return [
+    $data = [
       'welcome_newsletters_count' => $analyticsMap[NewsletterEntity::TYPE_WELCOME] ?? 0,
       'notifications_count' => $analyticsMap[NewsletterEntity::TYPE_NOTIFICATION] ?? 0,
       'automatic_emails_count' => array_sum($analyticsMap[NewsletterEntity::TYPE_AUTOMATIC] ?? []),
+      'automation_emails_count' => $analyticsMap[NewsletterEntity::TYPE_AUTOMATION] ?? 0,
+      're-engagement_emails_count' => $analyticsMap[NewsletterEntity::TYPE_RE_ENGAGEMENT] ?? 0,
       'sent_newsletters_count' => $analyticsMap[NewsletterEntity::TYPE_STANDARD] ?? 0,
       'sent_newsletters_3_months' => $this->getStandardNewsletterSentCount(Carbon::now()->subMonths(3)),
       'sent_newsletters_30_days' => $this->getStandardNewsletterSentCount(Carbon::now()->subDays(30)),
@@ -173,6 +206,12 @@ class NewslettersRepository extends Repository {
       'product_purchased_in_category_emails_count' => $analyticsMap[NewsletterEntity::TYPE_AUTOMATIC][PurchasedInCategory::SLUG] ?? 0,
       'abandoned_cart_emails_count' => $analyticsMap[NewsletterEntity::TYPE_AUTOMATIC][AbandonedCart::SLUG] ?? 0,
     ];
+    // Count all campaigns
+    $analyticsMap[NewsletterEntity::TYPE_AUTOMATIC] = array_sum($analyticsMap[NewsletterEntity::TYPE_AUTOMATIC] ?? []);
+    // Post notification history is not a campaign, we count only the parent notification
+    unset($analyticsMap[NewsletterEntity::TYPE_NOTIFICATION_HISTORY]);
+    $data['campaigns_count'] = array_sum($analyticsMap);
+    return $data;
   }
 
   /**

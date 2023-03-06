@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Util;
 
@@ -60,6 +60,18 @@ class DateConverter {
             'year' => $parsedDate[$yearPosition],
             'month' => '01',
             'day' => '01',
+          ];
+        }
+      } else if ($dateFormat === 'DD' && count($parsedDate) === 1) {
+        // create date from day
+        if ((int)$parsedDate[$dayPosition] === 0) {
+          $datetime = '';
+          $parsedDate = false;
+        } else {
+          $parsedDate = [
+            'year' => date('Y'),
+            'month' => '01',
+            'day' => $parsedDate[$dayPosition],
           ];
         }
       } else {

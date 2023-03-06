@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Cron\Workers\SendingQueue;
 
@@ -15,7 +15,6 @@ use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\ScheduledTaskEntity;
 use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Logging\LoggerFactory;
-use MailPoet\Mailer\MailerError;
 use MailPoet\Mailer\MailerLog;
 use MailPoet\Mailer\MetaInfo;
 use MailPoet\Models\Newsletter;
@@ -166,6 +165,7 @@ class SendingQueue {
 
     // pre-process newsletter (render, replace shortcodes/links, etc.)
     $newsletterEntity = $this->newsletterTask->preProcessNewsletter($newsletterEntity, $queue);
+
     if (!$newsletterEntity) {
       $this->deleteTask($queue);
       return;
@@ -277,6 +277,10 @@ class SendingQueue {
     $unsubscribeUrls = [];
     $statistics = [];
     $metas = [];
+    $oneClickUnsubscribeUrls = [];
+    $sendingQueueEntity = $queue->getSendingQueueEntity();
+    $sendingQueueMeta = $sendingQueueEntity->getMeta() ?? [];
+    $campaignId = $sendingQueueMeta['campaignId'] ?? null;
 
     $newsletterEntity = $this->newslettersRepository->findOneById($newsletter->id);
 
@@ -304,9 +308,14 @@ class SendingQueue {
       );
       $preparedSubscribersIds[] = $subscriber->id;
       // create personalized instant unsubsribe link
-      $unsubscribeUrls[] = $this->links->getUnsubscribeUrl($queue, $subscriber->id);
+      $unsubscribeUrls[] = $this->links->getUnsubscribeUrl($queue->id, $subscriberEntity);
+      $oneClickUnsubscribeUrls[] = $this->links->getOneClickUnsubscribeUrl($queue->id, $subscriberEntity);
 
-      $metas[] = $this->mailerMetaInfo->getNewsletterMetaInfo($newsletter, $subscriberEntity);
+      $metasForSubscriber = $this->mailerMetaInfo->getNewsletterMetaInfo($newsletter, $subscriberEntity);
+      if ($campaignId) {
+        $metasForSubscriber['campaign_id'] = $campaignId;
+      }
+      $metas[] = $metasForSubscriber;
 
       // keep track of values for statistics purposes
       $statistics[] = [
@@ -322,12 +331,17 @@ class SendingQueue {
           $preparedSubscribers[0],
           $statistics[0],
           $timer,
-          ['unsubscribe_url' => $unsubscribeUrls[0], 'meta' => $metas[0]]
+          [
+            'unsubscribe_url' => $unsubscribeUrls[0],
+            'meta' => $metas[0],
+            'one_click_unsubscribe' => $oneClickUnsubscribeUrls,
+          ]
         );
         $preparedNewsletters = [];
         $preparedSubscribers = [];
         $preparedSubscribersIds = [];
         $unsubscribeUrls = [];
+        $oneClickUnsubscribeUrls = [];
         $statistics = [];
         $metas = [];
       }
@@ -340,7 +354,11 @@ class SendingQueue {
         $preparedSubscribers,
         $statistics,
         $timer,
-        ['unsubscribe_url' => $unsubscribeUrls, 'meta' => $metas]
+        [
+          'unsubscribe_url' => $unsubscribeUrls,
+          'meta' => $metas,
+          'one_click_unsubscribe' => $oneClickUnsubscribeUrls,
+        ]
       );
     }
     return $queue;
@@ -419,7 +437,6 @@ class SendingQueue {
     // log error message and schedule retry/pause sending
     if ($sendResult['response'] === false) {
       $error = $sendResult['error'];
-      assert($error instanceof MailerError);
       $this->errorHandler->processError($error, $sendingTask, $preparedSubscribersIds, $preparedSubscribers);
     } elseif (!$sendingTask->updateProcessedSubscribers($preparedSubscribersIds)) { // update processed/to process list
       MailerLog::processError(

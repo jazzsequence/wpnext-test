@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\AdminPages\Pages;
 
@@ -6,8 +6,8 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\AdminPages\PageRenderer;
-use MailPoet\Automation\Engine\Data\WorkflowTemplate;
-use MailPoet\Automation\Engine\Storage\WorkflowTemplateStorage;
+use MailPoet\Automation\Engine\Data\AutomationTemplate;
+use MailPoet\Automation\Engine\Storage\AutomationTemplateStorage;
 use MailPoet\Form\AssetsController;
 use MailPoet\WP\Functions as WPFunctions;
 
@@ -18,7 +18,7 @@ class AutomationTemplates {
   /** @var PageRenderer */
   private $pageRenderer;
 
-  /** @var WorkflowTemplateStorage  */
+  /** @var AutomationTemplateStorage  */
   private $templateStorage;
 
   /** @var WPFunctions */
@@ -27,7 +27,7 @@ class AutomationTemplates {
   public function __construct(
     AssetsController $assetsController,
     PageRenderer $pageRenderer,
-    WorkflowTemplateStorage $templateStorage,
+    AutomationTemplateStorage $templateStorage,
     WPFunctions $wp
   ) {
     $this->assetsController = $assetsController;
@@ -43,12 +43,13 @@ class AutomationTemplates {
       'automation/templates.html',
       [
         'sub_menu' => 'mailpoet-automation',
+        'locale_full' => $this->wp->getLocale(),
         'api' => [
           'root' => rtrim($this->wp->escUrlRaw($this->wp->restUrl()), '/'),
           'nonce' => $this->wp->wpCreateNonce('wp_rest'),
         ],
         'templates' => array_map(
-          function(WorkflowTemplate $template): array {
+          function(AutomationTemplate $template): array {
             return $template->toArray();
           },
           $this->templateStorage->getTemplates()

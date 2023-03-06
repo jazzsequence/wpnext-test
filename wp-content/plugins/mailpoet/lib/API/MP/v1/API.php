@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\API\MP\v1;
 
@@ -81,6 +81,14 @@ class API {
 
   public function addList(array $list) {
     return $this->segments->addList($list);
+  }
+
+  public function deleteList(string $listId): bool {
+    return $this->segments->deleteList($listId);
+  }
+
+  public function updateList(array $list): array {
+    return $this->segments->updateList($list);
   }
 
   public function getSubscriber($subscriberEmail) {

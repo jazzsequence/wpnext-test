@@ -41,15 +41,16 @@ class Core {
 	 * @return array Array of versions and downloads.
 	 */
 	public function get_core_versions() {
-		$versions = \get_site_transient( 'core_rollback' );
+		$versions = get_site_transient( 'core_rollback' );
 		if ( ! $versions ) {
+			$versions = [];
 			$locale   = get_locale();
 			$response = wp_remote_get( "https://api.wordpress.org/core/version-check/1.7/?locale={$locale}" );
 			if ( is_wp_error( $response ) ) {
 				return [];
 			}
 			$body   = wp_remote_retrieve_body( $response );
-			$body   = \json_decode( $body );
+			$body   = json_decode( $body );
 			$offers = $body->offers;
 			foreach ( $offers as $offer ) {
 				if ( version_compare( $offer->version, '4.0', '>=' ) ) {
@@ -57,7 +58,7 @@ class Core {
 					$versions[ $offer->version ] = $offer;
 				}
 			}
-			\set_site_transient( 'core_rollback', $versions, DAY_IN_SECONDS );
+			set_site_transient( 'core_rollback', $versions, DAY_IN_SECONDS );
 		}
 
 		return $versions;

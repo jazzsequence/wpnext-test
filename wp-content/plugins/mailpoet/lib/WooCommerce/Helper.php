@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\WooCommerce;
 
@@ -11,8 +11,21 @@ use MailPoet\RuntimeException;
 use MailPoet\WP\Functions as WPFunctions;
 
 class Helper {
+  /** @var WPFunctions */
+  private $wp;
+
+  public function __construct(
+    WPFunctions $wp
+  ) {
+    $this->wp = $wp;
+  }
+
   public function isWooCommerceActive() {
     return class_exists('WooCommerce');
+  }
+
+  public function getWooCommerceVersion() {
+    return $this->isWooCommerceActive() ? get_plugin_data(WP_PLUGIN_DIR . '/woocommerce/woocommerce.php')['Version'] : null;
   }
 
   public function isWooCommerceBlocksActive($min_version = '') {
@@ -63,6 +76,13 @@ class Helper {
 
   public function wcGetProduct($theProduct = false) {
     return wc_get_product($theProduct);
+  }
+
+  public function wcGetPageId(string $page): ?int {
+    if ($this->isWooCommerceActive()) {
+      return (int)wc_get_page_id($page);
+    }
+    return null;
   }
 
   public function getWoocommerceCurrency() {
@@ -149,5 +169,57 @@ class Helper {
     }
 
     return \Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore::get_addresses_table_name();
+  }
+
+  public function wcGetCouponTypes(): array {
+    return wc_get_coupon_types();
+  }
+
+  public function wcGetCouponCodeById(int $id): string {
+    return wc_get_coupon_code_by_id($id);
+  }
+
+  /**
+   * @param mixed $data Coupon data, object, ID or code.
+   */
+  public function createWcCoupon($data) {
+    return new \WC_Coupon($data);
+  }
+
+  public function getCouponList(): array {
+    $couponPosts = $this->wp->getPosts([
+      'posts_per_page' => -1,
+      'orderby' => 'name',
+      'order' => 'asc',
+      'post_type' => 'shop_coupon',
+      'post_status' => 'publish',
+    ]);
+
+    return array_map(function(\WP_Post $post): array {
+      $discountType = $this->wp->getPostMeta($post->ID, 'discount_type', true);
+      return [
+        'id' => $post->ID,
+        'text' => $post->post_title, // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+        'excerpt' => $post->post_excerpt, // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+        'discountType' => $discountType,
+      ];
+    }, $couponPosts);
+  }
+
+  public function wcGetPriceDecimalSeparator() {
+    return wc_get_price_decimal_separator();
+  }
+
+  public function getLatestCoupon(): ?string {
+    $coupons = $this->wp->getPosts([
+      'numberposts' => 1,
+      'orderby' => 'name',
+      'order' => 'desc',
+      'post_type' => 'shop_coupon',
+      'post_status' => 'publish',
+    ]);
+    $coupon = reset($coupons);
+
+    return $coupon ? $coupon->post_title : null; // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
   }
 }

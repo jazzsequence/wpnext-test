@@ -7,7 +7,7 @@ if (!defined('ABSPATH')) exit;
  'type' => 'library',
  'install_path' => __DIR__ . '/../../',
  'aliases' => array(),
- 'reference' => 'ac405bf4908afe867fefdb3d8c728af98ad42dc1',
+ 'reference' => '2599d14bec898986c1deef546c021cfadf23e50a',
  'name' => '__root__',
  'dev' => false,
  ),
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) exit;
  'type' => 'library',
  'install_path' => __DIR__ . '/../../',
  'aliases' => array(),
- 'reference' => 'ac405bf4908afe867fefdb3d8c728af98ad42dc1',
+ 'reference' => '2599d14bec898986c1deef546c021cfadf23e50a',
  'dev_requirement' => false,
  ),
  'mtdowling/cron-expression' => array(
@@ -35,9 +35,7 @@ if (!defined('ABSPATH')) exit;
  'version' => 'dev-master',
  'type' => 'library',
  'install_path' => __DIR__ . '/../soundasleep/html2text',
- 'aliases' => array(
- 0 => '9999999-dev',
- ),
+ 'aliases' => array(),
  'reference' => 'd907c8fc20605135b4ac29b7a2f43d8c1c6cddb8',
  'dev_requirement' => false,
  ),

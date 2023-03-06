@@ -13,21 +13,29 @@ use MailPoet\Automation\Engine\Integration\Trigger;
 use MailPoet\Automation\Integrations\MailPoet\Payloads\SegmentPayload;
 use MailPoet\Automation\Integrations\MailPoet\Subjects\SegmentSubject;
 use MailPoet\Automation\Integrations\MailPoet\Subjects\SubscriberSubject;
+use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SubscriberSegmentEntity;
 use MailPoet\InvalidStateException;
+use MailPoet\Segments\SegmentsRepository;
 use MailPoet\Validator\Builder;
 use MailPoet\Validator\Schema\ObjectSchema;
 use MailPoet\WP\Functions as WPFunctions;
 
 class SomeoneSubscribesTrigger implements Trigger {
+  const KEY = 'mailpoet:someone-subscribes';
 
   /** @var WPFunctions */
   private $wp;
 
+  /** @var SegmentsRepository  */
+  private $segmentsRepository;
+
   public function __construct(
-    WPFunctions $wp
+    WPFunctions $wp,
+    SegmentsRepository $segmentsRepository
   ) {
     $this->wp = $wp;
+    $this->segmentsRepository = $segmentsRepository;
   }
 
   public function getKey(): string {
@@ -74,6 +82,10 @@ class SomeoneSubscribesTrigger implements Trigger {
 
   public function isTriggeredBy(StepRunArgs $args): bool {
     $segmentId = $args->getSinglePayloadByClass(SegmentPayload::class)->getId();
+    $segment = $this->segmentsRepository->findOneById($segmentId);
+    if (!$segment || $segment->getType() !== SegmentEntity::TYPE_DEFAULT) {
+      return false;
+    }
 
     // Triggers when no segment IDs defined (= any segment) or the current segment paylo.
     $triggerArgs = $args->getStep()->getArgs();

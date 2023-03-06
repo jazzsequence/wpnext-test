@@ -153,4 +153,14 @@ class SendingQueuesRepository extends Repository {
       ->getQuery()
       ->execute();
   }
+
+  public function saveCampaignId(SendingQueueEntity $queue, string $campaignId): void {
+    $meta = $queue->getMeta();
+    if (!is_array($meta)) {
+      $meta = [];
+    }
+    $meta['campaignId'] = $campaignId;
+    $queue->setMeta($meta);
+    $this->flush();
+  }
 }

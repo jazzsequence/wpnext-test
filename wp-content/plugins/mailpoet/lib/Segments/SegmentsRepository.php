@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Segments;
 
@@ -136,8 +136,10 @@ class SegmentsRepository extends Repository {
     string $description = '',
     string $type = SegmentEntity::TYPE_DEFAULT,
     array $filtersData = [],
-    ?int $id = null
+    ?int $id = null,
+    bool $displayInManageSubscriptionPage = true
   ): SegmentEntity {
+    $displayInManageSubPage = $type === SegmentEntity::TYPE_DEFAULT ? $displayInManageSubscriptionPage : false;
     if ($id) {
       $segment = $this->findOneById($id);
       if (!$segment instanceof SegmentEntity) {
@@ -148,9 +150,11 @@ class SegmentsRepository extends Repository {
         $segment->setName($name);
       }
       $segment->setDescription($description);
+      $segment->setDisplayInManageSubscriptionPage($displayInManageSubPage);
     } else {
       $this->verifyNameIsUnique($name, $id);
       $segment = new SegmentEntity($name, $type, $description);
+      $segment->setDisplayInManageSubscriptionPage($displayInManageSubPage);
       $this->persist($segment);
     }
 

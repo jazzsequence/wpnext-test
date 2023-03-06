@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Subscribers\ImportExport;
 
@@ -52,7 +52,7 @@ class ImportExportFactory {
     return array_map(function($segment) {
       return [
         'id' => $segment['id'],
-        'name' => $segment['name'],
+        'name' => esc_attr($segment['name']),
         'count' => $segment['subscribers'],
       ];
     }, $segments);

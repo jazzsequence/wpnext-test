@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Segments;
 
@@ -9,7 +9,6 @@ use MailPoet\Config\SubscriberChangesNotifier;
 use MailPoet\DI\ContainerWrapper;
 use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SubscriberEntity;
-use MailPoet\Features\FeaturesController;
 use MailPoet\Models\ModelValidator;
 use MailPoet\Models\Segment;
 use MailPoet\Models\Subscriber;
@@ -18,6 +17,7 @@ use MailPoet\Newsletter\Scheduler\WelcomeScheduler;
 use MailPoet\Settings\SettingsController;
 use MailPoet\Subscribers\ConfirmationEmailMailer;
 use MailPoet\Subscribers\Source;
+use MailPoet\Subscribers\SubscriberSegmentRepository;
 use MailPoet\Subscribers\SubscribersRepository;
 use MailPoet\WooCommerce\Helper as WooCommerceHelper;
 use MailPoet\WooCommerce\Subscription as WooCommerceSubscription;
@@ -39,25 +39,24 @@ class WP {
   /** @var SubscribersRepository */
   private $subscribersRepository;
 
-  /** @var FeaturesController */
-  private $featuresController;
-
   /** @var SubscriberChangesNotifier */
   private $subscriberChangesNotifier;
+
+  private $subscriberSegmentRepository;
 
   public function __construct(
     WPFunctions $wp,
     WelcomeScheduler $welcomeScheduler,
     WooCommerceHelper $wooHelper,
     SubscribersRepository $subscribersRepository,
-    FeaturesController $featuresController,
+    SubscriberSegmentRepository $subscriberSegmentRepository,
     SubscriberChangesNotifier $subscriberChangesNotifier
   ) {
     $this->wp = $wp;
     $this->welcomeScheduler = $welcomeScheduler;
     $this->wooHelper = $wooHelper;
     $this->subscribersRepository = $subscribersRepository;
-    $this->featuresController = $featuresController;
+    $this->subscriberSegmentRepository = $subscriberSegmentRepository;
     $this->subscriberChangesNotifier = $subscriberChangesNotifier;
   }
 
@@ -171,6 +170,17 @@ class WP {
         [$wpSegment->id]
       );
 
+      if (!$signupConfirmationEnabled && $subscriber->status === Subscriber::STATUS_SUBSCRIBED && $currentFilter === 'user_register') {
+        $subscriberSegment = $this->subscriberSegmentRepository->findOneBy([
+          'subscriber' => $subscriber->id(),
+          'segment' => $wpSegment->id(),
+        ]);
+
+        if (!is_null($subscriberSegment)) {
+          $this->wp->doAction('mailpoet_segment_subscribed', $subscriberSegment);
+        }
+      }
+
       $subscribeOnRegisterEnabled = SettingsController::getInstance()->get('subscribe.on_register.enabled');
       $sendConfirmationEmail =
         $signupConfirmationEnabled
@@ -202,17 +212,6 @@ class WP {
           (array)$wpUser,
           (array)$oldWpUserData
         );
-      }
-
-      // fire user registered hook for new WP segment subscribers
-      if (
-        $this->featuresController->isSupported(FeaturesController::AUTOMATION)
-        && $currentFilter === 'user_register'
-      ) {
-        $subscriberEntity = $this->subscribersRepository->findOneById($subscriber->id);
-        if ($subscriberEntity instanceof SubscriberEntity) {
-          $this->wp->doAction('mailpoet_user_registered', $subscriberEntity);
-        }
       }
     }
   }

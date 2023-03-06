@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Config;
 
@@ -71,7 +71,7 @@ class Changelog {
     $version = $this->settings->get('version');
     if ($version === null) {
       $this->setupNewInstallation();
-      $this->checkWelcomeWizard();
+      $this->maybeRedirectToLandingPage();
     }
     $this->checkWooCommerceListImportPage();
     $this->checkRevenueTrackingPermissionPage();
@@ -82,6 +82,10 @@ class Changelog {
       return false;
     }
     return $this->settings->get('version') === null;
+  }
+
+  public function shouldShowLandingPage(): bool {
+    return $this->shouldShowWelcomeWizard();
   }
 
   public function shouldShowWooCommerceListImportPage() {
@@ -101,14 +105,38 @@ class Changelog {
       && $this->wp->currentUserCan('administrator');
   }
 
+  public function redirectToLandingPage() {
+    if (isset($_GET['activate-multi'])) return; // do not redirect when activated with bulk activation mode
+
+    if ($this->shouldShowLandingPage() && !$this->isLandingPage()) {
+      $this->urlHelper->redirectTo(
+        $this->wp->adminUrl('admin.php?page=mailpoet-landingpage')
+      );
+    }
+  }
+
+  public function maybeRedirectToLandingPage() {
+    if ($this->isWelcomeWizardPage()) return; // do not redirect when on welcome wizard page
+
+    if ($this->isExperimentalPage()) return; // do not redirect when on experimental page
+
+    $this->redirectToLandingPage();
+  }
+
   private function setupNewInstallation() {
     $this->settings->set('show_congratulate_after_first_newsletter', true);
   }
 
-  private function checkWelcomeWizard() {
-    if ($this->shouldShowWelcomeWizard()) {
-      $this->terminateWithRedirect($this->wp->adminUrl('admin.php?page=mailpoet-welcome-wizard'));
-    }
+  private function isWelcomeWizardPage() {
+    return isset($_GET['page']) && sanitize_text_field(wp_unslash($_GET['page'])) === Menu::WELCOME_WIZARD_PAGE_SLUG;
+  }
+
+  private function isLandingPage() {
+    return isset($_GET['page']) && sanitize_text_field(wp_unslash($_GET['page'])) === Menu::LANDINGPAGE_PAGE_SLUG;
+  }
+
+  private function isExperimentalPage() {
+    return isset($_GET['page']) && sanitize_text_field(wp_unslash($_GET['page'])) === Menu::EXPERIMENTS_PAGE_SLUG;
   }
 
   private function checkWooCommerceListImportPage() {
@@ -120,6 +148,7 @@ class Changelog {
           'mailpoet-woocommerce-setup',
           'mailpoet-welcome-wizard',
           'mailpoet-migration',
+          'mailpoet-landingpage',
         ]
       )
       && $this->shouldShowWooCommerceListImportPage()
@@ -137,17 +166,12 @@ class Changelog {
           'mailpoet-woocommerce-setup',
           'mailpoet-welcome-wizard',
           'mailpoet-migration',
+          'mailpoet-landingpage',
         ]
       )
       && $this->shouldShowRevenueTrackingPermissionPage()
     ) {
       $this->urlHelper->redirectTo($this->wp->adminUrl('admin.php?page=mailpoet-woocommerce-setup'));
     }
-  }
-
-  private function terminateWithRedirect($redirectUrl) {
-    // save version number
-    $this->settings->set('version', Env::$version);
-    $this->urlHelper->redirectWithReferer($redirectUrl);
   }
 }

@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Mailer\Methods;
 
@@ -7,12 +7,12 @@ if (!defined('ABSPATH')) exit;
 
 use MailPoet\Config\ServicesChecker;
 use MailPoet\Mailer\Mailer;
-use MailPoet\Mailer\MailerError;
 use MailPoet\Mailer\Methods\Common\BlacklistCheck;
 use MailPoet\Mailer\Methods\ErrorMappers\MailPoetMapper;
 use MailPoet\Services\AuthorizedEmailsController;
 use MailPoet\Services\Bridge;
 use MailPoet\Services\Bridge\API;
+use MailPoet\Util\Url;
 
 class MailPoet implements MailerMethod {
   public $api;
@@ -29,12 +29,16 @@ class MailPoet implements MailerMethod {
   /** @var BlacklistCheck */
   private $blacklist;
 
+  /*** @var Url */
+  private $url;
+
   public function __construct(
     $apiKey,
     $sender,
     $replyTo,
     MailPoetMapper $errorMapper,
-    AuthorizedEmailsController $authorizedEmailsController
+    AuthorizedEmailsController $authorizedEmailsController,
+    Url $url
   ) {
     $this->api = new API($apiKey);
     $this->sender = $sender;
@@ -43,6 +47,7 @@ class MailPoet implements MailerMethod {
     $this->errorMapper = $errorMapper;
     $this->authorizedEmailsController = $authorizedEmailsController;
     $this->blacklist = new BlacklistCheck();
+    $this->url = $url;
   }
 
   public function send($newsletter, $subscriber, $extraParams = []): array {
@@ -68,7 +73,7 @@ class MailPoet implements MailerMethod {
       case API::SENDING_STATUS_SEND_ERROR:
         $error = $this->processSendError($result, $subscriber, $newsletter);
         return Mailer::formatMailerErrorResult($error);
-      case API::SENDING_STATUS_OK:
+      case API::RESPONSE_STATUS_OK:
       default:
         return Mailer::formatMailerSendSuccessResult();
     }
@@ -80,7 +85,7 @@ class MailPoet implements MailerMethod {
     } elseif (
       !empty($result['code'])
       && $result['code'] === API::RESPONSE_CODE_CAN_NOT_SEND
-      && $result['message'] === MailerError::MESSAGE_EMAIL_NOT_AUTHORIZED
+      && $result['error'] === API::ERROR_MESSAGE_INVALID_FROM
     ) {
       $this->authorizedEmailsController->checkAuthorizedEmailAddresses();
     }
@@ -108,6 +113,7 @@ class MailPoet implements MailerMethod {
           $newsletter[$record],
           $this->processSubscriber($subscriber[$record]),
           (!empty($extraParams['unsubscribe_url'][$record])) ? $extraParams['unsubscribe_url'][$record] : false,
+          (!empty($extraParams['one_click_unsubscribe'][$record])) ? $extraParams['one_click_unsubscribe'][$record] : false,
           (!empty($extraParams['meta'][$record])) ? $extraParams['meta'][$record] : false
         );
       }
@@ -116,13 +122,14 @@ class MailPoet implements MailerMethod {
         $newsletter,
         $this->processSubscriber($subscriber),
         (!empty($extraParams['unsubscribe_url'])) ? $extraParams['unsubscribe_url'] : false,
+        (!empty($extraParams['one_click_unsubscribe'])) ? $extraParams['one_click_unsubscribe'] : false,
         (!empty($extraParams['meta'])) ? $extraParams['meta'] : false
       );
     }
     return $body;
   }
 
-  private function composeBody($newsletter, $subscriber, $unsubscribeUrl, $meta): array {
+  private function composeBody($newsletter, $subscriber, $unsubscribeUrl, $oneClickUnsubscribeUrl, $meta): array {
     $body = [
       'to' => ([
         'address' => $subscriber['email'],
@@ -147,7 +154,11 @@ class MailPoet implements MailerMethod {
       $body['text'] = $newsletter['body']['text'];
     }
     if ($unsubscribeUrl) {
-      $body['list_unsubscribe'] = $unsubscribeUrl;
+      $isHttps = $this->url->isUsingHttps($unsubscribeUrl);
+      $body['unsubscribe'] = [
+        'url' => $isHttps && $oneClickUnsubscribeUrl ? $oneClickUnsubscribeUrl : $unsubscribeUrl,
+        'post' => $isHttps,
+      ];
     }
     if ($meta) {
       $body['meta'] = $meta;

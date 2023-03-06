@@ -321,6 +321,18 @@
     'newsletter_editor_template_unknown_block_fallback_widget',
     'newsletter/templates/blocks/unknownBlockFallback/widget.hbs'
   ) %>
+  <%= partial(
+  'newsletter_editor_template_coupon_block',
+  'newsletter/templates/blocks/coupon/block.hbs'
+  ) %>
+  <%= partial(
+  'newsletter_editor_template_coupon_widget',
+  'newsletter/templates/blocks/coupon/widget.hbs'
+  ) %>
+  <%= partial(
+  'newsletter_editor_template_coupon_settings',
+  'newsletter/templates/blocks/coupon/settings.hbs'
+  ) %>
 <% endblock %>
 
 <% block content %>
@@ -385,6 +397,7 @@
     'newsletterSavingError': __('The email could not be saved. Please, clear browser cache and reload the page. If the problem persists, duplicate the email and try again.'),
     'unsubscribeLinkMissing': __('All emails must include an "Unsubscribe" link. Add a footer widget to your email to continue.'),
     'reEngageLinkMissing': __('A re-engagement email must include a link with [link:subscription_re_engage_url] shortcode.'),
+    'activationLinkIsMissing': __('Don\'t forget to include the [activation_link] shortcode in the email'),
     'newsletterIsEmpty': __('Poet, please add prose to your masterpiece before you send it to your followers.'),
     'emailAlreadySent': __('This email has already been sent. It can be edited, but not sent again. Duplicate this email if you want to send it again.'),
     'automatedLatestContentMissing': _x('Please add an “Automatic Latest Content” widget to the email from the right sidebar.', '(Please reuse the current translation used for the string “Automatic Latest Content”) This Error message is displayed when a user tries to send a “Post Notification” email without any “Automatic Latest Content” widget inside'),
@@ -425,6 +438,39 @@
     'canNotUndo': _x('No actions available to undo.', "A button title when user can't undo the change in editor", 'mailpoet'),
     'canRedo': _x('Redo', 'A button title when user can redo the change in editor', 'mailpoet'),
     'canNotRedo': _x('No actions available to redo.', "A button title when user can't redo the change in editor", 'mailpoet'),
+    'couponMinAndMaxAmountFieldsErrorMessage': __('Please enter a value with one monetary decimal point (%s) without thousand separators and currency symbols.'),
+    'allCoupons': __('All coupons'),
+    'createNew': __('Create new'),
+    'generalSettings': __('General settings'),
+    'discountType': __('Discount type'),
+    'couponAmount': __('Coupon amount'),
+    'expireIn': __('Expires in'),
+    'freeShipping': __('Free shipping'),
+    'usageRestriction': __('Usage restriction'),
+    'minimumSpend': __('Minimum spend'),
+    'maximumSpend': __('Maximum spend'),
+    'noMinimum': __('No minimum'),
+    'noMaximum': __('No maximum'),
+    'individualUseOnly': __('Individual use only'),
+    'individualUseHelp': __('Coupon cannot be used in conjunction with other coupons.'),
+    'excludeSaleItems': __('Exclude sale items'),
+    'excludeSaleItemsHelp': __('Coupon does not apply to items on sale.'),
+    'products': __('Products'),
+    'excludedProducts': __('Excluded products'),
+    'searchForProduct': __('Search for a product…'),
+    'productCategories': __('Product categories'),
+    'excludeProductCategories': __('Exclude product categories'),
+    'anyCategory': __('Any category'),
+    'noCategories': __('No categories'),
+    'allowedEmails': __('Allowed emails'),
+    'noRestrictions': __('No restrictions'),
+    'emailRestrictionsFieldsErrorMessage': __('Separate email addresses with commas. You can also use an asterisk (*) to match parts of an email. For example "*@gmail.com" would match all gmail addresses.'),
+    'usageLimits': __('Usage limits'),
+    'usageLimitPerCoupon': __('Usage limit per coupon'),
+    'usageLimitPerUser': __('Usage limit per user'),
+    'unlimitedUsage': __('Unlimited usage'),
+    'allTypes': __('All types'),
+    'noCouponsFound': __('No coupons found'),
   }) %>
 <% endblock %>
 
@@ -713,9 +759,20 @@
       unknownBlockFallbackInsertion: Handlebars.compile(
         jQuery('#newsletter_editor_template_unknown_block_fallback_widget').html()
       ),
+      couponBlock: Handlebars.compile(
+        jQuery('#newsletter_editor_template_coupon_block').html()
+      ),
+      couponInsertion: Handlebars.compile(
+        jQuery('#newsletter_editor_template_coupon_widget').html()
+      ),
+      couponBlockSettings: Handlebars.compile(
+        jQuery('#newsletter_editor_template_coupon_settings').html()
+      ),
     };
 
     var currentUserEmail = '<%= current_wp_user.user_email %>';
+    var mailpoet_product_categories = <%= json_encode(product_categories)  %>;
+    var mailpoet_products = <%= json_encode(products) %>;
 
     var config = {
       availableStyles: {
@@ -1540,6 +1597,30 @@
         woocommerceHeading: {
           contents: <%= json_encode(woocommerce.email_headings) %>,
         },
+        coupon: {
+            type: 'coupon',
+            discountType: <%= json_encode(woocommerce.coupon.defaults.discountType) %>,
+            code: <%= json_encode(woocommerce.coupon.defaults.code) %>,
+            amountMax: <%= json_encode(woocommerce.coupon.defaults.amountMax) %>,
+            amount: 10,
+            expiryDay: 10,
+            styles: {
+              block: {
+                backgroundColor: '#ffffff',
+                borderColor: '#000000',
+                borderWidth: '1px',
+                borderRadius: '5px',
+                borderStyle: 'solid',
+                width: '200px',
+                lineHeight: '40px',
+                fontColor: '#000000',
+                fontFamily: 'Verdana',
+                fontSize: '18px',
+                fontWeight: 'normal',
+                textAlign: 'center',
+              },
+          },
+        },
       },
       shortcodes: <%= json_encode(shortcodes) %>,
       sidepanelWidth: '331px',
@@ -1549,8 +1630,9 @@
         previewTypeLocalStorageKey: 'newsletter_editor.preview_type'
       },
       validation: {
-        validateUnsubscribeLinkPresent: <%= mss_active and is_wc_transactional_email != true ? 'true' : 'false' %>,
-        validateReEngageLinkPresent: <%= mss_active and is_wc_transactional_email != true ? 'true' : 'false' %>,
+        validateUnsubscribeLinkPresent: <%= mss_active and is_wc_transactional_email != true and is_confirmation_email_template != true ? 'true' : 'false' %>,
+        validateReEngageLinkPresent: <%= mss_active and is_wc_transactional_email != true and is_confirmation_email_template != true ? 'true' : 'false' %>,
+        validateActivationLinkIsPresent: <%= is_confirmation_email_template ? 'true' : 'false' %>,
       },
       urls: {
         send: '<%= admin_url('admin.php?page=mailpoet-newsletters#/send/' ~ (params('id') | intval)) %>',
@@ -1561,6 +1643,7 @@
       currentUserId: '<%= current_wp_user.wp_user_id %>',
       mtaMethod: '<%= settings["mta"]["method"] %>',
       woocommerceCustomizerEnabled: <%= woocommerce.customizer_enabled ? 'true' : 'false' %>,
+      confirmationEmailCustomizerEnabled: <%= is_confirmation_email_customizer_enabled ? 'true' : 'false' %>,
       <% if is_wc_transactional_email %>
       overrideGlobalStyles: {
         text: {
@@ -1591,7 +1674,12 @@
       },
       hiddenWidgets: ['automatedLatestContentLayout', 'header', 'footer', 'posts', 'products'],
       <% endif %>
+      <% if is_confirmation_email_template %>
+      hiddenWidgets: ['automatedLatestContentLayout', 'header', 'footer', 'posts', 'products'],
+      <% endif %>
+      coupon: <%= json_encode(woocommerce.coupon.config) %>,
     };
+
     wp.hooks.doAction('mailpoet_newsletters_editor_initialize', config);
 
   </script>

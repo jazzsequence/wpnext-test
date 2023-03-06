@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Twig;
 
@@ -15,14 +15,19 @@ use MailPoetVendor\Twig\TwigFunction;
 class Assets extends AbstractExtension {
   private $globals;
 
+  /** @var WPFunctions  */
+  private $wp;
+
   /** @var CdnAssetUrl|null */
   private $cdnAssetsUrl;
 
   public function __construct(
     array $globals,
+    WPFunctions $wp,
     CdnAssetUrl $cdnAssetsUrl = null
   ) {
     $this->globals = $globals;
+    $this->wp = $wp;
     $this->cdnAssetsUrl = $cdnAssetsUrl;
   }
 
@@ -53,6 +58,11 @@ class Assets extends AbstractExtension {
         [$this, 'generateCdnUrl'],
         ['is_safe' => ['all']]
       ),
+      new TwigFunction(
+        'language',
+        [$this, 'language'],
+        ['is_safe' => ['all']]
+      ),
     ];
   }
 
@@ -69,6 +79,19 @@ class Assets extends AbstractExtension {
     }
 
     return join("\n", $output);
+  }
+
+  /**
+   * Returns the language, which is currently loaded.
+   * This function is used to add the language tag for our system emails like stats notifications.
+   */
+  public function language() {
+
+    // If we do not have a translation, the language of the mail will be English.
+    if (!is_textdomain_loaded('mailpoet')) {
+      return 'en';
+    }
+    return (string)$this->wp->getBlogInfo('language');
   }
 
   public function generateJavascript() {

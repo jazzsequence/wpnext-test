@@ -5,10 +5,10 @@ namespace MailPoet\Automation\Integrations\MailPoet\Hooks;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Automation\Engine\Data\Automation;
 use MailPoet\Automation\Engine\Data\Step;
-use MailPoet\Automation\Engine\Data\Workflow;
 use MailPoet\Automation\Engine\Hooks;
-use MailPoet\Automation\Engine\Storage\WorkflowStorage;
+use MailPoet\Automation\Engine\Storage\AutomationStorage;
 use MailPoet\Newsletter\NewslettersRepository;
 use MailPoet\WP\Functions as WP;
 
@@ -17,19 +17,19 @@ class AutomationEditorLoadingHooks {
   /** @var WP */
   private $wp;
 
-  /** @var WorkflowStorage  */
-  private $workflowStorage;
+  /** @var AutomationStorage  */
+  private $automationStorage;
 
   /** @var NewslettersRepository  */
   private $newslettersRepository;
 
   public function __construct(
     WP $wp,
-    WorkflowStorage $workflowStorage,
+    AutomationStorage $automationStorage,
     NewslettersRepository $newslettersRepository
   ) {
     $this->wp = $wp;
-    $this->workflowStorage = $workflowStorage;
+    $this->automationStorage = $automationStorage;
     $this->newslettersRepository = $newslettersRepository;
   }
 
@@ -37,17 +37,17 @@ class AutomationEditorLoadingHooks {
     $this->wp->addAction(Hooks::EDITOR_BEFORE_LOAD, [$this, 'beforeEditorLoad']);
   }
 
-  public function beforeEditorLoad(int $workflowId): void {
-    $workflow = $this->workflowStorage->getWorkflow($workflowId);
-    if (!$workflow) {
+  public function beforeEditorLoad(int $automationId): void {
+    $automation = $this->automationStorage->getAutomation($automationId);
+    if (!$automation) {
       return;
     }
-    $this->disconnectEmptyEmailsFromSendEmailStep($workflow);
+    $this->disconnectEmptyEmailsFromSendEmailStep($automation);
   }
 
-  private function disconnectEmptyEmailsFromSendEmailStep(Workflow $workflow): void {
+  private function disconnectEmptyEmailsFromSendEmailStep(Automation $automation): void {
     $sendEmailSteps = array_filter(
-      $workflow->getSteps(),
+      $automation->getSteps(),
       function(Step $step): bool {
         return $step->getKey() === 'mailpoet:send-email';
       }
@@ -74,16 +74,16 @@ class AutomationEditorLoadingHooks {
       );
 
       $steps = array_merge(
-        $workflow->getSteps(),
+        $automation->getSteps(),
         [$updatedStep->getId() => $updatedStep]
       );
-      $workflow->setSteps($steps);
+      $automation->setSteps($steps);
 
-      //To be valid, an email would need to be associated to an active workflow.
-      if ($workflow->getStatus() === Workflow::STATUS_ACTIVE) {
-        $workflow->setStatus(Workflow::STATUS_DRAFT);
+      //To be valid, an email would need to be associated to an active automation.
+      if ($automation->getStatus() === Automation::STATUS_ACTIVE) {
+        $automation->setStatus(Automation::STATUS_DRAFT);
       }
-      $this->workflowStorage->updateWorkflow($workflow);
+      $this->automationStorage->updateAutomation($automation);
     }
   }
 }

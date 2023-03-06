@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore SlevomatCodingStandard.TypeHints.DeclareStrictTypes.DeclareStrictTypesMissing
 
 namespace MailPoet\Config;
 
@@ -92,6 +92,7 @@ class Hooks {
     $this->setupWooCommerceUsers();
     $this->setupWooCommercePurchases();
     $this->setupWooCommerceSubscriberEngagement();
+    $this->setupWooCommerceTracking();
     $this->setupImageSize();
     $this->setupListing();
     $this->setupSubscriptionEvents();
@@ -209,7 +210,11 @@ class Hooks {
     );
     $this->wp->addFilter(
       'the_content',
-      [$this->displayFormInWPContent, 'display']
+      [$this->displayFormInWPContent, 'contentDisplay']
+    );
+    $this->wp->addFilter(
+      'woocommerce_product_loop_end',
+      [$this->displayFormInWPContent, 'wooProductListDisplay']
     );
   }
 
@@ -311,6 +316,16 @@ class Hooks {
       $this->hooksWooCommerce,
       'disableWooCommerceSettings',
     ]);
+
+    $this->wp->addAction('before_woocommerce_init', [
+      $this->hooksWooCommerce,
+      'declareHposCompatibility',
+    ]);
+
+    $this->wp->addAction('init', [
+      $this->hooksWooCommerce,
+      'addMailPoetTaskToWooHomePage',
+    ]);
   }
 
   public function setupWooCommerceUsers() {
@@ -373,6 +388,14 @@ class Hooks {
     );
   }
 
+  public function setupWooCommerceTracking() {
+    $this->wp->addFilter(
+      'woocommerce_tracker_data',
+      [$this->hooksWooCommerce, 'addTrackingData'],
+      10
+    );
+  }
+
   public function setupImageSize() {
     $this->wp->addFilter(
       'image_size_names_choose',
@@ -422,8 +445,12 @@ class Hooks {
     );
   }
 
-  public function setFooter($text) {
-    return '<a href="https://feedback.mailpoet.com/" rel="noopener noreferrer" target="_blank">Give feedback</a>';
+  public function setFooter(): string {
+
+    if (Menu::isOnMailPoetAutomationPage()) {
+      return '';
+    }
+    return '<a href="https://feedback.mailpoet.com/" rel="noopener noreferrer" target="_blank">' . esc_html__('Give feedback', 'mailpoet') . '</a>';
   }
 
   public function setupSettingsLinkInPluginPage() {
