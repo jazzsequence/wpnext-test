@@ -290,6 +290,31 @@ function wp_cache_reset() {
 }
 
 /**
+ * Determines whether the object cache implementation supports a particular feature.
+ *
+ * @since 6.1.0
+ *
+ * @param string $feature Name of the feature to check for. Possible values include:
+ *                        'add_multiple', 'set_multiple', 'get_multiple', 'delete_multiple',
+ *                        'flush_runtime', 'flush_group'.
+ * @return bool True if the feature is supported, false otherwise.
+ */
+function wp_cache_supports( $feature ) {
+	switch ( $feature ) {
+		case 'get_multiple':
+			return true;
+
+		case 'add_multiple':
+		case 'set_multiple':
+		case 'delete_multiple':
+		case 'flush_runtime':
+		case 'flush_group':
+		default:
+			return false;
+	}
+}
+
+/**
  * WordPress Object Cache
  *
  * The WordPress Object Cache is used to save on trips to the database. The
@@ -301,6 +326,7 @@ function wp_cache_reset() {
  * in the wp-content folder which is looked at in wp-settings. If that file
  * exists, then this file will not be included.
  */
+#[AllowDynamicProperties]
 class WP_Object_Cache {
 
 	/**

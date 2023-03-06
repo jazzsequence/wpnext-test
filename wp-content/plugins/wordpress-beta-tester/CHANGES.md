@@ -1,5 +1,24 @@
 [unreleased]
 
+#### 3.2.9 / 2023-02-27
+* mitigate some issues/possible issues with PHP 8.1/8.2
+
+#### 3.2.8 / 2023-02-07
+* Composer 2.5.2 is fixed.
+
+#### 3.2.7 / 2023-02-07
+* revert to Composer v2.2.x locally for autoloader compatibility
+
+#### 3.2.6 / 2023-01-30
+* revert to Composer v2.5.0 as v2.5.1 has bug causing fatal, fixed in next version of Composer
+
+#### 3.2.5 / 2023-01-29
+* added auto display relative fields immediately bleeding edge option is selected, thanks @Preciousomonze
+* fixes for PHP8.1
+
+#### 3.2.4 / 2022-11-07
+* return empty array for 8.1 compatibility
+
 #### 3.2.3 / 2022-09-29
 * update for PHP 8.1 compatibility
 

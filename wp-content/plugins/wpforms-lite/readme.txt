@@ -1,9 +1,9 @@
 === Contact Form by WPForms - Drag & Drop Form Builder for WordPress ===
 Contributors: wpforms, jaredatch, smub, slaFFik
-Tags: contact form, contact form plugin, forms, form builder, custom form, contact button, contact me, custom contact form, form manager, form, forms builder, forms creator, captcha, recaptcha, Akismet, email form, web form, feedback form, payment form, survey form, donation form, email submit form, message form, mailchimp, mailchimp form, aweber, aweber form, paypal, paypal form, stripe, stripe form, getresponse, getresponse form, email subscription, contact form widget, user registration form, wordpress registration, wordpress login form, feedback
+Tags: contact form, contact form plugin, forms, form builder, custom form, contact button, contact me, custom contact form, form manager, form, forms builder, forms creator, captcha, recaptcha, Turnstile, Akismet, email form, web form, feedback form, payment form, survey form, donation form, email submit form, message form, mailchimp, mailchimp form, aweber, aweber form, paypal, paypal form, stripe, stripe form, getresponse, getresponse form, email subscription, contact form widget, user registration form, wordpress registration, wordpress login form, feedback
 Requires at least: 5.2
-Tested up to: 6.0
-Stable tag: 1.7.7.2
+Tested up to: 6.1
+Stable tag: 1.8.0.2
 Requires PHP: 5.6
 License: GNU General Public License v2.0 or later
 
@@ -51,7 +51,7 @@ Whether you're looking to create a simple contact form, marketing form, request 
 
 WPForms comes with <a href="https://wpforms.com/features/form-templates/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">pre-built form templates</a> to help you save time. You can add, remove, or re-arrange fields as necessary.
 
-See <a href="https://wpforms.com/templates/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">400+ Pre-Made WPForms Form Template Demo</a>
+See <a href="https://wpforms.com/templates/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">600+ Pre-Made WPForms Form Template Demo</a>
 
 = Mobile Ready, SEO Friendly and Optimized for Speed =
 
@@ -141,7 +141,7 @@ Since contact forms are essential for marketing, WPForms is a must have plugin f
 * 100% Responsive - Mobile Friendly contact forms.
 * GDPR Friendly - Make your contact form GDPR compatible with just a few clicks.
 * <a href="https://wpforms.com/features/form-templates/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Form Templates</a> - Use our pre-built form templates to save time. Never start from scratch again (see all <a href="https://wpforms.com/templates/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">form templates demos</a>).
-* <a href="https://wpforms.com/features/spam-protection/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Spam Protection</a> - WPForms provides smart anti-spam protection out-of-the-box, plus direct integrations with hCaptcha and Google reCAPTCHA.
+* <a href="https://wpforms.com/features/spam-protection/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Spam Protection</a> - WPForms provides smart anti-spam protection out-of-the-box, plus direct integrations with hCaptcha, Google reCAPTCHA and Cloudflare Turnstile.
 * <a href="https://wpforms.com/features/instant-notifications/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Instant Form Notification</a> - Quickly respond to incoming inquiries with our instant contact form notification system.
 * <a href="https://wpforms.com/features/form-confirmation/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Smart Form Confirmation</a> - Show a custom success message, or redirect users to a custom thank you page.
 * <a href="https://wpforms.com/features/file-uploads/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">File Uploads</a> - Collect files and media through your contact forms with File Uploads.
@@ -158,6 +158,7 @@ Since contact forms are essential for marketing, WPForms is a must have plugin f
 * <a href="https://wpforms.com/addons/offline-forms-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Offline Forms</a> - Let your visitors save their entered data offline and submit when their internet connection is restored.
 * <a href="https://wpforms.com/addons/form-pages-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Form Landing Pages</a> - Create "distraction-free" form landing pages to boost conversions. Great Google Forms and Wufoo alternative.
 * <a href="https://wpforms.com/addons/conversational-forms-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Conversational Forms</a> - Interactive form layout that makes your form feels more human and boost overall completion rate. Great for surveys and registration forms. Perfect Typeform alternative for WordPress without the high costs.
+* <a href="https://wpforms.com/addons/lead-forms-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Lead Forms</a> - Embed conversational forms in any post or page to boost conversion rates. Easily convert existing forms to Lead Forms and control the styling of your form so that it matches your theme.
 * <a href="https://wpforms.com/addons/webhooks-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Webhooks</a> - Send form entry data to secondary tools and external services. No code required, and no need for a third party connector.
 * <a href="https://wpforms.com/addons/user-journey-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">User Journey Reporting</a> - Discover the steps your visitors take before they submit your forms. Right in the WordPress dashboard, you can easily see the content that's driving the most valuable form conversions.
 * <a href="https://wpforms.com/addons/save-and-resume-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Save and Resume Forms</a> - Allows your visitors to save their progress while filling in your forms. When they're ready to continue, they can restore their entry with a click.
@@ -180,6 +181,7 @@ Since contact forms are essential for marketing, WPForms is a must have plugin f
 * <a href="https://wpforms.com/addons/sendinblue-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Sendinblue Forms</a> - Create Sendinblue forms to automate your marketing and engage your subscribers.
 * <a href="https://wpforms.com/addons/mailerlite-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">MailerLite Forms</a> - Create MailerLite forms to easily add subscribers to your email marketing lists.
 * <a href="https://wpforms.com/addons/salesforce-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Salesforce Forms</a> - Easily send your WordPress form contacts and leads to your Salesforce CRM account.
+* <a href="https://wpforms.com/addons/google-sheets-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Google Sheets Addon</a> - Connect your WordPress forms to your Google account and easily send forms entries to Google Sheets.
 * <a href="https://wpforms.com/addons/zapier-addon/?utm_source=wprepo&utm_medium=link&utm_campaign=liteplugin" rel="friend">Zapier Addon</a> - Connect your WordPress forms with over 5000+ apps. Route your contact form data to your favorite CRM, email marketing service, etc.
 
 After reading this feature list, you can probably imagine why WPForms is the best WordPress contact form plugin on the market.
@@ -203,25 +205,27 @@ WPForms&reg; is a registered trademark of WPForms LLC. When writing about the co
 
 = What's Next =
 
-If you like this plugin, then consider checking out our other projects:
+If you like our WPForms plugin, then consider checking out our other projects:
 
-* <a href="https://optinmonster.com/">OptinMonster</a> - Get More Email Subscribers with the most popular conversion optimization plugin for WordPress.
-* <a href="https://www.monsterinsights.com/">MonsterInsights</a> - See the stats that matter and grow your business with confidence. The best Google Analytics plugin for WordPress.
+* <a href="https://optinmonster.com/">OptinMonster</a> - Get more email subscribers with the most popular conversion optimization plugin for WordPress.
+* <a href="https://aioseo.com/">AIOSEO</a> - The original WordPress SEO plugin to help you rank higher in search results (trusted by over 3 million sites).
+* <a href="https://www.monsterinsights.com/">MonsterInsights</a> - See the stats that matter and grow your business with confidence. Best Google Analytics plugin for WordPress.
 * <a href="https://www.seedprod.com/">SeedProd</a> - Create beautiful landing pages with our powerful drag & drop landing page builder.
 * <a href="https://wpmailsmtp.com">WP Mail SMTP</a> - Improve email deliverability for your contact form with the most popular SMTP plugin for WordPress.
-* <a href="https://rafflepress.com/">RafflePress</a> - Best WordPress giveaway and contest plugin to grow traffic and social followers.
 * <a href="https://smashballoon.com/">Smash Balloon</a> - #1 social feeds plugin for WordPress - display social media content in WordPress without code.
-* <a href="https://aioseo.com/">AIOSEO</a> - The original WordPress SEO plugin to help you rank higher in search results (trusted by over 2 million sites).
-* <a href="https://www.pushengage.com/">Push Engage</a> - Connect with visitors after they leave your website with the leading web push notification plugin.
+* <a href="https://wpcode.com/">WPCode</a> – must have WordPress code snippet management plugin to help you future-proof website customization (trusted by 1.5 million sites).
+* <a href="https://snapcreek.com/">Duplicator</a> – popular WordPress backup and migration plugin used by over 1 million websites.
+* <a href="https://wpsimplepay.com/">WP Simple Pay</a> – #1 Stripe payments plugin for WordPress. Start accepting one-time or recurring payments without a shopping cart.
+* <a href="https://pushengage.com/">Push Engage</a> - Connect with visitors after they leave your website with the leading web push notification plugin.
+* <a href="https://rafflepress.com/">RafflePress</a> - Best WordPress giveaway and contest plugin to grow traffic and social followers.
 * <a href="https://trustpulse.com/">TrustPulse</a> - Add real-time social proof notifications to boost your store conversions by up to 15%.
 * <a href="https://searchwp.com/">SearchWP</a> – The most advanced custom WordPress search plugin to improve WordPress search quality.
 * <a href="https://affiliatewp.com/">AffiliateWP</a> – #1 affiliate management plugin for WordPress. Add a referral program to your online store.
-* <a href="https://wpsimplepay.com/">WP Simple Pay</a> – #1 Stripe payments plugin for WordPress. Start accepting one-time or recurring payments without a shopping cart.
 * <a href="https://easydigitaldownloads.com/">Easy Digital Downloads</a> – The best WordPress eCommerce plugin to sell digital products (eBooks, software, music, and more).
 * <a href="https://sugarcalendar.com/">Sugar Calendar</a> – A simple event calendar plugin for WordPress that's both easy and powerful.
+* <a href="https://www.wpcharitable.com/">WPCharitable</a> – Top-rated WordPress donation and fundraising plugin for WordPress.
 
 Visit <a href="https://www.wpbeginner.com/" rel="friend" title="WPBeginner">WPBeginner</a> to learn from our <a href="https://www.wpbeginner.com/category/wp-tutorials/" rel="friend" title="WordPress Tutorials">WordPress Tutorials</a> and find out about other <a href="https://www.wpbeginner.com/category/plugins/" rel="friend" title="Best WordPress Plugins">best WordPress plugins</a>.
-
 
 == Installation ==
 
@@ -234,10 +238,10 @@ Visit <a href="https://www.wpbeginner.com/" rel="friend" title="WPBeginner">WPBe
 
 1. WPForms Drag & Drop Online Form Builder
 2. Adding New Field
-3. Form Preview
-4. Form Settings
-5. Conversational Forms addon
-6. Form Pages addon
+3. WPForms Settings
+4. Form Preview
+5. Form Pages with multiple styles
+6. Conversational Forms
 
 == Frequently Asked Questions ==
 
@@ -297,10 +301,11 @@ Here is a list of our advanced contact form builder fields (Fancy Fields):
 * File Upload - Great for File Upload Form
 * Password Field
 * Rich Text - Add a WYSIWYG field, perfect for guest blog post forms
-* Layout Field – Position form fields inside columns using custom or pre-made layouts.
+* Layout Field – Position form fields inside columns using custom or pre-made layouts
 * Page Break Field - Great for Multi Page Contact Form with Progress Bar
 * Section Divider - Great for Long Contact Forms
 * HTML Field - add Custom HTML inside your form
+* Content Field - Add headings, lists, and media to your forms without writing code
 * Entry Preview - Allow your form users to preview their form entries before they've submitted them
 * Star Rating - Great for Survey Forms and Polls
 * Hidden Field
@@ -311,6 +316,7 @@ Here is a list of our advanced contact form builder fields (Fancy Fields):
 * Net Promoter Score (NPS Field) - Great for Survey Forms
 * Google ReCAPTCHA - Great for Preventing Contact Form Spam
 * hCAPTCHA - Great for Preventing Contact Form Spam
+* Cloudflare Turnstile - Great for Preventing Contact Form Spam
 
 Here is a list of our Payment Fields that will help you create a order form, donation form, booking form, and other payment forms:
 
@@ -342,7 +348,7 @@ Here is a list of our popular marketing integrations:
 * Sendinblue
 * MailerLite
 
-Using our Zapier integration, you can easily connect WPForms with over 1000+ marketing apps including:
+Using our Zapier integration, you can easily connect WPForms with over 5000+ marketing apps including:
 
 * PipeDrive CRM
 * Google Sheets
@@ -405,7 +411,7 @@ Yes, WPForms has full translation and localization support via the wpforms textd
 
 Yes, WPForms includes spam protection which is enabled on all forms by default in the form settings.
 
-Additionally, Google reCAPTCHA and hCaptcha are also supported and can be set up at WPForms > Settings > CAPTCHA.
+Additionally, Google reCAPTCHA, hCaptcha and Cloudflare Turnstile are also supported and can be set up at WPForms > Settings > CAPTCHA.
 
 WPForms is fully compatible with all versions of Google reCAPTCHA:
 
@@ -430,6 +436,63 @@ Thank you
 Syed Balkhi
 
 == Changelog ==
+
+= 1.8.0.2 =
+- Changed: Updated DOMPurify library to 3.0.1.
+- Fixed: An error occurred when the DreamHost Panel Login plugin and WPForms Lite were both active and WPForms Pro was activated.
+- Fixed: Form template block in the Form Builder could overflow the container on smaller screen sizes.
+- Fixed: Long links in the HTML email messages did not wrap and caused overflow issues.
+- Fixed: Google reCAPTCHA v2 could not be reset on server-side validation failure.
+
+= 1.8.0.1 =
+- Added: Prevent spam submissions using the new Cloudflare Turnstile anti-spam integration. You can find it on the Settings > CAPTCHA page.
+- Changed: Non-public taxonomies should not be displayed in Dynamic Choices' available sources.
+- Changed: External usage of removed PHP classes is now handled gracefully without generating fatal errors.
+- Changed: The performance of the Email field validation is improved when using an allowlist or denylist.
+- Changed: Updated DOMPurify library to 2.4.3.
+- Fixed: The Dropdown field text indentation was incorrect in the Form Builder in Firefox.
+- Fixed: Various notification modals' titles had inconsistent sizes in the Form Builder.
+- Fixed: Validation errors in various modals were inconsistent in the Form Builder.
+- Fixed: When duplicating an inactive field, the settings of the active field are now removed properly.
+- Fixed: Some cache files were unnecessarily re-downloaded on the front end.
+- Fixed: Users with roles other than Administrator could not add the reCAPTCHA/hCaptcha field and dismiss notices even if they had sufficient permissions.
+- Fixed: Number Slider field validation failed if a maximum value was not a multiple of steps..
+- Fixed: HTML markup in the Default Text of Paragraph Text fields was not being displayed on the front end and in the Form Builder preview.
+
+= 1.7.9.1 =
+- Fixed: Incorrect spacing around the Submit button in the Form Builder was fixed.
+- Fixed: Missing assets were added to the plugin.
+
+= 1.7.9 =
+- Added: Icon Choices feature for Checkboxes and Multiple Choice fields - a selection of 2000+ icons can now be used with your choices!
+- Changed: Avoid rendering the WPForms Import admin page if the user lacks `unfiltered_html` capability.
+- Changed: Respect site settings for displaying avatars on the Revisions screen in the Form Builder.
+- Changed: Color picker fields in the Form Builder are now correctly handling default colors.
+- Changed: In the form Notifications you can now set up the Reply-To Name value in addition to the Reply-To Email using a special format.
+- Changed: Updated jquery-confirm library to 3.3.4.
+- Fixed: Prevent field duplication in the Form Builder performed multiple times when clicking fast inside the confirmation modal.
+- Fixed: Action links were rendered on two lines in the admin dashboard widget.
+- Fixed: PHP notices were generated when form locations logic ran for unregistered post types.
+- Fixed: The Embed modal performance in the Form Builder was improved a lot when there are a ton of pages on a site.
+- Fixed: The confirmation message for non-AJAX form submissions wasn't wrapped into the main form container.
+- Fixed: Improved compatibility with Elementor popups v3.9+.
+- Fixed: Notification email suggestion didn't work properly in WordPress installed in a subdomain.
+- Fixed: `{page_title}` smart tag was conflicting with the wpSEO plugin.
+- Fixed: Better compatibility with the Popup Maker plugin.
+
+= 1.7.8 =
+- Added: All anti-spam protection settings are grouped in one place in the Form Builder > Settings for easier access.
+- Changed: Recently added Form Templates are now available in the "New Templates" category.
+- Changed: Non-responsive (desktop) version of the Form Builder is not accessible on mobile devices.
+- Fixed: jQuery deprecation notices were triggered in the browser's console.
+- Fixed: Close button in dropdowns was displayed incorrectly in certain places.
+- Fixed: A PHP warning was raised on certain site configurations when the user tried to submit a form.
+- Fixed: Toggle control animation was working incorrectly in certain cases.
+- Fixed: Text was overlapping the down arrow on dropdowns in the 2021 theme.
+- Fixed: WPForms Challenge user experience was improved.
+- Fixed: Smart tag list was too big in fields with warnings.
+- Fixed: Some input masks caused the text in the Text field to be right-aligned.
+- Fixed: Compatibility with the 2023 theme was improved.
 
 = 1.7.7.2 =
 - Added: There is a new filter `wpforms_builder_panel_sidebar_section_classes` to change builder panel sidebar section classes.
@@ -538,114 +601,5 @@ Syed Balkhi
 - Fixed: Notices appeared in the debug.log when the user created a Custom Template and used it in the Form Builder.
 - Fixed: hCaptcha pointer had a weird thick dark border since WordPress 6.0.
 - Fixed: Check GDPR settings before trying to use a cookie.
-
-= 1.7.4.2 =
-- Changed: DOMPurify library updated to 2.3.8.
-- Fixed: WordPress 6.0 compatibility - WPForms block styling fixed inside the Full Site Editor.
-- Fixed: Lite Connect: submitted form entries counting improved.
-
-= 1.7.4.1 =
-- Fixed: LiteConnect auth key request didn't work with plain permalinks and with subdirectory install.
-- Fixed: Form Locations compatibility with the Full Site Editor template parts.
-
-= 1.7.4 =
-- Added: Form Locations! On the Forms Overview page easily check all places where each form is currently embedded.
-- Added: Back up form submissions into the cloud and restore them to your database as Entries after upgrading to a paid plan.
-- Changed: Improved text wrapping of field labels and descriptions.
-- Changed: Each smart tag inserted by a user in the Form Builder will now be placed as the last one in relevant inputs.
-- Changed: The input field in the Form Embed wizard popup in the Form Builder is now focused by default.
-- Changed: Updated DOMPurify lib to 2.3.6.
-- Fixed: Search result was not reset when the user clicked "x" sign in the search field on the Addons page.
-- Fixed: The form could be saved while still adding a field, but it should not.
-- Fixed: Improved compatibility with Elementor popups.
-- Fixed: Cleaned up deprecation notice for `_register_controls()` with recent Elementor versions.
-
-= 1.7.3 =
-- IMPORTANT: Support for PHP 5.5 has been discontinued. If you are running PHP 5.5, you MUST upgrade PHP before installing WPForms 1.7.3. Failure to do that will disable WPForms core functionality.
-- IMPORTANT: Support for WordPress 5.1 has been discontinued. If you are running WordPress 5.1, you MUST upgrade WordPress before installing WPForms 1.7.3. Failure to do that will disable WPForms core functionality.
-- Added: Forms now can be moved to Trash and restored on the Forms Overview page.
-- Added: Forms now support Revisions with new UI and ability to switch between them.
-- Added: Form Template Export selection on the Tools > Export page now supports search.
-- Changed: Improved support for WordPress Core UI colors and admin themes in the admin notifications panel.
-- Changed: Improved submitted email field value validation (take into account real-world usage and RFC information).
-- Changed: Updated Action Scheduler library to 3.4.0.
-- Changed: Hide Sub-Labels option should be hidden for some formats in the Name field.
-- Changed: Improved performance of Action Scheduler tasks.
-- Changed: Drop jQuery matchHeight library in favor of a CSS solution.
-- Changed: Unified and improved modals across all plugin pages and the Form Builder.
-- Changed: Forms now can be deleted when the user who created them is deleted.
-- Fixed: Long field titles didn't wrap within the field container.
-- Fixed: Stuck on loading the Form Builder when switching to a new form template with unsaved changes and dismissing the native browser prompt.
-- Fixed: Buttons had no spacing when the Embed button is not available for a user without the capability to edit pages and/or posts.
-- Fixed: Incorrect position of the notification counter in the admin bar when a notification was dismissed.
-- Fixed: Make the form Submit button disabled all the time after the submit action when AJAX form submission or confirmation redirect are enabled.
-- Fixed: Toggle control labels did not have a hand cursor.
-- Fixed: The dropdown list was shown partially when located at the end of the form in the Twenty Twenty theme.
-- Fixed: Multiple selected options in the Classic Dropdown field didn't have a visual active state.
-- Fixed: Deprecation notice when processing smart tags.
-- Fixed: False JavaScript issue error when WP Rocket's Delay JavaScript execution option is on.
-- Fixed: PHP notice generated when email notifications were sent.
-- Fixed: "Did You Know" block now always spaned across all columns.
-- Fixed: Validation error if an email was not required and left empty.
-- Fixed: Email field validation failed with long and invalid emails.
-- Fixed: Import from other plugins.
-- Fixed: Compatibility with PHP 8.1.
-
-= 1.7.2.1 =
-- Fixed: Compatibility with PHP 8.0 and PHP 8.1.
-- Fixed: Compatibility with WordPress 5.9, including its new Full Site Editing feature.
-- Fixed: Broken cache directory path if `WP_CONTENT_DIR` is set in the `wp-config.php` without trailing slash.
-- Fixed: PHP Notice when using the `wpforms_log()` function in certain conditions.
-- Fixed: Type mismatch brakes a list of scheduled actions in Action Scheduler if typed arguments are passed.
-
-= 1.7.2 =
-- Added: Search by form name and description is available on the Forms Overview page.
-- Added: New "Author" column in the Forms Overview table to display a name of a person who created the form.
-- Changed: Adjusted an error message for the Locked Field modal when attempting to delete required form fields.
-- Changed: Hide image choice style options if image choices are not enabled.
-- Changed: Improved sanitization for Page and Form IDs in Form embed wizard popup.
-- Changed: Adjusted Weekly Summary email text for Lite users.
-- Changed: Updated the WPForms > About Us page.
-- Changed: Updated jQuery inputmask lib to 5.0.7-beta29.
-- Changed: Updated DOMPurify lib to 2.3.4.
-- Fixed: Missing search docs in the Form Builder Help.
-- Fixed: Display empty table instead of empty state screen for Unread (0), Starred (0), Abandoned (0), etc., views.
-- Fixed: Media modal 'Actions' menu was missing when using the Divi Builder.
-- Fixed: PHP notice was generated on a form preview if a page template is changed.
-- Fixed: Correctly handle the legacy widget options (show/hide form title and description) on the front-end.
-- Fixed: If a form with configured Google reCAPTCHA v3 is submitted after 2 minutes, there was an error "Google reCAPTCHA verification failed, please try again later."
-- Fixed: Better compatibility for From Name and From Email fields in the Form Builder > Notifications screen when the WP Mail SMTP plugin forces those values.
-- Fixed: PHP warning occurred when the `%` symbol is used inside some Form Builder settings.
-- Fixed: Form Preview didn't work properly on the upcoming Twenty Twenty-Two theme.
-- Fixed: PHP timeout occurred in the Form Builder when large multi-level term taxonomies were used as dynamic choices for Checkboxes/Multiple Choices/Dropdown fields.
-- Fixed: PHP fatal error generated in some cases when Site Health information was displayed.
-- Fixed: WP.com VIP clients used to have caching issues with external data.
-- Fixed: WooCommerce product import (CSV) to update existing products wasn't updating product images while WPForms was active.
-- Fixed: Form couldn't be submitted on the Lite version of the plugin when it contained the Page Break field from the paid version.
-
-= 1.7.1.2 =
-- Fixed: Edge case when form tokens (anti-spam protection) failed verification at certain time of a new day.
-
-= 1.7.1.1 =
-- Changed: Improved translations by removing confusion if non-translatable placeholders are used.
-- Changed: Improved support for WordPress Core UI colors and admin themes in the admin bar menu.
-- Changed: Improved display of empty and hidden field labels in Form Builder preview.
-- Changed: Field helper notification in the Form Builder now can be dismissed.
-- Changed: Improved and standardized look of classic and modern Dropdown field across Form Builder, admin area, and frontend.
-- Fixed: Strip slashes from Paragraph Text field when the value is dynamically populated.
-- Fixed: SMTP settings page linked to Setup Wizard even when SMTP settings are already configured.
-- Fixed: Notifications count in the admin bar is misaligned.
-- Fixed: Field helper notification in the Form Builder overlaps and blocks Duplicate and Delete actions when hovered.
-- Fixed: Non-latin (Punycode) email addresses are not converted for display in email suggestion hints.
-
-= 1.7.0 =
-- Added: Uncanny Automator integration.
-- Changed: Updated jQuery Validation library to v1.9.3.
-- Fixed: Incorrect handling of language files downloads when the plugin is activated, or site language is changed.
-- Fixed: Alignment for admin notification counter.
-- Fixed: Javascript error in Elementor page builder.
-- Fixed: Embedded forms into global sidebar report about an error in the Divi page builder.
-- Fixed: Change settings were not applied for a Duplicated Modern Dropdown field.
-- Fixed: Form fields not displaying full width on mobile devices with Base form styling selected.
 
 [See changelog for all versions](https://plugins.svn.wordpress.org/wpforms-lite/trunk/changelog.txt).

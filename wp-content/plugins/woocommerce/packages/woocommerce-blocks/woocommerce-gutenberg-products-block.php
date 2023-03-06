@@ -3,14 +3,14 @@
  * Plugin Name: WooCommerce Blocks
  * Plugin URI: https://github.com/woocommerce/woocommerce-gutenberg-products-block
  * Description: WooCommerce blocks for the Gutenberg editor.
- * Version: 8.5.2
+ * Version: 9.4.4
  * Author: Automattic
  * Author URI: https://woocommerce.com
  * Text Domain:  woo-gutenberg-products-block
- * Requires at least: 6.0
- * Requires PHP: 7.0
- * WC requires at least: 6.7
- * WC tested up to: 6.8
+ * Requires at least: 6.1.1
+ * Requires PHP: 7.2
+ * WC requires at least: 7.2
+ * WC tested up to: 7.3
  *
  * @package WooCommerce\Blocks
  * @internal This file is only used when running as a feature plugin.
@@ -18,11 +18,22 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$minimum_wp_version = '6.0';
+$minimum_wp_version = '6.1.1';
 
 if ( ! defined( 'WC_BLOCKS_IS_FEATURE_PLUGIN' ) ) {
 	define( 'WC_BLOCKS_IS_FEATURE_PLUGIN', true );
 }
+
+// Declare compatibility with custom order tables for WooCommerce.
+add_action(
+	'before_woocommerce_init',
+	function () {
+		if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+			\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+		}
+	}
+);
+
 /**
  * Whether notices must be displayed in the current page (plugins and WooCommerce pages).
  *

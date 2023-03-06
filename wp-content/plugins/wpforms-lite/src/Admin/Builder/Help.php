@@ -32,9 +32,9 @@ class Help {
 	 *
 	 * @since 1.6.3
 	 */
-	public function init() {
+	public function init() { // phpcs:ignore WPForms.PHP.HooksMethod.InvalidPlaceForAddingHooks
 
-		// This should be here, otherwise scheduled task doesn't executes.
+		// This should be here, otherwise scheduled task doesn't execute.
 		add_action( 'wpforms_builder_help_cache_update', [ $this, 'update_docs' ] );
 
 		// Terminate initialization if not in builder.
@@ -292,6 +292,7 @@ class Help {
 			'fields/field_options/name'               => 'name',
 			'fields/field_options/hidden'             => 'hidden',
 			'fields/field_options/html'               => 'html',
+			'fields/field_options/content'            => 'content',
 			'fields/field_options/pagebreak'          => 'page break',
 			'fields/field_options/entry-preview'      => 'entry preview',
 			'fields/field_options/password'           => 'password',
@@ -317,8 +318,10 @@ class Help {
 			'fields/field_options/signature'          => 'signature',
 			'fields/field_options/net_promoter_score' => 'net promoter score',
 			'settings/general'                        => 'settings',
+			'settings/anti_spam'                      => 'spam',
 			'settings/notifications'                  => 'notification emails',
 			'settings/confirmation'                   => 'confirmation message',
+			'settings/lead_forms'                     => 'lead forms',
 			'settings/form_abandonment'               => 'form abandonment',
 			'settings/post_submissions'               => 'post submissions',
 			'settings/user_registration'              => 'user registration',
@@ -327,6 +330,7 @@ class Help {
 			'settings/form_locker'                    => 'form locker',
 			'settings/form_pages'                     => 'form pages',
 			'settings/save_resume'                    => 'save and resume',
+			'settings/google_sheets'                  => 'google sheets',
 			'settings/webhooks'                       => 'webhooks',
 			'providers'                               => '',
 			'providers/aweber'                        => 'aweber',
@@ -388,6 +392,7 @@ class Help {
 				'/docs/setup-captcha-wpforms/',
 			],
 			'spam'                      => [
+				'/docs/how-to-prevent-spam-in-wpforms/',
 				'/docs/setup-captcha-wpforms/',
 				'/docs/how-to-install-and-use-custom-captcha-addon-in-wpforms/',
 				'/docs/setting-up-akismet-anti-spam-protection/',
@@ -490,11 +495,15 @@ class Help {
 			'image choices'             => [
 				'/docs/how-to-add-image-choices-to-fields/',
 			],
+			'icon choices'              => [
+				'/docs/using-icon-choices/',
+			],
 			'multiple choice'           => [
 				'/docs/how-to-bulk-add-choices-for-multiple-choice-checkbox-and-dropdown-fields/',
 				'/docs/how-to-create-a-multi-column-layout-for-radio-buttons-and-checkboxes/',
 				'/docs/how-to-randomize-checkbox-and-multiple-choice-options/',
 				'/docs/how-to-add-image-choices-to-fields/',
+				'/docs/using-icon-choices/',
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
@@ -504,6 +513,7 @@ class Help {
 				'/docs/how-to-create-a-multi-column-layout-for-radio-buttons-and-checkboxes/',
 				'/docs/how-to-randomize-checkbox-and-multiple-choice-options/',
 				'/docs/how-to-add-image-choices-to-fields/',
+				'/docs/using-icon-choices/',
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
@@ -514,6 +524,7 @@ class Help {
 				'/docs/how-to-create-a-multi-column-layout-for-radio-buttons-and-checkboxes/',
 				'/docs/how-to-randomize-checkbox-and-multiple-choice-options/',
 				'/docs/how-to-add-image-choices-to-fields/',
+				'/docs/using-icon-choices/',
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
@@ -524,6 +535,7 @@ class Help {
 				'/docs/how-to-create-a-multi-column-layout-for-radio-buttons-and-checkboxes/',
 				'/docs/how-to-randomize-checkbox-and-multiple-choice-options/',
 				'/docs/how-to-add-image-choices-to-fields/',
+				'/docs/using-icon-choices/',
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
@@ -744,6 +756,9 @@ class Help {
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
 			],
+			'content'                   => [
+				'docs/using-the-content-field/',
+			],
 			'code'                      => [
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
@@ -934,6 +949,7 @@ class Help {
 				'/docs/how-to-create-a-donation-form-with-multiple-amounts/',
 				'/docs/how-to-allow-users-to-choose-a-payment-method-on-your-form/',
 				'/docs/how-to-add-image-choices-to-fields/',
+				'/docs/using-icon-choices/',
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
@@ -946,6 +962,7 @@ class Help {
 				'/docs/how-to-create-a-donation-form-with-multiple-amounts/',
 				'/docs/how-to-allow-users-to-choose-a-payment-method-on-your-form/',
 				'/docs/how-to-add-image-choices-to-fields/',
+				'/docs/using-icon-choices/',
 				'/docs/how-to-customize-form-field-options/',
 				'/docs/how-to-use-conditional-logic-with-wpforms/',
 				'/docs/how-to-customize-the-style-of-individual-form-fields/',
@@ -1063,6 +1080,9 @@ class Help {
 			'conditional confirmation'  => [
 				'/docs/setup-form-confirmation-wpforms/',
 				'/docs/how-to-create-conditional-form-confirmations/',
+			],
+			'lead forms'                => [
+				'/docs/lead-forms-addon/',
 			],
 			'form abandonment'          => [
 				'/docs/how-to-install-and-use-form-abandonment-with-wpforms/',
@@ -1194,6 +1214,10 @@ class Help {
 			'getresponse'               => [
 				'/docs/how-to-install-and-use-getresponse-addon-with-wpforms/',
 			],
+			'google sheets'             => [
+				'/docs/google-sheets-addon/',
+				'/docs/google-permissions/',
+			],
 			'mailchimp'                 => [
 				'/docs/install-use-mailchimp-addon-wpforms/',
 			],
@@ -1215,10 +1239,12 @@ class Help {
 			'integrate'                 => [
 				'/docs/how-to-install-and-use-zapier-addon-with-wpforms/',
 				'/docs/how-to-install-and-use-the-webhooks-addon-with-wpforms/',
+				'/docs/google-sheets-addon/',
 			],
 			'integration'               => [
 				'/docs/how-to-install-and-use-zapier-addon-with-wpforms/',
 				'/docs/how-to-install-and-use-the-webhooks-addon-with-wpforms/',
+				'/docs/google-sheets-addon/',
 			],
 			'crm'                       => [
 				'/docs/how-to-install-and-use-zapier-addon-with-wpforms/',
@@ -1227,6 +1253,7 @@ class Help {
 			'api'                       => [
 				'/docs/how-to-install-and-use-zapier-addon-with-wpforms/',
 				'/docs/how-to-install-and-use-the-webhooks-addon-with-wpforms/',
+				'/docs/google-sheets-addon/',
 			],
 			'paypal commerce'           => [
 				'/docs/paypal-commerce-addon/',

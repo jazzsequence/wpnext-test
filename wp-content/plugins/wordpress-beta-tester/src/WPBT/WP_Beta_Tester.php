@@ -228,7 +228,7 @@ class WP_Beta_Tester {
 	 * Get current WP release version.
 	 *
 	 * @since 3.1.0
-	 * @return string $wp_version
+	 * @return string|array $wp_version
 	 */
 	public function get_current_wp_release() {
 		$response = get_site_transient( 'current_wp_release' );
@@ -238,12 +238,13 @@ class WP_Beta_Tester {
 			$response = wp_remote_retrieve_body( $response );
 
 			if ( is_wp_error( $response ) ) {
-				return null;
+				return array();
 			}
 
 			$response = (array) json_decode( $response );
 			$response = array_keys( $response, 'latest', true );
 			$response = array_pop( $response );
+			$response = null === $response ? '' : $response;
 			set_site_transient( 'current_wp_release', $response, DAY_IN_SECONDS );
 		}
 
@@ -380,7 +381,7 @@ class WP_Beta_Tester {
 			);
 			$field_guide_link = "<li>$field_guide_link</li>";
 		}
-		$links = $beta_rc || $rc ? "<ul> $dev_note_link $field_guide_link </ul>" : null;
+		$links = $beta_rc || $rc ? "<ul> $dev_note_link $field_guide_link </ul>" : '';
 
 		return $links;
 	}

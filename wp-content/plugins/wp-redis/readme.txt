@@ -2,8 +2,8 @@
 Contributors: getpantheon, danielbachhuber, mboynes, Outlandish Josh
 Tags: cache, plugin, redis
 Requires at least: 3.0.1
-Tested up to: 5.9
-Stable tag: 1.2.0
+Tested up to: 6.1.1
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -49,7 +49,7 @@ This assumes you have a PHP environment with the [required PhpRedis extension](h
 6. (Optional) To use the same Redis server with multiple, discreet WordPress installs, you can use the `WP_CACHE_KEY_SALT` constant to define a unique salt for each install.
 7. (Optional) To use true cache groups, with the ability to delete all keys for a given group, register groups with `wp_cache_add_redis_hash_groups()`, or define the `WP_REDIS_USE_CACHE_GROUPS` constant to `true` to enable with all groups. However, when enabled, the expiration value is not respected because expiration on group keys isn't a feature [supported by Redis](https://github.com/redis/redis/issues/6620).
 8. (Optional) On an existing site previously using WordPress' transient cache, use WP-CLI to delete all (`%_transient_%`) transients from the options table: `wp transient delete-all`. WP Redis assumes responsibility for the transient cache.
-9. (Optional) To use [Relay](https://relaycache.com) instead of PhpRedis as the client define the `WP_REDIS_USE_RELAY` constant to `true`.
+9. (Optional) To use [Relay](https://relaycache.com) instead of PhpRedis as the client define the `WP_REDIS_USE_RELAY` constant to `true`. For support requests, please use [Relay's GitHub discussions](https://github.com/cachewerk/relay/discussions).
 
 == WP-CLI Commands ==
 
@@ -76,22 +76,7 @@ Use `wp help redis <command>` to learn more about each command.
 
 == Contributing ==
 
-The best way to contribute to the development of this plugin is by participating on the GitHub project:
-
-https://github.com/pantheon-systems/wp-redis
-
-Pull requests and issues are welcome!
-
-You may notice there are two sets of tests running, on two different services:
-
-* Travis CI runs the [PHPUnit](https://phpunit.de/) test suite in a variety of environment configurations (e.g. Redis enabled vs. Redis disabled).
-* Circle CI runs the [Behat](http://behat.org/) test suite against a Pantheon site, to ensure the plugin's compatibility with the Pantheon platform.
-
-Both of these test suites can be run locally, with a varying amount of setup.
-
-PHPUnit requires the [WordPress PHPUnit test suite](https://make.wordpress.org/core/handbook/testing/automated-testing/phpunit/), and access to a database with name `wordpress_test`. If you haven't already configured the test suite locally, you can run `bash bin/install-wp-tests.sh wordpress_test root '' localhost`. You'll also need to enable Redis and the PHPRedis extension in order to run the test suite against Redis.
-
-Behat requires a Pantheon site with Redis enabled. Once you've created the site, you'll need [install Terminus](https://github.com/pantheon-systems/terminus#installation), and set the `TERMINUS_TOKEN`, `TERMINUS_SITE`, and `TERMINUS_ENV` environment variables. Then, you can run `./bin/behat-prepare.sh` to prepare the site for the test suite.
+See [CONTRIBUTING.md](https://github.com/pantheon-systems/wp-redis/blob/master/CONTRIBUTING.md) for information on contributing.
 
 == Frequently Asked Questions ==
 
@@ -116,6 +101,21 @@ This declaration means use of `wp_cache_set( 'foo', 'bar', 'bad-actor' );` and `
 There's a known issue with WordPress `alloptions` cache design. Specifically, a race condition between two requests can cause the object cache to have stale values. If you think you might be impacted by this, [review this GitHub issue](https://github.com/pantheon-systems/wp-redis/issues/221) for links to more context, including a workaround.
 
 == Changelog ==
+
+= 1.3.3 (February 28, 2023) =
+* Add PHP 8.2 support [[#388](https://github.com/pantheon-systems/wp-redis/pull/388)].
+* Remove Grunt, add valid license to Composer file [[#387](https://github.com/pantheon-systems/wp-redis/pull/387)].
+* Update Composer dependencies [[#384](https://github.com/pantheon-systems/wp-redis/pull/384)] [[#385](https://github.com/pantheon-systems/wp-redis/pull/385)].
+
+= 1.3.2 (December 5, 2022) =
+* Fix broken `wp_cache_supports` function [[#382](https://github.com/pantheon-systems/wp-redis/pull/382)].
+
+= 1.3.1 (December 2, 2022) =
+* Declare `wp_cache_supports` function and support features. [[#378](https://github.com/pantheon-systems/wp-redis/pull/378)]
+* Make dependabot target `develop` branch for PRs. [[#376](https://github.com/pantheon-systems/wp-redis/pull/376)]
+
+= 1.3.0 (November 29, 2022) =
+* Added CONTRIBUTING.MD and GitHub action to automate deployments to wp.org. [[#368](https://github.com/pantheon-systems/wp-redis/pull/368)]
 
 = 1.2.0 (February 17, 2022) =
 * Adds support for Relay via `WP_REDIS_USE_RELAY` constant [[#344](https://github.com/pantheon-systems/wp-redis/pull/344)].

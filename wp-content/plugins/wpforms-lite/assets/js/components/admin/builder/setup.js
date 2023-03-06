@@ -195,7 +195,7 @@ WPForms.Admin.Builder.Setup = WPForms.Admin.Builder.Setup || ( function( documen
 			}
 
 			if ( view === 'setup' ) {
-				el.$formName.focus();
+				el.$formName.trigger( 'focus' );
 			}
 		},
 
@@ -445,7 +445,10 @@ WPForms.Admin.Builder.Setup = WPForms.Admin.Builder.Setup || ( function( documen
 
 						// We have already warned the user that unsaved changes will be ignored.
 						WPFormsBuilder.setCloseConfirmation( false );
-						window.location.href = res.data.redirect;
+
+						window.location.href = wpf.getQueryString( 'force_desktop_view' ) ?
+							wpf.updateQueryString( 'force_desktop_view', 1, res.data.redirect ) :
+							res.data.redirect;
 
 						return;
 					}
@@ -746,7 +749,7 @@ WPForms.Admin.Builder.Setup = WPForms.Admin.Builder.Setup || ( function( documen
 				return;
 			}
 
-			el.$panel.find( '.wpforms-template .wpforms-btn[data-template="' + templateId + '"]' ).click();
+			el.$panel.find( '.wpforms-template .wpforms-btn[data-template="' + templateId + '"]' ).trigger( 'click' );
 		},
 	};
 

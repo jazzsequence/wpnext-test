@@ -8,8 +8,12 @@ import {
 	useCheckoutAddress,
 	useStoreEvents,
 	useEditorContext,
+	noticeContexts,
 } from '@woocommerce/base-context';
-import { CheckboxControl } from '@woocommerce/blocks-checkout';
+import {
+	CheckboxControl,
+	StoreNoticesContainer,
+} from '@woocommerce/blocks-checkout';
 import Noninteractive from '@woocommerce/base-components/noninteractive';
 import type {
 	BillingAddress,
@@ -69,7 +73,12 @@ const Block = ( {
 			setBillingAddress( shippingAddress );
 		}
 		setAddressesSynced( true );
-	}, [ setBillingAddress, shippingAddress, useShippingAsBilling ] );
+	}, [
+		addressesSynced,
+		setBillingAddress,
+		shippingAddress,
+		useShippingAsBilling,
+	] );
 
 	const addressFieldsConfig = useMemo( () => {
 		return {
@@ -92,6 +101,9 @@ const Block = ( {
 	return (
 		<>
 			<AddressFormWrapperComponent>
+				<StoreNoticesContainer
+					context={ noticeContexts.SHIPPING_ADDRESS }
+				/>
 				<AddressForm
 					id="shipping"
 					type="shipping"

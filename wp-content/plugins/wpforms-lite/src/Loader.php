@@ -48,6 +48,7 @@ class Loader {
 		$this->populate_logger();
 		$this->populate_education();
 		$this->populate_robots();
+		$this->populate_anti_spam_filters();
 	}
 
 	/**
@@ -82,6 +83,11 @@ class Loader {
 		$this->classes[] = [
 			'name' => 'Forms\Locator',
 			'id'   => 'locator',
+		];
+
+		$this->classes[] = [
+			'name' => 'Forms\IconChoices',
+			'id'   => 'icon_choices',
 		];
 	}
 
@@ -147,7 +153,7 @@ class Loader {
 				'hook' => 'admin_init',
 			],
 			[
-				'name' => 'Admin\Settings\Captcha',
+				'name' => 'Admin\Settings\Captcha\Page',
 				'hook' => 'admin_init',
 			],
 			[
@@ -239,7 +245,14 @@ class Loader {
 				'id'   => 'builder_templates',
 			],
 			[
+				'name' => 'Admin\Builder\AntiSpam',
+				'hook' => 'wpforms_builder_init',
+			],
+			[
 				'name' => 'Admin\Builder\Notifications\Advanced\Settings',
+			],
+			[
+				'name' => 'Admin\Builder\Notifications\Advanced\FileUploadAttachment',
 			],
 			[
 				'name' => 'Admin\Builder\Notifications\Advanced\EntryCsvAttachment',
@@ -405,5 +418,25 @@ class Loader {
 			'name' => 'Robots',
 			'run'  => 'hooks',
 		];
+	}
+
+	/**
+	 * Populate Country and Keyword filters from AntiSpam settings.
+	 *
+	 * @since 1.7.8
+	 */
+	private function populate_anti_spam_filters() {
+
+		array_push(
+			$this->classes,
+			[
+				'name' => 'AntiSpam\CountryFilter',
+				'hook' => 'init',
+			],
+			[
+				'name' => 'AntiSpam\KeywordFilter',
+				'hook' => 'init',
+			]
+		);
 	}
 }

@@ -192,14 +192,23 @@ var wpf = {
 			// Normal processing, get fields from builder and prime cache.
 			var formData       = wpf.formObject( '#wpforms-field-options' ),
 				fields         = formData.fields,
-				fieldBlacklist = [ 'entry-preview', 'html', 'pagebreak', 'internal-information', 'layout' ];
+				fieldBlockList = [
+					'captcha',
+					'content',
+					'divider',
+					'entry-preview',
+					'html',
+					'internal-information',
+					'layout',
+					'pagebreak',
+				];
 
 			if ( ! fields ) {
 				return false;
 			}
 
 			for ( var key in fields ) {
-				if ( ! fields[key].type || jQuery.inArray( fields[key].type, fieldBlacklist ) > -1 ) {
+				if ( ! fields[key].type || jQuery.inArray( fields[key].type, fieldBlockList ) > -1 ) {
 					delete fields[key];
 				}
 			}
@@ -590,7 +599,7 @@ var wpf = {
 	 * @since 1.4.1
 	 */
 	focusCaretToEnd: function( el ) {
-		el.focus();
+		el.trigger( 'focus' );
 		var $thisVal = el.val();
 		el.val( '' ).val( $thisVal );
 	},
@@ -753,12 +762,14 @@ var wpf = {
 	 * Uses: `https://github.com/cure53/DOMPurify`
 	 *
 	 * @since 1.5.9
+	 * @since 1.7.8 Introduced optional allowed parameter.
 	 *
-	 * @param {string} string HTML to sanitize.
+	 * @param {string}           string  HTML to sanitize.
+	 * @param {undefined|Array}  allowed Array of allowed HTML tags.
 	 *
 	 * @returns {string} Sanitized HTML.
 	 */
-	sanitizeHTML: function( string ) {
+	sanitizeHTML: function( string, allowed ) {
 
 		var purify = window.DOMPurify;
 
@@ -770,7 +781,15 @@ var wpf = {
 			string = string.toString();
 		}
 
-		return purify.sanitize( string );
+		const purifyOptions = {
+			ADD_ATTR: [ 'target' ],
+		};
+
+		if ( typeof allowed !== 'undefined' ) {
+			purifyOptions.ALLOWED_TAGS = allowed;
+		}
+
+		return purify.sanitize( string, purifyOptions ).trim();
 	},
 
 	/**
@@ -938,6 +957,10 @@ var wpf = {
 		pee = pee.replace( new RegExp( '(<' + allblocks + '[^>]*>)', 'gmi' ), '\n$1' );
 		pee = pee.replace( new RegExp( '(</' + allblocks + '>)', 'gmi' ), '$1\n\n' );
 		pee = pee.replace( /\r\n|\r/, '\n' ); // cross-platform newlines.
+
+		if ( pee.indexOf( '\n' ) === 0 ) {
+			pee = pee.substring( 1 );
+		}
 
 		if ( pee.indexOf( '<option' ) > -1 ) {
 

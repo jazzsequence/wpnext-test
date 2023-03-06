@@ -1,4 +1,4 @@
-/* global wpforms_settings, grecaptcha, hcaptcha, wpformsRecaptchaCallback, wpformsRecaptchaV3Execute, wpforms_validate, wpforms_datepicker, wpforms_timepicker, Mailcheck, Choices, WPFormsPasswordField, WPFormsEntryPreview, punycode, tinyMCE, WPFormsUtils */
+/* global wpforms_settings, grecaptcha, hcaptcha, turnstile, wpformsRecaptchaCallback, wpformsRecaptchaV3Execute, wpforms_validate, wpforms_datepicker, wpforms_timepicker, Mailcheck, Choices, WPFormsPasswordField, WPFormsEntryPreview, punycode, tinyMCE, WPFormsUtils */
 
 'use strict';
 
@@ -116,7 +116,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				} );
 
 				// Prepend URL field contents with https:// if user input doesn't contain a schema.
-				$( '.wpforms-validate input[type=url]' ).change( function() {
+				$( document ).on( 'change', '.wpforms-validate input[type=url]', function() {
 					var url = $( this ).val();
 					if ( ! url ) {
 						return false;
@@ -169,6 +169,28 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 					}
 					return true;
 				}, wpforms_settings.val_filesize );
+
+				$.validator.addMethod( 'step', function( value, element, param ) {
+
+					const decimalPlaces = function( num ) {
+
+						if ( Math.floor( num ) === num ) {
+							return 0;
+						}
+
+						return num.toString().split( '.' )[1].length || 0;
+					};
+					const decimals = decimalPlaces( param );
+					const decimalToInt = function( num ) {
+
+						return Math.round( num * Math.pow( 10, decimals ) );
+					};
+					const min = decimalToInt( $( element ).attr( 'min' ) );
+
+					value = decimalToInt( value ) - min;
+
+					return this.optional( element ) || decimalToInt( value ) % decimalToInt( param ) === 0;
+				} );
 
 				// Validate email addresses.
 				$.validator.methods.email = function( value, element ) {
@@ -507,21 +529,24 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 									app.scrollToError( $( validator.errorList[0].element ) );
 								}
 							},
-							onkeyup: function( element, event ) {
+							onkeyup: WPFormsUtils.debounce( // eslint-disable-next-line complexity
+								function( element, event ) {
 
-								// This code is copied from JQuery Validate 'onkeyup' method with only one change: 'wpforms-novalidate-onkeyup' class check.
-								var excludedKeys = [ 16, 17, 18, 20, 35, 36, 37, 38, 39, 40, 45, 144, 225 ];
+									// This code is copied from JQuery Validate 'onkeyup' method with only one change: 'wpforms-novalidate-onkeyup' class check.
+									const excludedKeys = [ 16, 17, 18, 20, 35, 36, 37, 38, 39, 40, 45, 144, 225 ];
 
-								if ( $( element ).hasClass( 'wpforms-novalidate-onkeyup' ) ) {
-									return; // Disable onkeyup validation for some elements (e.g. remote calls).
-								}
+									if ( $( element ).hasClass( 'wpforms-novalidate-onkeyup' ) ) {
+										return; // Disable onkeyup validation for some elements (e.g. remote calls).
+									}
 
-								if ( 9 === event.which && '' === this.elementValue( element ) || $.inArray( event.keyCode, excludedKeys ) !== -1 ) {
-									return;
-								} else if ( element.name in this.submitted || element.name in this.invalid ) {
-									this.element( element );
-								}
-							},
+									if ( event.which === 9 && this.elementValue( element ) === '' || $.inArray( event.keyCode, excludedKeys ) !== -1 ) {
+										return;
+									} else if ( element.name in this.submitted || element.name in this.invalid ) {
+										this.element( element );
+									}
+								},
+								1000
+							),
 							onfocusout: function( element ) {
 
 								// This code is copied from JQuery Validate 'onfocusout' method with only one change: 'wpforms-novalidate-onkeyup' class check.
@@ -781,7 +806,8 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				return;
 			}
 
-			$( '.wpforms-masked-input' ).inputmask();
+			// This setting has no effect when switching to the "RTL" mode.
+			$( '.wpforms-masked-input' ).inputmask( { rightAlign: false } );
 		},
 
 		/**
@@ -1110,16 +1136,13 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 			} );
 
 			// Rating field: hover effect.
-			$( '.wpforms-field-rating-item' ).hover(
-				function() {
-					$( this ).parent().find( '.wpforms-field-rating-item' ).removeClass( 'selected hover' );
-					$( this ).prevAll().addBack().addClass( 'hover' );
-				},
-				function() {
-					$( this ).parent().find( '.wpforms-field-rating-item' ).removeClass( 'selected hover' );
-					$( this ).parent().find( 'input:checked' ).parent().prevAll().addBack().addClass( 'selected' );
-				}
-			);
+			$( document ).on( 'mouseenter', '.wpforms-field-rating-item', function() {
+				$( this ).parent().find( '.wpforms-field-rating-item' ).removeClass( 'selected hover' );
+				$( this ).prevAll().addBack().addClass( 'hover' );
+			} ).on( 'mouseleave', '.wpforms-field-rating-item', function() {
+				$( this ).parent().find( '.wpforms-field-rating-item' ).removeClass( 'selected hover' );
+				$( this ).parent().find( 'input:checked' ).parent().prevAll().addBack().addClass( 'selected' );
+			} );
 
 			// Rating field: toggle selected state.
 			$( document ).on( 'change', '.wpforms-field-rating-item input', function() {
@@ -1134,7 +1157,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 			// Rating field: preselect the selected rating (from dynamic/fallback population).
 			$( function() {
-				$( '.wpforms-field-rating-item input:checked' ).change();
+				$( '.wpforms-field-rating-item input:checked' ).trigger( 'change' );
 			} );
 
 			// Checkbox/Radio/Payment checkbox: make labels keyboard-accessible.
@@ -1149,7 +1172,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 				// Cause the input to be clicked when clicking the label.
 				if ( 13 === event.which ) {
-					$( '#' + $this.attr( 'for' ) ).click();
+					$( '#' + $this.attr( 'for' ) ).trigger( 'click' );
 				}
 			} );
 
@@ -1157,7 +1180,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 			if ( window.document.documentMode ) {
 				$( document ).on( 'click', '.wpforms-image-choices-item img', function() {
 
-					$( this ).closest( 'label' ).find( 'input' ).click();
+					$( this ).closest( 'label' ).find( 'input' ).trigger( 'click' );
 				} );
 			}
 
@@ -1274,11 +1297,11 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				e.preventDefault();
 
 				if ( $page.hasClass( 'last' ) ) {
-					$page.closest( '.wpforms-form' ).find( '.wpforms-submit' ).click();
+					$page.closest( '.wpforms-form' ).find( '.wpforms-submit' ).trigger( 'click' );
 					return;
 				}
 
-				$page.find( '.wpforms-page-next' ).click();
+				$page.find( '.wpforms-page-next' ).trigger( 'click' );
 			} );
 
 			// Allow only numbers, minus and decimal point to be entered into the Numbers field.
@@ -1353,7 +1376,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 			app.animateScrollTop( offset.top - 75, 750 ).done( function() {
 				var $error = $field.find( '.wpforms-error' ).first();
 				if ( typeof $error.focus === 'function' ) {
-					$error.focus();
+					$error.trigger( 'focus' );
 				}
 			} );
 		},
@@ -1443,6 +1466,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 		 * @param {jQuery} $page  Current page element object in page break context.
 		 */
 		navigateToPage: function( $this, action, page, $form, $page ) {
+
 			let nextPage = page;
 
 			if ( 'next' === action ) {
@@ -1451,14 +1475,14 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				nextPage -= 1;
 			}
 
-			let event = WPFormsUtils.triggerEvent( $this, 'wpformsBeforePageChange', [ nextPage, $form ] );
+			let event = WPFormsUtils.triggerEvent( $this, 'wpformsBeforePageChange', [ nextPage, $form, action ] );
 
 			// Allow callbacks on `wpformsBeforePageChange` to cancel page changing by triggering `event.preventDefault()`.
 			if ( event.isDefaultPrevented() ) {
 				return;
 			}
 
-			$page.hide();
+			$( '.wpforms-page' ).hide();
 
 			let $destinationPage = $form.find( '.wpforms-page-' + nextPage );
 			$destinationPage.show();
@@ -1470,7 +1494,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				app.animateScrollTop( $form.offset().top - pageScroll, 750, null );
 			}
 
-			$this.trigger( 'wpformsPageChange', [ nextPage, $form ] );
+			$this.trigger( 'wpformsPageChange', [ nextPage, $form, action ] );
 
 			app.manipulateIndicator( nextPage, $form );
 		},
@@ -1733,6 +1757,8 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 					total  = Number( total ) + Number( amount );
 				}
 			} );
+
+			$( document ).trigger( 'wpformsAmountTotalCalculated', [ $form, total ] );
 
 			return total;
 		},
@@ -2186,7 +2212,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				return false;
 			}
 
-			if ( typeof hcaptcha === 'undefined' && typeof grecaptcha === 'undefined' ) {
+			if ( typeof hcaptcha === 'undefined' && typeof grecaptcha === 'undefined' && typeof turnstile === 'undefined' ) {
 				return false;
 			}
 
@@ -2210,8 +2236,16 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 			}
 
 			var $captchaContainer = $form.find( '.wpforms-recaptcha-container' ),
-				apiVar = $captchaContainer.hasClass( 'wpforms-is-hcaptcha' ) ? hcaptcha : grecaptcha,
+				apiVar,
 				recaptchaID;
+
+			if ( $captchaContainer.hasClass( 'wpforms-is-hcaptcha' ) ) {
+				apiVar = hcaptcha;
+			} else if ( $captchaContainer.hasClass( 'wpforms-is-turnstile' ) ) {
+				apiVar = turnstile;
+			} else {
+				apiVar = grecaptcha;
+			}
 
 			// Check for invisible recaptcha first.
 			recaptchaID = $form.find( '.wpforms-submit' ).get( 0 ).recaptchaID;
@@ -2416,6 +2450,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 					app.resetFormRecaptcha( $form );
 					app.displayFormAjaxErrors( $form, json.data );
 					$form.trigger( 'wpformsAjaxSubmitFailed', json );
+					app.setCurrentPage( $form, json.data );
 					return;
 				}
 
@@ -2482,6 +2517,54 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 			}
 
 			return $.ajax( args );
+		},
+
+		/**
+		 * Display page with error for multiple page form.
+		 *
+		 * @since 1.7.9
+		 *
+		 * @param {jQuery} $form Form element.
+		 * @param {object} $json Error json.
+		 */
+		setCurrentPage: function( $form, $json ) {
+
+			// Return for one-page forms.
+			if ( $form.find( '.wpforms-page-indicator' ).length === 0 ) {
+				return;
+			}
+
+			let $errorPages = [];
+
+			$form.find( '.wpforms-page' ).each( function( index, el ) {
+
+				if ( $( el ).find( '.wpforms-has-error' ).length >= 1 ) {
+
+					return $errorPages.push( $( el ) );
+				}
+			} );
+
+			// Get first page with error.
+			const $currentPage = $errorPages.length > 0 ? $errorPages[0] : $form.find( '.wpforms-page-1' );
+			const currentPage = $currentPage.data( 'page' );
+
+			let $page,
+				action = 'prev';
+
+			// If error is on the first page, or we have general errors among others, go to first page.
+			if ( currentPage === 1 || $json.errors.general.footer !== undefined ) {
+				$page = $form.find( '.wpforms-page-1' ).next();
+			} else {
+				$page  = $currentPage.next().length !== 0 ? $currentPage.next() : $currentPage.prev();
+				action = $currentPage.next().length !== 0 ? 'prev' : 'next';
+			}
+
+			// Take the page from which navigate to error.
+			const $nextBtn = $page.find( '.wpforms-page-next' ),
+				page = $page.data( 'page' );
+
+			// Imitate navigation to the page with error.
+			app.navigateToPage( $nextBtn, action, page, $form, $( '.wpforms-page-' + page ) );
 		},
 
 		/**
