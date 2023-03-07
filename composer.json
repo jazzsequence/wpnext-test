@@ -19,8 +19,9 @@
         }
     },
     "require": {
-        "composer/installers": "^2.2",
-        "pantheon-systems/pantheon-mu-plugin": "^1.0"
+        "composer/installers": "^1.0 || ^2.2",
+        "pantheon-systems/pantheon-mu-plugin": "^1.0",
+        "humanmade/wordpress-importer": "dev-master"
     },
     "config": {
         "allow-plugins": {
