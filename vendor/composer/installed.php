@@ -3,7 +3,7 @@
         'name' => 'pantheon/wptest',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '36795d0c09ffbedaf7337b9477574bef4b8c5117',
+        'reference' => '15568a5b5a7ff8b71099551749c40b73453f9f5f',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'composer/installers' => array(
-            'pretty_version' => 'v2.2.0',
-            'version' => '2.2.0.0',
-            'reference' => 'c29dc4b93137acb82734f672c37e029dfbd95b35',
+            'pretty_version' => 'v1.12.0',
+            'version' => '1.12.0.0',
+            'reference' => 'd20a64ed3c94748397ff5973488761b22f6d3f19',
             'type' => 'composer-plugin',
             'install_path' => __DIR__ . '/./installers',
             'aliases' => array(),
@@ -28,6 +28,17 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'humanmade/wordpress-importer' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '140a53eb597de87d786cf942c8fe74fc97432f14',
+            'type' => 'wordpress-plugin',
+            'install_path' => __DIR__ . '/../../wp-content/plugins/wordpress-importer',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
+            'dev_requirement' => false,
+        ),
         'pantheon-systems/pantheon-mu-plugin' => array(
             'pretty_version' => '1.0.1',
             'version' => '1.0.1.0',
@@ -40,7 +51,7 @@
         'pantheon/wptest' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '36795d0c09ffbedaf7337b9477574bef4b8c5117',
+            'reference' => '15568a5b5a7ff8b71099551749c40b73453f9f5f',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -54,6 +65,18 @@
             'install_path' => __DIR__ . '/../phpoption/phpoption',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'roundcube/plugin-installer' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '*',
+            ),
+        ),
+        'shama/baton' => array(
+            'dev_requirement' => false,
+            'replaced' => array(
+                0 => '*',
+            ),
         ),
         'symfony/polyfill-ctype' => array(
             'pretty_version' => 'v1.26.0',
