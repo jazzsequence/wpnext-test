@@ -1,0 +1,16 @@
+{
+    "name": "jazzsequence/6.2-plugin-test",
+    "description": "A plugin to test some WP 6.2 stuff",
+    "type": "wordpress-plugin",
+    "require": {
+        "cmb2/cmb2": "^2.10"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Chris Reynolds",
+            "email": "chris@jazzsequence.com"
+        }
+    ],
+    "minimum-stability": "stable"
+}
