@@ -6,7 +6,7 @@ terminus wp -- wp59-test.dev plugin update --all
 terminus env:commit wp59-test.dev --message="Updating WordPress plugins"
 
 # Wait for the workflow to finish
-terminus build:workflow:wait wp59-test.dev
+terminus build:workflow:wait wp59-test.dev --max=30
 
 # Switch back to Git mode
 terminus connection:set wp59-test.dev git
