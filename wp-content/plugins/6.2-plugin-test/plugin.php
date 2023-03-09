@@ -37,7 +37,7 @@ function cmb2_render_callback_for_button( $field, $escaped_value, $object_id, $o
 	<?php
 }
 
-function cmb2_render_callback_for_html_tag_processor_test( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
+function cmb2_render_callback_for_html_tag_processor_test() {
 	ob_start();
 	?>
 	<div class="html-tag-processor-test">
@@ -57,17 +57,45 @@ function cmb2_render_callback_for_html_tag_processor_test( $field, $escaped_valu
 	<?php
 	$html_before = ob_get_clean();
 	$html_after = new WP_HTML_Tag_Processor( $html_before );
-	if ( $html_after->next_tag( [ 'tag_name' => 'img' ] ) ) {
+
+	while ( $html_after->next_tag( [ 'tag_name' => 'p' ] ) ) {
+		$html_after->add_class( 'lead' );
+	}
+
+	// Since we just looped through all the markup, we need to instantiate the Tag Processor again so we can do other stuff. This probably isn't super efficient but it's a fun experiment.
+	$html_after = new WP_HTML_Tag_Processor( $html_after->get_updated_html() );
+
+	$query = [
+		'tag_name' => 'img'
+	];
+
+	while ( $html_after->next_tag( $query ) ) {
 		$html_after->add_class( 'img-responsive' );
 		$html_after->set_attribute( 'alt', 'Placed Kitten' );
 	}
+
 	if ( $html_after->next_tag( [ 'tag_name' => 'figure' ] ) ) {
 		$html_after->add_class( 'figure' );
+		if ( $html_after->next_tag( $query ) ) {
+			$html_after->add_class( 'figure-img' );
+			$html_after->set_attribute( 'alt', 'Placed Kitten' );
+		}
 	}
 	if ( $html_after->next_tag( [ 'tag_name' => 'figcaption' ] ) ) {
 		$html_after->add_class( 'figure-caption' );
 	}
-	echo $html_after->get_updated_html();
+
+	$css = 'overflow: auto; word-wrap: break-word; white-space: pre-wrap; border: 1px solid #ccc; padding: 1em;';
+	?>
+	<p>Source before:</p>
+	<pre style="<?php echo esc_attr( $css ); ?>">
+<?php echo esc_html( $html_before ); ?>
+	</pre>
+	<p>Source after:</p>
+	<pre style="<?php echo esc_attr( $css ); ?>">
+<?php echo esc_html( $html_after->get_updated_html() ); ?>
+	</pre>
+	<?php
 }
 
 add_action( 'plugins_loaded', __NAMESPACE__ . '\\bootstrap_62' );
