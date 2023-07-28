@@ -85,6 +85,22 @@ class Helper {
     return null;
   }
 
+  public function wcGetPriceDecimals(): int {
+    return wc_get_price_decimals();
+  }
+
+  public function wcGetPriceDecimalSeperator(): string {
+    return wc_get_price_decimal_separator();
+  }
+
+  public function wcGetPriceThousandSeparator(): string {
+    return wc_get_price_thousand_separator();
+  }
+
+  public function getWoocommercePriceFormat(): string {
+    return get_woocommerce_price_format();
+  }
+
   public function getWoocommerceCurrency() {
     return get_woocommerce_currency();
   }
@@ -186,6 +202,10 @@ class Helper {
     return new \WC_Coupon($data);
   }
 
+  public function getOrderStatuses(): array {
+    return wc_get_order_statuses();
+  }
+
   public function getCouponList(): array {
     $couponPosts = $this->wp->getPosts([
       'posts_per_page' => -1,
@@ -213,7 +233,7 @@ class Helper {
   public function getLatestCoupon(): ?string {
     $coupons = $this->wp->getPosts([
       'numberposts' => 1,
-      'orderby' => 'name',
+      'orderby' => 'date_created',
       'order' => 'desc',
       'post_type' => 'shop_coupon',
       'post_status' => 'publish',
@@ -221,5 +241,66 @@ class Helper {
     $coupon = reset($coupons);
 
     return $coupon ? $coupon->post_title : null; // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+  }
+
+  public function getPaymentGateways() {
+    return $this->WC()->payment_gateways();
+  }
+
+  /**
+   * Returns a list of all available shipping methods formatted
+   * in a way to be used in the 'used shipping method' segment.
+   */
+  public function getShippingMethodInstancesData(): array {
+    $shippingZones = \WC_Shipping_Zones::get_zones();
+    $formattedShippingMethodData = [];
+
+    foreach ($shippingZones as $shippingZone) {
+      $formattedShippingMethodData = array_merge(
+        $formattedShippingMethodData,
+        $this->formatShippingMethods($shippingZone['shipping_methods'], $shippingZone['zone_name'])
+      );
+    }
+
+    // special shipping zone that includes locations not covered by the configured shipping zones
+    $outOfCoverageShippingZone = new \WC_Shipping_Zone(0);
+    $formattedShippingMethodData = array_merge(
+      $formattedShippingMethodData,
+      $this->formatShippingMethods($outOfCoverageShippingZone->get_shipping_methods(), $outOfCoverageShippingZone->get_zone_name())
+    );
+
+    return $formattedShippingMethodData;
+  }
+
+  protected function formatShippingMethods(array $shippingMethods, string $shippingZoneName): array {
+    $formattedShippingMethods = [];
+
+    foreach ($shippingMethods as $shippingMethod) {
+      $formattedShippingMethods[] = [
+        'instanceId' => $shippingMethod->instance_id, // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+        'name' => "{$shippingMethod->title} ({$shippingZoneName})",
+      ];
+    }
+
+    return $formattedShippingMethods;
+  }
+
+  /**
+   * Check whether the current request is processing a WooCommerce checkout.
+   * Works for both the normal checkout and the block checkout.
+   *
+   * This solution is not ideal, but I checked with a few WooCommerce developers,
+   * and it is what they suggested. There is no helper function provided by Woo
+   * for this.
+   *
+   * @return bool
+   */
+  public function isCheckoutRequest(): bool {
+    $requestUri = !empty($_SERVER['REQUEST_URI']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_URI'])) : '';
+    $isRegularCheckout = is_checkout();
+    $isBlockCheckout = WC()->is_rest_api_request()
+      && (strpos($requestUri, 'wc/store/checkout') !== false || strpos($requestUri, 'wc/store/v1/checkout') !== false);
+
+    return $isRegularCheckout || $isBlockCheckout;
   }
 }

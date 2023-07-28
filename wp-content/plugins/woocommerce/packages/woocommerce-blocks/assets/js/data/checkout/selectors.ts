@@ -2,6 +2,8 @@
  * External dependencies
  */
 import { select } from '@wordpress/data';
+import { hasCollectableRate } from '@woocommerce/base-utils';
+import { isString, objectHasProp } from '@woocommerce/types';
 
 /**
  * Internal dependencies
@@ -75,7 +77,7 @@ export const isCalculating = ( state: CheckoutState ) => {
 };
 
 export const prefersCollection = ( state: CheckoutState ) => {
-	if ( state.prefersCollection === undefined ) {
+	if ( typeof state.prefersCollection === 'undefined' ) {
 		const shippingRates = select( cartStoreKey ).getShippingRates();
 		if ( ! shippingRates || ! shippingRates.length ) {
 			return false;
@@ -83,7 +85,13 @@ export const prefersCollection = ( state: CheckoutState ) => {
 		const selectedRate = shippingRates[ 0 ].shipping_rates.find(
 			( rate ) => rate.selected
 		);
-		return selectedRate?.method_id === 'pickup_location';
+
+		if (
+			objectHasProp( selectedRate, 'method_id' ) &&
+			isString( selectedRate.method_id )
+		) {
+			return hasCollectableRate( selectedRate?.method_id );
+		}
 	}
 	return state.prefersCollection;
 };

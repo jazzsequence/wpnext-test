@@ -12,10 +12,10 @@
  * Plugin Name:       WordPress Beta Tester
  * Plugin URI:        https://wordpress.org/plugins/wordpress-beta-tester/
  * Description:       Allows you to easily upgrade to Beta releases.
- * Author:            Peter Westwood, Andy Fragen
- * Version:           3.2.9
+ * Author:            WordPress Upgrade/Install Team
+ * Version:           3.5.2
  * Network:           true
- * Author URI:        https://blog.ftwr.co.uk/
+ * Author URI:        https://make.wordpress.org/core/components/upgrade-install/
  * Text Domain:       wordpress-beta-tester
  * Domain Path:       /languages
  * License:           GPL v2 or later
@@ -31,4 +31,10 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 require_once __DIR__ . '/vendor/autoload.php';
-( new WPBT_Bootstrap( __FILE__ ) )->run();
+
+add_action(
+	'plugins_loaded',
+	function() {
+		( new WPBT_Bootstrap( __FILE__ ) )->run();
+	}
+);

@@ -36,6 +36,9 @@ class WPBT_Settings {
 	public function __construct( WP_Beta_Tester $wp_beta_tester, $options ) {
 		self::$options        = $options;
 		$this->wp_beta_tester = $wp_beta_tester;
+		if ( isset( self::$options['hide_report_a_bug'] ) ) {
+			add_filter( 'wpbt_hide_report_a_bug', '__return_true' );
+		}
 	}
 
 	/**
@@ -49,6 +52,9 @@ class WPBT_Settings {
 		( new WPBT_Extras( $this->wp_beta_tester, self::$options ) )->load_hooks();
 		( new WPBT_Extras( $this->wp_beta_tester, self::$options ) )->skip_autoupdate_email();
 		( new WPBT_Help() )->load_hooks();
+		if ( ! apply_filters( 'wpbt_hide_report_a_bug', false ) ) {
+			( new WPBT_Bug_Report( $this->wp_beta_tester, self::$options ) )->load_hooks();
+		}
 	}
 
 	/**
@@ -64,6 +70,10 @@ class WPBT_Settings {
 
 		add_action( 'admin_head-plugins.php', array( $this->wp_beta_tester, 'action_admin_head_plugins_php' ) );
 		add_action( 'admin_head-update-core.php', array( $this->wp_beta_tester, 'action_admin_head_plugins_php' ) );
+
+		if ( ! apply_filters( 'wpbt_hide_report_a_bug', false ) ) {
+			add_action( 'admin_bar_menu', array( $this, 'admin_bar_menu' ), 80 );
+		}
 	}
 
 	/**
@@ -167,6 +177,29 @@ class WPBT_Settings {
 	}
 
 	/**
+	 * Defines the menu for the admin bar.
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar The WP_Admin_Bar object.
+	 * @return void
+	 */
+	public function admin_bar_menu( WP_Admin_Bar $wp_admin_bar ) {
+		// Exit if user doesn't have correct capabilities.
+		$capability = is_multisite() ? 'manage_network_options' : 'manage_options';
+		if ( ! current_user_can( $capability ) ) {
+			return;
+		}
+
+		/**
+		 * Action hook to add adminbar menu.
+		 *
+		 * @since 3.3.0
+		 *
+		 * @param WP_Admin_Bar $wpadminbar The WP_Admin_Bar object.
+		 */
+		do_action( 'wp_beta_tester_add_admin_bar_menu', $wp_admin_bar );
+	}
+
+	/**
 	 * Renders setting tabs.
 	 *
 	 * Walks through the object's tabs array and prints them one by one.
@@ -201,7 +234,7 @@ class WPBT_Settings {
 		) {
 			echo '<div class="updated"><p>';
 			esc_html_e( 'Saved.', 'wordpress-beta-tester' );
-			echo '<span style="padding:0 2em;">' . wp_kses_post( __( 'Why don&#8217;t you <a href="update-core.php">head on over and upgrade now</a>.', 'wordpress-beta-tester' ) ) . '</span>';
+			echo '<span style="padding:0 2em;">' . wp_kses_post( __( 'Perhaps you should head on over and <a href="update-core.php">upgrade now</a>.', 'wordpress-beta-tester' ) ) . '</span>';
 			echo '</p></div>';
 		}
 	}

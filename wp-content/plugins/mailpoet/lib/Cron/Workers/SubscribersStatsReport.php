@@ -8,15 +8,15 @@ if (!defined('ABSPATH')) exit;
 use MailPoet\Config\ServicesChecker;
 use MailPoet\Cron\CronWorkerScheduler;
 use MailPoet\Entities\ScheduledTaskEntity;
-use MailPoet\Services\Bridge;
+use MailPoet\Services\SubscribersCountReporter;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
 
 class SubscribersStatsReport extends SimpleWorker {
   const TASK_TYPE = 'subscribers_stats_report';
 
-  /** @var Bridge */
-  private $bridge;
+  /** @var SubscribersCountReporter */
+  private $subscribersCountReporter;
 
   /** @var ServicesChecker */
   private $serviceChecker;
@@ -25,27 +25,27 @@ class SubscribersStatsReport extends SimpleWorker {
   private $workerScheduler;
 
   public function __construct(
-    Bridge $bridge,
+    SubscribersCountReporter $subscribersCountReporter,
     ServicesChecker $servicesChecker,
     CronWorkerScheduler $workerScheduler,
     WPFunctions $wp
   ) {
     parent::__construct($wp);
-    $this->bridge = $bridge;
+    $this->subscribersCountReporter = $subscribersCountReporter;
     $this->serviceChecker = $servicesChecker;
     $this->workerScheduler = $workerScheduler;
   }
 
   public function checkProcessingRequirements() {
-    return (bool)$this->serviceChecker->getAnyValidKey();
+    return (bool)$this->serviceChecker->getValidAccountKey();
   }
 
   public function processTaskStrategy(ScheduledTaskEntity $task, $timer): bool {
-    $key = $this->serviceChecker->getAnyValidKey();
+    $key = $this->serviceChecker->getValidAccountKey();
     if ($key === null) {
       return false;
     }
-    $result = $this->bridge->updateSubscriberCount($key);
+    $result = $this->subscribersCountReporter->report($key);
     // We have a valid key, but request failed
     if ($result === false) {
       $this->workerScheduler->rescheduleProgressively($task);

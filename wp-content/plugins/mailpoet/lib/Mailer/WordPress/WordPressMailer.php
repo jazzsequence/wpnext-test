@@ -5,10 +5,10 @@ namespace MailPoet\Mailer\WordPress;
 if (!defined('ABSPATH')) exit;
 
 
-use Html2Text\Html2Text;
 use MailPoet\Mailer\MailerFactory;
 use MailPoet\Mailer\MetaInfo;
 use MailPoet\Subscribers\SubscribersRepository;
+use MailPoetVendor\Html2Text\Html2Text;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 use PHPMailer\PHPMailer\PHPMailer;
 
@@ -82,7 +82,7 @@ class WordPressMailer extends PHPMailer {
     if (strpos($this->ContentType, 'text/plain') === 0) {
       $email['body']['text'] = $this->Body;
     } elseif (strpos($this->ContentType, 'text/html') === 0) {
-      $text = @Html2Text::convert(strtolower($this->CharSet) === 'utf-8' ? $this->Body : utf8_encode($this->Body));
+      $text = @Html2Text::convert(strtolower($this->CharSet) === 'utf-8' ? $this->Body : mb_convert_encoding($this->Body, 'UTF-8', mb_list_encodings()));
       $email['body']['text'] = $text;
       $email['body']['html'] = $this->Body;
     } elseif (strpos($this->ContentType, 'multipart/alternative') === 0) {

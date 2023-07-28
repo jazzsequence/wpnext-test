@@ -16,7 +16,7 @@ export const RatePrice = ( {
 }: {
 	minRate: CartShippingPackageShippingRate | undefined;
 	maxRate: CartShippingPackageShippingRate | undefined;
-	multiple: boolean;
+	multiple?: boolean;
 } ) => {
 	if ( minRate === undefined || maxRate === undefined ) {
 		return null;
@@ -42,7 +42,12 @@ export const RatePrice = ( {
 			{ minRatePrice === maxRatePrice && ! multiple
 				? priceElement
 				: createInterpolateElement(
-						__( 'from <price />', 'woo-gutenberg-products-block' ),
+						minRatePrice === 0 && maxRatePrice === 0
+							? '<price />'
+							: __(
+									'from <price />',
+									'woo-gutenberg-products-block'
+							  ),
 						{
 							price: priceElement,
 						}

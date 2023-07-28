@@ -6,7 +6,7 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\Entities\NewsletterEntity;
-use MailPoet\Newsletter\Renderer\Blocks\AbandonedCartContent;
+  use MailPoet\Newsletter\Renderer\Blocks\AbandonedCartContent;
 use MailPoet\Newsletter\Renderer\Blocks\AutomatedLatestContentBlock;
 use MailPoet\Tasks\Sending as SendingTask;
 use MailPoet\WooCommerce\CouponPreProcessor;
@@ -57,9 +57,7 @@ class Preprocessor {
     }
     $blocks = [];
     $contentBlocks = $content['blocks'];
-
     $contentBlocks = $this->couponPreProcessor->processCoupons($newsletter, $contentBlocks, $preview);
-
     foreach ($contentBlocks as $block) {
       $processedBlock = $this->processBlock($newsletter, $block, $preview, $sendingTask);
       if (!empty($processedBlock)) {

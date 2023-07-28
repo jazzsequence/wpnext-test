@@ -6,12 +6,18 @@
  * @package automattic/jetpack
  */
 
+use Automattic\Jetpack\Blaze;
+use Automattic\Jetpack\Boost_Speed_Score\Speed_Score_History;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Connection\Plugin_Storage as Connection_Plugin_Storage;
 use Automattic\Jetpack\Connection\REST_Connector;
 use Automattic\Jetpack\Constants;
+use Automattic\Jetpack\Current_Plan as Jetpack_Plan;
 use Automattic\Jetpack\Device_Detection\User_Agent_Info;
 use Automattic\Jetpack\Identity_Crisis;
+use Automattic\Jetpack\Image_CDN\Image_CDN_Core;
+use Automattic\Jetpack\Image_CDN\Image_CDN_Image;
+use Automattic\Jetpack\IP\Utils as IP_Utils;
 use Automattic\Jetpack\Licensing;
 use Automattic\Jetpack\Licensing\Endpoints as Licensing_Endpoints;
 use Automattic\Jetpack\My_Jetpack\Initializer as My_Jetpack_Initializer;
@@ -32,8 +38,12 @@ class Jetpack_Redux_State_Helper {
 	 */
 	public static function get_minimal_state() {
 		return array(
-			'WP_API_root'  => esc_url_raw( rest_url() ),
-			'WP_API_nonce' => wp_create_nonce( 'wp_rest' ),
+			'pluginBaseUrl'        => plugins_url( '', JETPACK__PLUGIN_FILE ),
+			/* This filter is documented in class.jetpack-connection-banner.php */
+			'preConnectionHelpers' => apply_filters( 'jetpack_pre_connection_prompt_helpers', false ),
+			'registrationNonce'    => wp_create_nonce( 'jetpack-registration-nonce' ),
+			'WP_API_root'          => esc_url_raw( rest_url() ),
+			'WP_API_nonce'         => wp_create_nonce( 'wp_rest' ),
 		);
 	}
 
@@ -119,6 +129,8 @@ class Jetpack_Redux_State_Helper {
 
 		$host = new Host();
 
+		$speed_score_history = new Speed_Score_History( wp_parse_url( get_site_url(), PHP_URL_HOST ) );
+
 		return array(
 			'WP_API_root'                 => esc_url_raw( rest_url() ),
 			'WP_API_nonce'                => wp_create_nonce( 'wp_rest' ),
@@ -151,7 +163,7 @@ class Jetpack_Redux_State_Helper {
 			),
 			'aff'                         => Partner::init()->get_partner_code( Partner::AFFILIATE_CODE ),
 			'partnerSubsidiaryId'         => Partner::init()->get_partner_code( Partner::SUBSIDIARY_CODE ),
-			'settings'                    => self::get_flattened_settings( $modules ),
+			'settings'                    => self::get_flattened_settings(),
 			'userData'                    => array(
 				'currentUser' => $current_user_data,
 			),
@@ -179,6 +191,7 @@ class Jetpack_Redux_State_Helper {
 				'showMyJetpack'              => My_Jetpack_Initializer::should_initialize(),
 				'isMultisite'                => is_multisite(),
 				'dateFormat'                 => get_option( 'date_format' ),
+				'latestBoostSpeedScores'     => $speed_score_history->latest(),
 			),
 			'themeData'                   => array(
 				'name'      => $current_theme->get( 'Name' ),
@@ -199,7 +212,7 @@ class Jetpack_Redux_State_Helper {
 				'messageContent'   => Jetpack::state( 'display_update_modal' ) ? self::get_update_modal_data() : null,
 			),
 			'tracksUserData'              => Jetpack_Tracks_Client::get_connected_user_tracks_identity(),
-			'currentIp'                   => function_exists( 'jetpack_protect_get_ip' ) ? jetpack_protect_get_ip() : false,
+			'currentIp'                   => IP_Utils::get_ip(),
 			'lastPostUrl'                 => esc_url( $last_post ),
 			'externalServicesConnectUrls' => self::get_external_services_connect_urls(),
 			'calypsoEnv'                  => Jetpack::get_calypso_env(),
@@ -218,6 +231,9 @@ class Jetpack_Redux_State_Helper {
 			// Check if WooCommerce plugin is active (based on https://docs.woocommerce.com/document/create-a-plugin/).
 			'isWooCommerceActive'         => in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', Jetpack::get_active_plugins() ), true ),
 			'useMyJetpackLicensingUI'     => My_Jetpack_Initializer::is_licensing_ui_enabled(),
+			'isOdysseyStatsEnabled'       => Stats_Options::get_option( 'enable_odyssey_stats' ),
+			'shouldInitializeBlaze'       => Blaze::should_initialize(),
+			'isBlazeDashboardEnabled'     => Blaze::is_dashboard_enabled(),
 		);
 	}
 
@@ -275,10 +291,9 @@ class Jetpack_Redux_State_Helper {
 
 		$post_thumbnail = isset( $post['post_thumbnail'] ) ? $post['post_thumbnail'] : null;
 		if ( ! empty( $post_thumbnail ) ) {
-			require_once JETPACK__PLUGIN_DIR . '_inc/lib/class.jetpack-photon-image.php';
-			$photon_image = new Jetpack_Photon_Image(
+			$photon_image = new Image_CDN_Image(
 				array(
-					'file'   => jetpack_photon_url( $post_thumbnail['URL'] ),
+					'file'   => Image_CDN_Core::cdn_url( $post_thumbnail['URL'] ),
 					'width'  => $post_thumbnail['width'],
 					'height' => $post_thumbnail['height'],
 				),

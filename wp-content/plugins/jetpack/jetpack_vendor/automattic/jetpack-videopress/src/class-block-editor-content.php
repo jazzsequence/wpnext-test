@@ -74,7 +74,7 @@ class Block_Editor_Content {
 			'controls'        => true,  // Whether the video should display controls
 			'playsinline'     => false, // Whether the video should be allowed to play inline (for browsers that support this)
 			'useaveragecolor' => false, // Whether the video should use the seekbar automatic average color
-			// 'defaultlangcode' => false, // Default language code. Currently ignored by the player.
+			'preloadcontent'  => 'metadata',
 		);
 
 		// Make sure "false" will be actually false.
@@ -82,6 +82,10 @@ class Block_Editor_Content {
 			if ( is_string( $value ) && 'false' === strtolower( $value ) ) {
 				$atts[ $key ] = false;
 			}
+		}
+
+		if ( isset( $atts['preload'] ) ) {
+			$atts['preloadcontent'] = $atts['preload'];
 		}
 
 		$atts = shortcode_atts( $defaults, $atts, 'videopress' );
@@ -95,6 +99,7 @@ class Block_Editor_Content {
 			'controls'        => $atts['controls'],
 			'playsinline'     => $atts['playsinline'],
 			'useAverageColor' => $atts['useaveragecolor'], // The casing is intentional, shortcode params are lowercase, but player expects useAverageColor
+			'preloadContent'  => $atts['preloadcontent'], // The casing is intentional, shortcode params are lowercase, but player expects preloadContent
 		);
 		$src          = esc_url( add_query_arg( $query_params, $base_url ) );
 
@@ -137,7 +142,7 @@ class Block_Editor_Content {
 	 * @return string
 	 */
 	public static function videopress_video_block_by_guid( $content, $post ) {
-		if ( isset( $_GET['videopress_guid'], $_GET['_wpnonce'] )
+		if ( isset( $_GET['videopress_guid'] ) && isset( $_GET['_wpnonce'] )
 			&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'videopress-content-nonce' )
 			&& current_user_can( 'edit_post', $post->ID )
 			&& '' === $content

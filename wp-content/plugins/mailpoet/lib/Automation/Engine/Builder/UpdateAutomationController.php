@@ -64,8 +64,15 @@ class UpdateAutomationController {
       $this->validateAutomationSteps($automation, $data['steps']);
       $this->updateStepsController->updateSteps($automation, $data['steps']);
       foreach ($automation->getSteps() as $step) {
-        $this->hooks->doAutomationStepBeforeSave($step);
-        $this->hooks->doAutomationStepByKeyBeforeSave($step);
+        $this->hooks->doAutomationStepBeforeSave($step, $automation);
+        $this->hooks->doAutomationStepByKeyBeforeSave($step, $automation);
+      }
+    }
+
+    if (array_key_exists('meta', $data)) {
+      $automation->deleteAllMetas();
+      foreach ($data['meta'] as $key => $value) {
+        $automation->setMeta($key, $value);
       }
     }
 

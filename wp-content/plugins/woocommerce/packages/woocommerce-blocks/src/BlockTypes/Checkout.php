@@ -1,7 +1,8 @@
 <?php
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
 
-use Automattic\WooCommerce\Blocks\Package;
+use Automattic\WooCommerce\StoreApi\Utilities\LocalPickupUtils;
+use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
 
 /**
  * Checkout class.
@@ -62,11 +63,15 @@ class Checkout extends AbstractBlock {
 	protected function enqueue_assets( array $attributes ) {
 		/**
 		 * Fires before checkout block scripts are enqueued.
+		 *
+		 * @since 4.6.0
 		 */
 		do_action( 'woocommerce_blocks_enqueue_checkout_block_scripts_before' );
 		parent::enqueue_assets( $attributes );
 		/**
 		 * Fires after checkout block scripts are enqueued.
+		 *
+		 * @since 4.6.0
 		 */
 		do_action( 'woocommerce_blocks_enqueue_checkout_block_scripts_after' );
 	}
@@ -138,8 +143,8 @@ class Checkout extends AbstractBlock {
 			<div data-block-name="woocommerce/checkout-order-summary-taxes-block" class="wp-block-woocommerce-checkout-order-summary-taxes-block"></div>
 		';
 		// Order summary subtotal block was added in i3, so we search for it to see if we have a Checkout i2 template.
-		$regex_for_order_summary_subtotal = '/<div[\n\r\s\ta-zA-Z0-9_\-=\'"]*data-block-name="woocommerce\/checkout-order-summary-subtotal-block"[\n\r\s\ta-zA-Z0-9_\-=\'"]*>/mi';
-		$regex_for_order_summary          = '/<div[\n\r\s\ta-zA-Z0-9_\-=\'"]*data-block-name="woocommerce\/checkout-order-summary-block"[\n\r\s\ta-zA-Z0-9_\-=\'"]*>/mi';
+		$regex_for_order_summary_subtotal = '/<div[^<]*?data-block-name="woocommerce\/checkout-order-summary-subtotal-block"[^>]*?>/mi';
+		$regex_for_order_summary          = '/<div[^<]*?data-block-name="woocommerce\/checkout-order-summary-block"[^>]*?>/mi';
 		$has_i2_template                  = ! preg_match( $regex_for_order_summary_subtotal, $content );
 
 		if ( $has_i2_template ) {
@@ -150,11 +155,11 @@ class Checkout extends AbstractBlock {
 		 * Add the Local Pickup toggle to checkouts missing this forced template.
 		 */
 		$local_pickup_inner_blocks = '<div data-block-name="woocommerce/checkout-shipping-method-block" class="wp-block-woocommerce-checkout-shipping-method-block"></div>' . PHP_EOL . PHP_EOL . '<div data-block-name="woocommerce/checkout-pickup-options-block" class="wp-block-woocommerce-checkout-pickup-options-block"></div>' . PHP_EOL . PHP_EOL . '$0';
-		$has_local_pickup_regex    = '/<div[\n\r\s\ta-zA-Z0-9_\-=\'"]*data-block-name="woocommerce\/checkout-shipping-method-block"[\n\r\s\ta-zA-Z0-9_\-=\'"]*>/mi';
+		$has_local_pickup_regex    = '/<div[^<]*?data-block-name="woocommerce\/checkout-shipping-method-block"[^>]*?>/mi';
 		$has_local_pickup          = preg_match( $has_local_pickup_regex, $content );
 
 		if ( ! $has_local_pickup ) {
-			$shipping_address_block_regex = '/<div[\n\r\s\ta-zA-Z0-9_\-=\'"]*data-block-name="woocommerce\/checkout-shipping-address-block" class="wp-block-woocommerce-checkout-shipping-address-block"[\n\r\s\ta-zA-Z0-9_\-=\'"]*><\/div>/mi';
+			$shipping_address_block_regex = '/<div[^<]*?data-block-name="woocommerce\/checkout-shipping-address-block" class="wp-block-woocommerce-checkout-shipping-address-block"[^>]*?><\/div>/mi';
 			$content                      = preg_replace( $shipping_address_block_regex, $local_pickup_inner_blocks, $content );
 		}
 
@@ -180,54 +185,7 @@ class Checkout extends AbstractBlock {
 	protected function enqueue_data( array $attributes = [] ) {
 		parent::enqueue_data( $attributes );
 
-		$this->asset_data_registry->add(
-			'allowedCountries',
-			function() {
-				return $this->deep_sort_with_accents( WC()->countries->get_allowed_countries() );
-			},
-			true
-		);
-		$this->asset_data_registry->add(
-			'allowedStates',
-			function() {
-				return $this->deep_sort_with_accents( WC()->countries->get_allowed_country_states() );
-			},
-			true
-		);
-		if ( wc_shipping_enabled() ) {
-			$this->asset_data_registry->add(
-				'shippingCountries',
-				function() {
-					return $this->deep_sort_with_accents( WC()->countries->get_shipping_countries() );
-				},
-				true
-			);
-			$this->asset_data_registry->add(
-				'shippingStates',
-				function() {
-					return $this->deep_sort_with_accents( WC()->countries->get_shipping_country_states() );
-				},
-				true
-			);
-		}
-
-		$this->asset_data_registry->add(
-			'countryLocale',
-			function() {
-				// Merge country and state data to work around https://github.com/woocommerce/woocommerce/issues/28944.
-				$country_locale = wc()->countries->get_country_locale();
-				$states         = wc()->countries->get_states();
-
-				foreach ( $states as $country => $states ) {
-					if ( empty( $states ) ) {
-						$country_locale[ $country ]['state']['required'] = false;
-						$country_locale[ $country ]['state']['hidden']   = true;
-					}
-				}
-				return $country_locale;
-			},
-			true
-		);
+		$this->asset_data_registry->add( 'countryData', CartCheckoutUtils::get_country_data(), true );
 		$this->asset_data_registry->add( 'baseLocation', wc_get_base_location(), true );
 		$this->asset_data_registry->add(
 			'checkoutAllowsGuest',
@@ -256,9 +214,7 @@ class Checkout extends AbstractBlock {
 		$this->asset_data_registry->register_page_id( isset( $attributes['cartPageId'] ) ? $attributes['cartPageId'] : 0 );
 
 		$pickup_location_settings = get_option( 'woocommerce_pickup_location_settings', [] );
-		$local_pickup_enabled     = wc_string_to_bool( $pickup_location_settings['enabled'] ?? 'no' );
-
-		$this->asset_data_registry->add( 'localPickupEnabled', $local_pickup_enabled, true );
+		$this->asset_data_registry->add( 'localPickupEnabled', wc_string_to_bool( $pickup_location_settings['enabled'] ?? 'no' ), true );
 
 		$is_block_editor = $this->is_block_editor();
 
@@ -273,7 +229,7 @@ class Checkout extends AbstractBlock {
 			$formatted_shipping_methods = array_reduce(
 				$shipping_methods,
 				function( $acc, $method ) {
-					if ( 'pickup_location' === $method->id ) {
+					if ( in_array( $method->id, LocalPickupUtils::get_local_pickup_method_ids(), true ) ) {
 						return $acc;
 					}
 					if ( $method->supports( 'settings' ) ) {
@@ -313,17 +269,17 @@ class Checkout extends AbstractBlock {
 		}
 
 		if ( $is_block_editor && ! $this->asset_data_registry->exists( 'globalPaymentMethods' ) ) {
-			$payment_methods           = WC()->payment_gateways->payment_gateways();
+			// These are used to show options in the sidebar. We want to get the full list of enabled payment methods,
+			// not just the ones that are available for the current cart (which may not exist yet).
+			$payment_methods           = $this->get_enabled_payment_gateways();
 			$formatted_payment_methods = array_reduce(
 				$payment_methods,
 				function( $acc, $method ) {
-					if ( 'yes' === $method->enabled ) {
-						$acc[] = [
-							'id'          => $method->id,
-							'title'       => $method->method_title,
-							'description' => $method->method_description,
-						];
-					}
+					$acc[] = [
+						'id'          => $method->id,
+						'title'       => $method->method_title,
+						'description' => $method->method_description,
+					];
 					return $acc;
 				},
 				[]
@@ -338,8 +294,25 @@ class Checkout extends AbstractBlock {
 
 		/**
 		 * Fires after checkout block data is registered.
+		 *
+		 * @since 2.6.0
 		 */
 		do_action( 'woocommerce_blocks_checkout_enqueue_data' );
+	}
+
+	/**
+	 * Get payment methods that are enabled in settings.
+	 *
+	 * @return array
+	 */
+	protected function get_enabled_payment_gateways() {
+		$payment_gateways = WC()->payment_gateways->payment_gateways();
+		return array_filter(
+			$payment_gateways,
+			function( $payment_gateway ) {
+				return 'yes' === $payment_gateway->enabled;
+			}
+		);
 	}
 
 	/**
@@ -355,26 +328,6 @@ class Checkout extends AbstractBlock {
 	}
 
 	/**
-	 * Removes accents from an array of values, sorts by the values, then returns the original array values sorted.
-	 *
-	 * @param array $array Array of values to sort.
-	 * @return array Sorted array.
-	 */
-	protected function deep_sort_with_accents( $array ) {
-		if ( ! is_array( $array ) || empty( $array ) ) {
-			return $array;
-		}
-
-		if ( is_array( reset( $array ) ) ) {
-			return array_map( [ $this, 'deep_sort_with_accents' ], $array );
-		}
-
-		$array_without_accents = array_map( 'remove_accents', array_map( 'wc_strtolower', array_map( 'html_entity_decode', $array ) ) );
-		asort( $array_without_accents );
-		return array_replace( $array_without_accents, $array );
-	}
-
-	/**
 	 * Get saved customer payment methods for use in checkout.
 	 */
 	protected function hydrate_customer_payment_methods() {
@@ -382,9 +335,23 @@ class Checkout extends AbstractBlock {
 			return;
 		}
 		add_filter( 'woocommerce_payment_methods_list_item', [ $this, 'include_token_id_with_payment_methods' ], 10, 2 );
+
+		$payment_gateways = $this->get_enabled_payment_gateways();
+		$payment_methods  = wc_get_customer_saved_methods_list( get_current_user_id() );
+
+		// Filter out payment methods that are not enabled.
+		foreach ( $payment_methods as $payment_method_group => $saved_payment_methods ) {
+			$payment_methods[ $payment_method_group ] = array_filter(
+				$saved_payment_methods,
+				function( $saved_payment_method ) use ( $payment_gateways ) {
+					return in_array( $saved_payment_method['method']['gateway'], array_keys( $payment_gateways ), true );
+				}
+			);
+		}
+
 		$this->asset_data_registry->add(
 			'customerPaymentMethods',
-			wc_get_customer_saved_methods_list( get_current_user_id() )
+			$payment_methods
 		);
 		remove_filter( 'woocommerce_payment_methods_list_item', [ $this, 'include_token_id_with_payment_methods' ], 10, 2 );
 	}

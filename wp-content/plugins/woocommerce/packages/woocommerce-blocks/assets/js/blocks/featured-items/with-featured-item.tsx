@@ -4,19 +4,13 @@
  * External dependencies
  */
 import type { BlockAlignment } from '@wordpress/blocks';
-import { ProductResponseItem } from '@woocommerce/types';
-import { __experimentalGetSpacingClassesAndStyles as getSpacingClassesAndStyles } from '@wordpress/block-editor';
+import { ProductResponseItem, isEmpty } from '@woocommerce/types';
 import { Icon, Placeholder, Spinner } from '@wordpress/components';
 import classnames from 'classnames';
-import { isEmpty } from 'lodash';
-import {
-	ComponentType,
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useState,
-} from 'react';
+import { useCallback, useState } from '@wordpress/element';
 import { WP_REST_API_Category } from 'wp-types';
+import { useStyleProps } from '@woocommerce/base-hooks';
+import type { ComponentType, Dispatch, SetStateAction } from 'react';
 
 /**
  * Internal dependencies
@@ -156,6 +150,8 @@ export const withFeaturedItem =
 			</Placeholder>
 		);
 
+		const styleProps = useStyleProps( attributes );
+
 		const renderItem = () => {
 			const {
 				contentAlign,
@@ -173,7 +169,7 @@ export const withFeaturedItem =
 				textColor,
 			} = attributes;
 
-			const classes = classnames(
+			const containerClass = classnames(
 				className,
 				{
 					'is-selected':
@@ -186,7 +182,8 @@ export const withFeaturedItem =
 					'is-repeated': isRepeated,
 				},
 				dimRatioToClass( dimRatio ),
-				contentAlign !== 'center' && `has-${ contentAlign }-content`
+				contentAlign !== 'center' && `has-${ contentAlign }-content`,
+				styleProps.className
 			);
 
 			const containerStyle = {
@@ -194,11 +191,9 @@ export const withFeaturedItem =
 				color: textColor
 					? `var(--wp--preset--color--${ textColor })`
 					: style?.color?.text,
-			};
-
-			const wrapperStyle = {
-				...getSpacingClassesAndStyles( attributes ).style,
+				boxSizing: 'border-box',
 				minHeight,
+				...styleProps.style,
 			};
 
 			const isImgElement = ! isRepeated && ! hasParallax;
@@ -224,11 +219,8 @@ export const withFeaturedItem =
 						showHandle={ isSelected }
 						style={ { minHeight } }
 					/>
-					<div className={ classes } style={ containerStyle }>
-						<div
-							className={ `${ className }__wrapper` }
-							style={ wrapperStyle }
-						>
+					<div className={ containerClass } style={ containerStyle }>
+						<div className={ `${ className }__wrapper` }>
 							<div
 								className="background-dim__overlay"
 								style={ overlayStyle }

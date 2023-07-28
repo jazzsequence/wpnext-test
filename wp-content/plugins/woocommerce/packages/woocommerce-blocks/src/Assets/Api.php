@@ -95,6 +95,8 @@ class Api {
 			);
 
 			if ( file_exists( $asset_path ) ) {
+				// The following require is safe because we are checking if the file exists and it is not a user input.
+				// nosemgrep audit.php.lang.security.file.inclusion-arg.
 				$asset        = require $asset_path;
 				$dependencies = isset( $asset['dependencies'] ) ? array_merge( $asset['dependencies'], $dependencies ) : $dependencies;
 				$version      = ! empty( $asset['version'] ) ? $asset['version'] : $this->get_file_version( $relative_src );
@@ -149,6 +151,8 @@ class Api {
 
 		/**
 		 * Filters the list of script dependencies.
+		 *
+		 * @since 3.0.0
 		 *
 		 * @param array $dependencies The list of script dependencies.
 		 * @param string $handle The script's handle.

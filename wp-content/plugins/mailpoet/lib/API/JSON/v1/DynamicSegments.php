@@ -22,6 +22,7 @@ use MailPoet\Segments\DynamicSegments\SegmentSaveController;
 use MailPoet\Segments\SegmentsRepository;
 use MailPoet\Segments\SegmentSubscribersRepository;
 use MailPoet\UnexpectedValueException;
+use Throwable;
 
 class DynamicSegments extends APIEndpoint {
 
@@ -108,6 +109,8 @@ class DynamicSegments extends APIEndpoint {
 
   public function save($data) {
     try {
+      $data['name'] = isset($data['name']) ? sanitize_text_field($data['name']) : '';
+      $data['description'] = isset($data['description']) ? sanitize_textarea_field($data['description']) : '';
       $segment = $this->saveController->save($data);
       return $this->successResponse($this->segmentsResponseBuilder->build($segment));
     } catch (InvalidFilterException $e) {
@@ -121,6 +124,29 @@ class DynamicSegments extends APIEndpoint {
     } catch (ValidationException $exception) {
       return $this->badRequest([
         Error::BAD_REQUEST => __('Please specify a name.', 'mailpoet'),
+      ]);
+    }
+  }
+
+  public function duplicate($data = []) {
+    $segment = $this->getSegment($data);
+
+    if ($segment instanceof SegmentEntity) {
+      try {
+        $duplicate = $this->saveController->duplicate($segment);
+      } catch (Throwable $e) {
+        return $this->errorResponse([
+          // translators: %s is the error message
+          Error::UNKNOWN => sprintf(__('Duplicating of segment failed: %s', 'mailpoet'), $e->getMessage()),
+        ], [], Response::STATUS_UNKNOWN);
+      }
+      return $this->successResponse(
+        $this->segmentsResponseBuilder->build($duplicate),
+        ['count' => 1]
+      );
+    } else {
+      return $this->errorResponse([
+        Error::NOT_FOUND => __('This segment does not exist.', 'mailpoet'),
       ]);
     }
   }
@@ -149,6 +175,8 @@ class DynamicSegments extends APIEndpoint {
       case InvalidFilterException::MISSING_NUMBER_OF_ORDERS_FIELDS:
         return __('Please select a type for the comparison, a number of orders and a number of days.', 'mailpoet');
       case InvalidFilterException::MISSING_TOTAL_SPENT_FIELDS:
+      case InvalidFilterException::MISSING_SINGLE_ORDER_VALUE_FIELDS:
+      case InvalidFilterException::MISSING_AVERAGE_SPENT_FIELDS:
         return __('Please select a type for the comparison, an amount and a number of days.', 'mailpoet');
       case InvalidFilterException::MISSING_FILTER:
         return __('Please add at least one condition for filtering.', 'mailpoet');

@@ -46,11 +46,24 @@ class WPForms_Field_Radio extends WPForms_Field {
 			],
 		];
 
+		$this->hooks();
+	}
+
+	/**
+	 * Hooks.
+	 *
+	 * @since 1.8.1
+	 */
+	private function hooks() {
+
 		// Customize HTML field values.
 		add_filter( 'wpforms_html_field_value', [ $this, 'field_html_value' ], 10, 4 );
 
 		// Define additional field properties.
 		add_filter( 'wpforms_field_properties_radio', [ $this, 'field_properties' ], 5, 3 );
+
+		// This field requires fieldset+legend instead of the field label.
+		add_filter( "wpforms_frontend_modern_is_field_requires_fieldset_{$this->type}", '__return_true', PHP_INT_MAX, 2 );
 	}
 
 	/**
@@ -359,7 +372,7 @@ class WPForms_Field_Radio extends WPForms_Field {
 	}
 
 	/**
-	 * Field display on the form front-end.
+	 * Field display on the form front-end and admin entry edit page.
 	 *
 	 * @since 1.0.0
 	 *
@@ -375,6 +388,18 @@ class WPForms_Field_Radio extends WPForms_Field {
 		// Define data.
 		$container = $field['properties']['input_container'];
 		$choices   = $field['properties']['inputs'];
+
+		// Do not display the field with empty choices on the frontend.
+		if ( ! $choices && ! is_admin() ) {
+			return;
+		}
+
+		// Display a warning message on Entry Edit page.
+		if ( ! $choices && is_admin() ) {
+			$this->display_empty_dynamic_choices_message( $field );
+
+			return;
+		}
 
 		$amp_state_id = '';
 
@@ -505,6 +530,27 @@ class WPForms_Field_Radio extends WPForms_Field {
 			}
 
 		echo '</ul>';
+	}
+
+	/**
+	 * Validate field.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param int          $field_id     Field ID.
+	 * @param string|array $field_submit Submitted field value (selected option).
+	 * @param array        $form_data    Form data and settings.
+	 */
+	public function validate( $field_id, $field_submit, $form_data ) {
+
+		$field = $form_data['fields'][ $field_id ];
+
+		// Skip validation if field is dynamic and choices are empty.
+		if ( $this->is_dynamic_choices_empty( $field, $form_data ) ) {
+			return;
+		}
+
+		parent::validate( $field_id, $field_submit, $form_data );
 	}
 
 	/**

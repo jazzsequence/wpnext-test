@@ -1,5 +1,52 @@
 [unreleased]
 
+#### 5.3.3 / 2023-07-16
+* remove Reflection in `WP_Rollback_Auto_Update::cron_rollback()` as methods are public
+
+#### 5.3.2 / 2023-07-10
+* cleanup
+
+#### 5.3.1 / 2023-06-21
+* cleanup email sending
+
+#### 5.3.0 / 2023-05-21
+* improved language for email
+* ensure `find_core_auto_update()` is available
+* put guard for Rollback part 2 not being committed back
+* add theme update data to failure email
+
+#### 5.2.0 / 2023-05-09
+* restart theme auto-updates
+* remove guard for Rollback not being committed
+* set Plugin_Upgrader via hook
+* cleanup Plugin_Upgrader hook from fatal update
+
+#### 5.1.1 / 2023-05-05
+* update readme
+
+#### 5.1.0 / 2023-05-03
+* align docblocks with PR
+* update for Rollback committed to core
+* change `temp-backup` to `upgrade-temp-backup`
+
+#### 5.0.6 / 2023-04-25
+* update code logic for creating `temp-backup` dir, thanks @azaozz
+
+#### 5.0.5 / 2023-04-14
+* hotfix for no autoload
+
+#### 5.0.4 / 2023-04-14
+* update tests
+* update GitHub Actions
+* ignore vendor directory
+
+#### 5.0.3 / 2023-03-22
+* update @since
+* update using constant to check version for when `move_dir()` was committed
+* update using constant to check version for when `Rollback` was committed
+* update for PR compatibility
+* developery stuff
+
 #### 5.0.2 / 2023-02-05
 * make variables static to retain value during auto-update run
 

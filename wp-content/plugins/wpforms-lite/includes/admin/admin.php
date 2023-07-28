@@ -255,6 +255,7 @@ function wpforms_admin_scripts() {
 		'loading'                         => esc_html__( 'Loading...', 'wpforms-lite' ),
 		'use_simple_contact_form'         => esc_html__( 'Use Simple Contact Form Template', 'wpforms-lite' ),
 		'error_select_template'           => esc_html__( 'Something went wrong while applying the template.', 'wpforms-lite' ),
+		'payment_delete_confirm'          => esc_html__( 'Are you sure you want to delete this payment and all its information (details, notes, logs, etc.)?', 'wpforms-lite' ),
 	];
 
 	/**
@@ -464,15 +465,7 @@ add_action( 'admin_print_scripts', 'wpforms_admin_hide_unrelated_notices' );
  */
 function wpforms_admin_upgrade_link( $medium = 'link', $content = '' ) {
 
-	/**
-	 * Modify utm_medium tag for the upgrade plugin link.
-	 *
-	 * @since 1.5.1
-	 *
-	 * @param string $medium The utm_medium tag value.
-	 */
-	$medium = apply_filters( 'wpforms_upgrade_link_medium', $medium );
-	$url    = 'https://wpforms.com/lite-upgrade/';
+	$url = 'https://wpforms.com/lite-upgrade/';
 
 	if ( wpforms()->is_pro() ) {
 		$license_key = wpforms_get_license_key();
@@ -483,7 +476,8 @@ function wpforms_admin_upgrade_link( $medium = 'link', $content = '' ) {
 		);
 	}
 
-	$upgrade = wpforms_utm_link( $url, $medium, $content );
+	// phpcs:ignore WPForms.Comments.PHPDocHooks.RequiredHookDocumentation
+	$upgrade = wpforms_utm_link( $url, apply_filters( 'wpforms_upgrade_link_medium', $medium ), $content );
 
 	/**
 	 * Modify upgrade link.

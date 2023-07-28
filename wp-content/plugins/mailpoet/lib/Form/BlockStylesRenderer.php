@@ -21,6 +21,7 @@ class BlockStylesRenderer {
     $rules = [];
     if (isset($styles['full_width']) && intval($styles['full_width'])) {
       $rules[] = 'width:100%;';
+      $rules[] = 'box-sizing:border-box;'; // to avoid a larger width increased by padding
     }
     if (isset($styles['background_color']) && empty($styles['gradient'])) {
       $rules[] = "background-color:{$styles['background_color']};";
@@ -51,10 +52,10 @@ class BlockStylesRenderer {
       $rules[] = "font-family:'{$formSettings['font_family']}';" ;
     }
     if (isset($styles['font_size'])) {
-      $rules[] = "font-size:" . intval($styles['font_size']) . "px;";
+      $rules[] = "font-size:" . $styles['font_size'] . (is_numeric($styles['font_size']) ? "px;" : ";");
     }
     if (isset($formSettings['fontSize']) && !isset($styles['font_size'])) {
-      $rules[] = "font-size:" . intval($formSettings['fontSize']) . "px;";
+      $rules[] = "font-size:" . $formSettings['fontSize'] . (is_numeric($formSettings['fontSize']) ? "px;" : ";");
     }
     if (isset($formSettings['fontSize']) || isset($styles['font_size'])) {
       $rules[] = "line-height:1.5;";

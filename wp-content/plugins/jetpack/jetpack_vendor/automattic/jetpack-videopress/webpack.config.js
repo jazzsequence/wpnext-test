@@ -9,6 +9,9 @@ module.exports = [
 			'block-editor/blocks/video/index': './src/client/block-editor/blocks/video/index.ts',
 			'block-editor/blocks/video/view': './src/client/block-editor/blocks/video/view.ts',
 
+			'lib/token-bridge': './src/client/lib/token-bridge/index.ts',
+			'lib/player-bridge': './src/client/lib/player-bridge/index.ts',
+
 			'lib/videopress-token-bridge': './src/client/lib/videopress-token-bridge.js',
 
 			// VideoPress dashboard page
@@ -16,6 +19,8 @@ module.exports = [
 
 			// Block editor extensions
 			'block-editor/index': './src/client/block-editor/index.ts',
+			// Divi editor extensions
+			'divi-editor/index': './src/client/divi-editor/index.js',
 		},
 		mode: jetpackWebpackConfig.mode,
 		devtool: jetpackWebpackConfig.isDevelopment ? 'source-map' : false,

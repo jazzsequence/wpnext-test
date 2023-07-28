@@ -6,6 +6,7 @@
  */
 
 use Automattic\Jetpack\Assets\Logo as Jetpack_Logo;
+use Automattic\Jetpack\Current_Plan as Jetpack_Plan;
 use Automattic\Jetpack\Partner_Coupon as Jetpack_Partner_Coupon;
 use Automattic\Jetpack\Status;
 use Automattic\Jetpack\Status\Host;
@@ -129,6 +130,16 @@ class Jetpack_Admin {
 	 * @since 11.0 . Prior to that, this function was located in custom-css-4.7.php (now custom-css.php).
 	 */
 	public static function additional_css_menu() {
+		/*
+		 * Custom CSS for the Customizer is deprecated for block themes as of WP 6.1, so we only expose it with a menu
+		 * if the site already has existing CSS code.
+		 */
+		if ( function_exists( 'wp_is_block_theme' ) && wp_is_block_theme() ) {
+			$styles = wp_get_custom_css();
+			if ( ! $styles ) {
+				return;
+			}
+		}
 
 		// If the site is a WoA site and the custom-css feature is not available, return.
 		// See https://github.com/Automattic/jetpack/pull/19965 for more on how this menu item is dealt with on WoA sites.
@@ -141,7 +152,7 @@ class Jetpack_Admin {
 			// Add in our new page slug that will redirect to the customizer.
 			$hook = add_theme_page( __( 'CSS', 'jetpack' ), __( 'Additional CSS', 'jetpack' ), 'edit_theme_options', 'editcss-customizer-redirect', array( __CLASS__, 'customizer_redirect' ) );
 			add_action( "load-{$hook}", array( __CLASS__, 'customizer_redirect' ) );
-		} else { // Link to the Jetpack Settings > Writing page, highlighting the Custom CSS setting.
+		} elseif ( class_exists( 'Jetpack' ) && Jetpack::is_connection_ready() ) { // Link to the Jetpack Settings > Writing page, highlighting the Custom CSS setting.
 			add_submenu_page( '', __( 'CSS', 'jetpack' ), __( 'Additional CSS', 'jetpack' ), 'edit_theme_options', 'editcss', array( __CLASS__, 'theme_enhancements_redirect' ) );
 
 			$hook = add_theme_page( __( 'CSS', 'jetpack' ), __( 'Additional CSS', 'jetpack' ), 'edit_theme_options', 'editcss-theme-enhancements-redirect', array( __CLASS__, 'theme_enhancements_redirect' ) );
@@ -177,7 +188,7 @@ class Jetpack_Admin {
 	 */
 	public static function theme_enhancements_redirect() {
 		wp_safe_redirect(
-			'admin.php?page=jetpack#/writing?term=Custom%20CSS'
+			'admin.php?page=jetpack#/writing?term=custom-css'
 		);
 		exit;
 	}
@@ -278,6 +289,7 @@ class Jetpack_Admin {
 				$module_array['short_description']  = $short_desc_trunc;
 				$module_array['configure_url']      = Jetpack::module_configuration_url( $module );
 				$module_array['override']           = $overrides->get_module_override( $module );
+				$module_array['disabled']           = $is_available ? '' : 'disabled="disabled"';
 
 				ob_start();
 				/**
@@ -568,7 +580,7 @@ class Jetpack_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			die( '-1' );
 		}
-		Jetpack_Admin_Page::wrap_ui( array( $this, 'debugger_page' ) );
+		Jetpack_Admin_Page::wrap_ui( array( $this, 'debugger_page' ), array( 'is-wide' => true ) );
 	}
 
 	/**

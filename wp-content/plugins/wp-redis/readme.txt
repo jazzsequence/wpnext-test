@@ -1,9 +1,9 @@
 === WP Redis ===
-Contributors: getpantheon, danielbachhuber, mboynes, Outlandish Josh
+Contributors: getpantheon, danielbachhuber, mboynes, Outlandish Josh, jspellman, jazzs3quence
 Tags: cache, plugin, redis
 Requires at least: 3.0.1
-Tested up to: 6.1.1
-Stable tag: 1.3.3
+Tested up to: 6.2
+Stable tag: 1.4.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,7 +11,7 @@ Back your WP Object Cache with Redis, a high-performance in-memory storage backe
 
 == Description ==
 
-[![Travis CI](https://travis-ci.org/pantheon-systems/wp-redis.svg?branch=master)](https://travis-ci.org/pantheon-systems/wp-redis) [![CircleCI](https://circleci.com/gh/pantheon-systems/wp-redis/tree/master.svg?style=svg)](https://circleci.com/gh/pantheon-systems/wp-redis/tree/master)
+[![CircleCI](https://circleci.com/gh/pantheon-systems/wp-redis/tree/master.svg?style=svg)](https://circleci.com/gh/pantheon-systems/wp-redis/tree/master)
 
 For sites concerned with high traffic, speed for logged-in users, or dynamic pageloads, a high-speed and persistent object cache is a must. You also need something that can scale across multiple instances of your application, so using local file caches or APC are out.
 
@@ -101,6 +101,32 @@ This declaration means use of `wp_cache_set( 'foo', 'bar', 'bad-actor' );` and `
 There's a known issue with WordPress `alloptions` cache design. Specifically, a race condition between two requests can cause the object cache to have stale values. If you think you might be impacted by this, [review this GitHub issue](https://github.com/pantheon-systems/wp-redis/issues/221) for links to more context, including a workaround.
 
 == Changelog ==
+
+= 1.4.3 (June 26, 2023)  =
+* Bug fix: Fixes assumption that CACHE_PORT & CACHE_PASSWORD are Set. [[428](https://github.com/pantheon-systems/wp-redis/pull/428)] (props @tnolte)
+* Adds WP.org validation GitHub action [[#435](https://github.com/pantheon-systems/wp-redis/pull/435)]
+* Bug fix: Fixes incorrect order of `array_replace_recursive` and other issues [[434](https://github.com/pantheon-systems/wp-redis/pull/434)] (props @timnolte)
+* Bug fix: Replace use of wp_strip_all_tags in object-cache.php [[434](https://github.com/pantheon-systems/wp-redis/pull/434)] (props @timnolte)
+* Bug fix: Don't strip tags from the cache password. [[434](https://github.com/pantheon-systems/wp-redis/pull/434)] (props @timnolte)
+
+= 1.4.2 (May 15, 2023) =
+* Bug fix: Removes exception loop caused by `esc_html` in `_exception_handler()` [[421](https://github.com/pantheon-systems/wp-redis/pull/421)]
+
+= 1.4.1 (May 11, 2023) =
+* Bug fix: `wp_cache_flush_runtime` should only clear the local cache [[413](https://github.com/pantheon-systems/wp-redis/pull/413)]
+
+= 1.4.0 (May 9, 2023) =
+* Add support for `flush_runtime` and `flush_group` functions [[#405](https://github.com/pantheon-systems/wp-redis/pull/405)]
+* Add `pantheon-wp-coding-standards` [[#400](https://github.com/pantheon-systems/wp-redis/pull/400)]
+* Update CONTRIBUTING.MD [[#406](https://github.com/pantheon-systems/wp-redis/pull/406)]
+* Update Composer dependencies [[#401](https://github.com/pantheon-systems/wp-redis/pull/394)]
+
+= 1.3.5 (April 6, 2023) =
+* Bump tested up to version to 6.2
+* Update Composer dependencies [[#394](https://github.com/pantheon-systems/wp-redis/pull/394)]
+
+= 1.3.4 (March 7, 2023) =
+* Set `missing_redis_message` if Redis service is not connected [[#391](https://github.com/pantheon-systems/wp-redis/pull/391)].
 
 = 1.3.3 (February 28, 2023) =
 * Add PHP 8.2 support [[#388](https://github.com/pantheon-systems/wp-redis/pull/388)].
@@ -214,3 +240,8 @@ There's a known issue with WordPress `alloptions` cache design. Specifically, a 
 
 = 0.1 =
 * Initial commit of working code for the benefit of all.
+
+== Upgrade Notice ==
+
+= 1.4.0 =
+WP Redis 1.4.0 adds support for the `flush_runtime` and `flush_group` functions. If you've copied `object-cache.php` and made your own changes, be sure to copy these additions over as well.

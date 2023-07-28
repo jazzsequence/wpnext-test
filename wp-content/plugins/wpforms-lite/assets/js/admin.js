@@ -687,17 +687,17 @@
 
 			// eslint-disable-next-line complexity
 			$( document ).on( 'keydown', function( event ) {
-				if ( 74 === event.keyCode && ! WPFormsAdmin.isFormTypeNode( event.target.nodeName ) ) {
+				if ( 74 === event.keyCode && ! event.metaKey && ! WPFormsAdmin.isFormTypeNode( event.target.nodeName ) ) {
 
 					// j key has been pressed outside a form element, go to the previous entry.
-					var prevEntry = $( '#wpforms-entry-prev-link' ).attr( 'href' );
+					var prevEntry = $( '#wpforms-admin-single-navigation-prev-link' ).attr( 'href' );
 					if ( '#' !== prevEntry ) {
 						window.location.href = prevEntry;
 					}
-				} else if ( 75 === event.keyCode && ! WPFormsAdmin.isFormTypeNode( event.target.nodeName ) ) {
+				} else if ( 75 === event.keyCode && ! event.metaKey && ! WPFormsAdmin.isFormTypeNode( event.target.nodeName ) ) {
 
 					// k key has been pressed outside a form element, go to the previous entry.
-					var nextEntry = $( '#wpforms-entry-next-link' ).attr( 'href' );
+					var nextEntry = $( '#wpforms-admin-single-navigation-next-link' ).attr( 'href' );
 					if ( '#' !== nextEntry ) {
 						window.location.href = nextEntry;
 					}
@@ -1181,6 +1181,9 @@
 				] );
 			} );
 
+			// Render engine setting.
+			$( document ).on( 'change', '#wpforms-setting-row-render-engine input', WPFormsAdmin.settingsRenderEngineChange );
+
 			// Form styles plugin setting.
 			$( document ).on( 'change', '#wpforms-setting-disable-css', function() {
 
@@ -1269,7 +1272,7 @@
 				$this
 					.parent()
 					.find( '.wpforms-settings-provider-accounts' )
-					.stop()
+					.stop( false, true )
 					.slideToggle( '', function() {
 						$this.parent().find( '.wpforms-settings-provider-logo i' ).toggleClass( 'fa-chevron-right fa-chevron-down' );
 					} );
@@ -1324,6 +1327,22 @@
 				$descOn.toggleClass( 'wpforms-hidden', ! checked && isDoubleDesc );
 				$descOff.toggleClass( 'wpforms-hidden', checked && isDoubleDesc );
 			} );
+		},
+
+		/**
+		 * Render engine setting change event handler.
+		 *
+		 * @since 1.8.1
+		 *
+		 * @param {object} e Event object.
+		 */
+		settingsRenderEngineChange: function( e ) {
+
+			// noinspection JSUnusedLocalSymbols
+			// eslint-disable-next-line
+			const renderEngine = $( this ).val();
+
+			// TODO: Add corresponding code that need to be executed on change render engine setting.
 		},
 
 		/**
@@ -1521,7 +1540,11 @@
 				const msg  = ! data.msg || typeof data.msg !== 'string' ? wpforms_admin.something_went_wrong : data.msg;
 
 				if ( res.success ) {
-					$row.find( '#wpforms-setting-license-key' ).val( '' ).attr( 'value', '' ).prop( { readonly: false, disabled: false } );
+					$row.find( '#wpforms-setting-license-key' )
+						.val( '' )
+						.attr( 'value', '' )
+						.prop( { readonly: false, disabled: false } )
+						.removeClass();
 					$row.find( '.wpforms-license-key-deactivate-remove' ).remove();
 					$row.find( '#wpforms-setting-license-key-info-message' ).html( data.info ).show();
 					$row.find( '#wpforms-setting-license-key-verify' ).prop( 'disabled', false ).show();

@@ -1,5 +1,7 @@
 <?php
 
+// phpcs:ignore WPForms.PHP.UseStatement.UnusedUseStatement
+use \WPForms\Forms\Fields\Base\Frontend as FrontendBase;
 use WPForms\Forms\IconChoices;
 
 /**
@@ -100,6 +102,15 @@ abstract class WPForms_Field {
 	public $field_data;
 
 	/**
+	 * Instance of the Frontend class.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @var FrontendBase
+	 */
+	protected $frontend_obj;
+
+	/**
 	 * Primary class constructor.
 	 *
 	 * @since 1.0.0
@@ -118,6 +129,9 @@ abstract class WPForms_Field {
 		// Bootstrap.
 		$this->init();
 
+		// Initialize field's Frontend class.
+		$this->frontend_obj = $this->get_object( 'Frontend' );
+
 		// Temporary solution to get an object of the field class.
 		add_filter(
 			"wpforms_fields_get_field_object_{$this->type}",
@@ -126,6 +140,9 @@ abstract class WPForms_Field {
 				return $this;
 			}
 		);
+
+		// Field data.
+		add_filter( 'wpforms_field_data', [ $this, 'field_data' ], 10, 2 );
 
 		// Add fields tab.
 		add_filter( 'wpforms_builder_fields_buttons', [ $this, 'field_button' ], 15 );
@@ -140,7 +157,7 @@ abstract class WPForms_Field {
 		add_action( "wp_ajax_wpforms_new_field_{$this->type}", [ $this, 'field_new' ] );
 
 		// Display field input elements on front-end.
-		add_action( "wpforms_display_field_{$this->type}", [ $this, 'field_display' ], 10, 3 );
+		add_action( "wpforms_display_field_{$this->type}", [ $this, 'field_display_proxy' ], 10, 3 );
 
 		// Display field on back-end.
 		add_filter( "wpforms_pro_admin_entries_edit_is_field_displayable_{$this->type}", '__return_true', 9 );
@@ -162,6 +179,12 @@ abstract class WPForms_Field {
 
 		// Add HTML line breaks before all newlines in Entry Preview.
 		add_filter( "wpforms_pro_fields_entry_preview_get_field_value_{$this->type}_field_after", 'nl2br', 100 );
+
+		// Add allowed HTML tags for the field label.
+		add_filter( 'wpforms_builder_strings', [ $this, 'add_allowed_label_html_tags' ] );
+
+		// Exclude empty dynamic choices from Entry Preview.
+		add_filter( 'wpforms_pro_fields_entry_preview_print_entry_preview_exclude_field', [ $this, 'exclude_empty_dynamic_choices' ], 10, 3 );
 	}
 
 	/**
@@ -631,6 +654,26 @@ abstract class WPForms_Field {
 	}
 
 	/**
+	 * Get field data for the field.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param array $field     Current field.
+	 * @param array $form_data Form data and settings.
+	 *
+	 * @return array
+	 */
+	public function field_data( $field, $form_data ) {
+
+		// Remove field on frontend if it has no dynamic choices.
+		if ( $this->is_dynamic_choices_empty( $field, $form_data ) ) {
+			return [];
+		}
+
+		return $field;
+	}
+
+	/**
 	 * Create the button for the 'Add Fields' tab, inside the form editor.
 	 *
 	 * @since 1.0.0
@@ -1092,7 +1135,7 @@ abstract class WPForms_Field {
 				if ( ! empty( $field['choices_icons'] ) ) {
 					$class[]      = 'show-icons';
 					$icon_color   = isset( $field['choices_icons_color'] ) ? wpforms_sanitize_hex_color( $field['choices_icons_color'] ) : '';
-					$icon_color   = empty( $icon_color ) ? IconChoices::DEFAULT_COLOR : $icon_color;
+					$icon_color   = empty( $icon_color ) ? IconChoices::get_default_color() : $icon_color;
 					$inline_style = "--wpforms-icon-choices-color: {$icon_color};";
 				}
 
@@ -1257,7 +1300,7 @@ abstract class WPForms_Field {
 				if ( ! empty( $field['choices_icons'] ) ) {
 					$class[]      = 'show-icons';
 					$icon_color   = isset( $field['choices_icons_color'] ) ? wpforms_sanitize_hex_color( $field['choices_icons_color'] ) : '';
-					$icon_color   = empty( $icon_color ) ? IconChoices::DEFAULT_COLOR : $icon_color;
+					$icon_color   = empty( $icon_color ) ? IconChoices::get_default_color() : $icon_color;
 					$inline_style = "--wpforms-icon-choices-color: {$icon_color};";
 				}
 
@@ -1307,7 +1350,7 @@ abstract class WPForms_Field {
 					$fld .= sprintf(
 						'<input type="text" name="%s[value]" value="%s" class="value wpforms-money-input" placeholder="%s">',
 						esc_attr( $base ),
-						esc_attr( $value['value'] ),
+						esc_attr( wpforms_format_amount( wpforms_sanitize_amount( $value['value'] ) ) ),
 						wpforms_format_amount( 0 )
 					);
 					$fld .= '<a class="add" href="#"><i class="fa fa-plus-circle"></i></a><a class="remove" href="#"><i class="fa fa-minus-circle"></i></a>';
@@ -1499,7 +1542,7 @@ abstract class WPForms_Field {
 				);
 
 				$icon_color = isset( $field['choices_icons_color'] ) ? wpforms_sanitize_hex_color( $field['choices_icons_color'] ) : '';
-				$icon_color = empty( $icon_color ) ? IconChoices::DEFAULT_COLOR : $icon_color;
+				$icon_color = empty( $icon_color ) ? IconChoices::get_default_color() : $icon_color;
 
 				$fld = $this->field_element(
 					'color',
@@ -2238,7 +2281,7 @@ abstract class WPForms_Field {
 					$list_class[] = sanitize_html_class( 'wpforms-icon-choices-' . $field['choices_icons_style'] );
 					$list_class[] = sanitize_html_class( 'wpforms-icon-choices-' . $field['choices_icons_size'] );
 					$icon_color   = isset( $field['choices_icons_color'] ) ? wpforms_sanitize_hex_color( $field['choices_icons_color'] ) : '';
-					$icon_color   = empty( $icon_color ) ? IconChoices::DEFAULT_COLOR : $icon_color;
+					$icon_color   = empty( $icon_color ) ? IconChoices::get_default_color() : $icon_color;
 					$inline_style = "--wpforms-icon-choices-color: {$icon_color};";
 				}
 
@@ -2554,16 +2597,81 @@ abstract class WPForms_Field {
 	}
 
 	/**
-	 * Display the field input elements on the frontend.
+	 * Display the field input elements on the frontend
+	 * according to the render engine setting.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @param array $field      Field data and settings.
+	 * @param array $field_atts Field attributes (deprecated).
+	 * @param array $form_data  Form data and settings.
+	 *
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function field_display_proxy( $field, $field_atts, $form_data ) {
+
+		$render_engine = wpforms_get_render_engine();
+		$method        = "field_display_{$render_engine}";
+
+		if ( ! method_exists( $this, $method ) ) {
+
+			// Something is wrong, this should never occur.
+			// Let's display classic field in this case.
+			$method = 'fields_display_classic';
+		}
+
+		$this->$method( $field, $form_data );
+	}
+
+	/**
+	 * Display the field using classic rendering.
 	 *
 	 * @since 1.0.0
 	 * @since 1.5.0 Converted to abstract method, as it's required for all fields.
 	 *
 	 * @param array $field      Field data and settings.
-	 * @param array $field_atts Field attributes.
+	 * @param array $field_atts Field attributes (deprecated).
 	 * @param array $form_data  Form data and settings.
 	 */
 	abstract public function field_display( $field, $field_atts, $form_data );
+
+	/**
+	 * Display the field using classic rendering.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @param array $field     Field data and settings.
+	 * @param array $form_data Form data and settings.
+	 */
+	protected function field_display_classic( $field, $form_data ) {
+
+		// The classic view is the same good old `field_display`.
+		$this->field_display( $field, [], $form_data );
+	}
+
+	/**
+	 * Display the field using modern rendering.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @param array $field     Field data and settings.
+	 * @param array $form_data Form data and settings.
+	 */
+	protected function field_display_modern( $field, $form_data ) {
+
+		// Maybe call the method from the field's modern frontend class.
+		if ( ! empty( $this->frontend_obj ) && method_exists( $this->frontend_obj, 'field_display_modern' ) ) {
+			$this->frontend_obj->field_display_modern( $field, $form_data );
+
+			return;
+		}
+
+		// By default, the modern view is the same as the classic.
+		// In this way, we will implement modern only for the fields,
+		// where it is needed.
+		$this->field_display_classic( $field, $form_data );
+	}
+
 
 	/**
 	 * Display field input errors if present.
@@ -2688,6 +2796,30 @@ abstract class WPForms_Field {
 	}
 
 	/**
+	 * Exclude empty dynamic choices from the entry preview.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param bool  $hide      Whether to hide the field.
+	 * @param array $field     Field data.
+	 * @param array $form_data Form data.
+	 *
+	 * @return bool
+	 */
+	public function exclude_empty_dynamic_choices( $hide, $field, $form_data ) {
+
+		if ( empty( $field['dynamic'] ) ) {
+			return $hide;
+		}
+
+		$field_id   = $field['id'];
+		$fields     = $form_data['fields'];
+		$form_field = $fields[ $field_id ];
+
+		return $this->is_dynamic_choices_empty( $form_field, $form_data );
+	}
+
+	/**
 	 * Enqueue Choicesjs script and config.
 	 *
 	 * @param array $forms Forms on the current page.
@@ -2757,5 +2889,163 @@ abstract class WPForms_Field {
 
 		// We should auto hide/remove search, if less than 8 choices.
 		return $choices_count >= (int) apply_filters( 'wpforms_field_choicesjs_search_enabled_items_min', 8 );
+	}
+
+	/**
+	 * Get instance of the class connected to the current field,
+	 * and located in the `src/Forms/[Pro/]Fields/FieldType/Class.php` file.
+	 *
+	 * @since 1.8.1
+	 *
+	 * @param string $class Class name, for example `Frontend`.
+	 *
+	 * @return object
+	 */
+	private function get_object( $class ) {
+
+		$property = strtolower( $class ) . '_obj';
+
+		if ( ! is_null( $this->$property ) ) {
+			return $this->$property;
+		}
+
+		$pro        = $this->group === 'standard' ? '' : 'Pro\\';
+		$class_dir  = implode( '', array_map( 'ucfirst', explode( '-', $this->type ) ) );
+		$fqdn_class = 'WPForms\\' . $pro . 'Forms\Fields\\' . $class_dir . '\\' . $class;
+
+		$this->$property = class_exists( $fqdn_class ) ? new $fqdn_class( $this ) : false;
+
+		return $this->$property;
+	}
+
+	/**
+	 * Add allowed HTML tags for field labels.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param array $strings Array of strings.
+	 *
+	 * @return array
+	 */
+	public function add_allowed_label_html_tags( $strings ) {
+
+		// Default allowed tags.
+		$allowed_tags = [
+			'br',
+			'strong',
+			'b',
+			'em',
+			'i',
+			'a',
+		];
+
+		/**
+		 * Filter the allowed HTML tags for field labels.
+		 *
+		 * @since 1.8.2
+		 *
+		 * @param array $allowed_tags Allowed HTML tags.
+		 */
+		$strings['allowed_label_html_tags'] = (array) apply_filters( 'wpforms_field_label_allowed_html_tags', $allowed_tags );
+
+		return $strings;
+	}
+
+	/**
+	 * Whether a field has dynamic choices.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param array $field Field settings.
+	 *
+	 * @return bool
+	 */
+	protected function is_dynamic_choices( $field ) {
+
+		return ! empty( $field['dynamic_choices'] );
+	}
+
+	/**
+	 * Whether a field has dynamic choices and they are empty.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param array $field     Field settings.
+	 * @param array $form_data Form data and settings.
+	 *
+	 * @return bool
+	 */
+	protected function is_dynamic_choices_empty( $field, $form_data ) {
+
+		if ( ! $this->is_dynamic_choices( $field ) ) {
+			return false;
+		}
+
+		$form_id = absint( $form_data['id'] );
+		$dynamic = wpforms_get_field_dynamic_choices( $field, $form_id, $form_data );
+
+		return empty( $dynamic );
+	}
+
+	/**
+	 * Get empty dynamic choices message.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param array $field Field data and settings.
+	 *
+	 * @return string
+	 */
+	protected function get_empty_dynamic_choices_message( $field ) {
+
+		$dynamic = ! empty( $field['dynamic_choices'] ) ? $field['dynamic_choices'] : false;
+
+		if ( ! $dynamic ) {
+			return '';
+		}
+
+		if ( empty( $field[ 'dynamic_' . $dynamic ] ) ) {
+			return '';
+		}
+
+		$source = esc_html__( 'Dynamic choices', 'wpforms-lite' );
+		$type   = esc_html__( 'items', 'wpforms-lite' );
+
+		$source_object = null;
+
+		if ( $dynamic === 'post_type' ) {
+			$type          = esc_html__( 'posts', 'wpforms-lite' );
+			$source_object = get_post_type_object( $field[ 'dynamic_' . $dynamic ] );
+		}
+
+		if ( $dynamic === 'taxonomy' ) {
+			$type          = esc_html__( 'terms', 'wpforms-lite' );
+			$source_object = get_taxonomy( $field[ 'dynamic_' . $dynamic ] );
+		}
+
+		if ( $source_object !== null ) {
+			$source = $source_object->labels->name;
+		}
+
+		return sprintf( /* translators: %1$s - data source name (e.g. Categories, Posts), %2$s - data source type (e.g. post type, taxonomy). */
+			esc_html__( 'This field will not be displayed in your form since there are no %2$s belonging to %1$s.', 'wpforms-lite' ),
+			esc_html( $source ),
+			esc_html( $type )
+		);
+	}
+
+	/**
+	 * Display empty dynamic choices message.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @param array $field Field data and settings.
+	 */
+	protected function display_empty_dynamic_choices_message( $field ) {
+
+		printf(
+			'<div class="wpforms-alert wpforms-alert-warning">%s</div>',
+			esc_html( $this->get_empty_dynamic_choices_message( $field ) )
+		);
 	}
 }

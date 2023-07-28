@@ -10,6 +10,7 @@ use MailPoet\ConflictException;
 use MailPoet\Doctrine\Repository;
 use MailPoet\Entities\DynamicSegmentFilterData;
 use MailPoet\Entities\DynamicSegmentFilterEntity;
+use MailPoet\Entities\NewsletterSegmentEntity;
 use MailPoet\Entities\SegmentEntity;
 use MailPoet\Entities\SubscriberSegmentEntity;
 use MailPoet\Form\FormsRepository;
@@ -49,6 +50,19 @@ class SegmentsRepository extends Repository {
 
   protected function getEntityClassName() {
     return SegmentEntity::class;
+  }
+
+  /**
+   * @param string[] $types
+   * @return SegmentEntity[]
+   */
+  public function findByTypeNotIn(array $types): array {
+    return $this->doctrineRepository->createQueryBuilder('s')
+      ->select('s')
+      ->where('s.type NOT IN (:types)')
+      ->setParameter('types', $types)
+      ->getQuery()
+      ->getResult();
   }
 
   public function getWPUsersSegment(): ?SegmentEntity {
@@ -140,6 +154,7 @@ class SegmentsRepository extends Repository {
     bool $displayInManageSubscriptionPage = true
   ): SegmentEntity {
     $displayInManageSubPage = $type === SegmentEntity::TYPE_DEFAULT ? $displayInManageSubscriptionPage : false;
+
     if ($id) {
       $segment = $this->findOneById($id);
       if (!$segment instanceof SegmentEntity) {
@@ -227,6 +242,12 @@ class SegmentsRepository extends Repository {
         ->andWhere('s.type = :type')
         ->setParameter('ids', $ids, Connection::PARAM_INT_ARRAY)
         ->setParameter('type', $type, \PDO::PARAM_STR)
+        ->getQuery()->execute();
+
+      $queryBuilder = $entityManager->createQueryBuilder();
+      $queryBuilder->delete(NewsletterSegmentEntity::class, 'ns')
+        ->where('ns.segment IN (:ids)')
+        ->setParameter('ids', $ids, Connection::PARAM_INT_ARRAY)
         ->getQuery()->execute();
     });
     return $count;

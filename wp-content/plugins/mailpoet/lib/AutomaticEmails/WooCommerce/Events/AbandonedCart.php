@@ -18,6 +18,11 @@ class AbandonedCart {
   const SLUG = 'woocommerce_abandoned_shopping_cart';
   const TASK_META_NAME = 'cart_product_ids';
 
+
+  const HOOK_SCHEDULE = 'mailpoet_abandoned_cart_schedule';
+  const HOOK_RE_SCHEDULE = 'mailpoet_abandoned_cart_reschedule';
+  const HOOK_CANCEL = 'mailpoet_abandoned_cart_cancel';
+
   /** @var WPFunctions */
   private $wp;
 
@@ -65,8 +70,8 @@ class AbandonedCart {
       ],
       'timeDelayValues' => [
         'minutes' => [
-          'text' => _x('30 minutes', 'This is a trigger setting. It means that we will send an automatic email to a visitor 30 minutes after this visitor had left the website.', 'mailpoet'),
-          'displayAfterTimeNumberField' => false,
+          'text' => __('minute(s)', 'mailpoet'),
+          'displayAfterTimeNumberField' => true,
         ],
         'hours' => [
           'text' => __('hour(s)', 'mailpoet'),
@@ -144,7 +149,9 @@ class AbandonedCart {
 
   public function handleCartChange() {
     $cart = $this->wooCommerceHelper->WC()->cart;
-    if (current_action() !== 'woocommerce_cart_emptied' && $cart && !$cart->is_empty()) {
+
+    $currentAction = current_action();
+    if ($currentAction !== 'woocommerce_cart_emptied' && $cart && !$cart->is_empty()) {
       $this->scheduleAbandonedCartEmail($this->getCartProductIds($cart));
     } else {
       $this->cancelAbandonedCartEmail();
@@ -168,11 +175,13 @@ class AbandonedCart {
       return;
     }
 
+    $this->wp->doAction(self::HOOK_SCHEDULE, $subscriber, $cartProductIds);
     $meta = [self::TASK_META_NAME => $cartProductIds];
     $this->scheduler->scheduleOrRescheduleAutomaticEmail(WooCommerceEmail::SLUG, self::SLUG, $subscriber, $meta);
   }
 
   private function rescheduleAbandonedCartEmail(SubscriberEntity $subscriber) {
+    $this->wp->doAction(self::HOOK_RE_SCHEDULE, $subscriber);
     $this->scheduler->rescheduleAutomaticEmail(WooCommerceEmail::SLUG, self::SLUG, $subscriber);
   }
 
@@ -181,6 +190,7 @@ class AbandonedCart {
     if (!$subscriber) {
       return;
     }
+    $this->wp->doAction(self::HOOK_CANCEL, $subscriber);
     $this->scheduler->cancelAutomaticEmail(WooCommerceEmail::SLUG, self::SLUG, $subscriber);
   }
 

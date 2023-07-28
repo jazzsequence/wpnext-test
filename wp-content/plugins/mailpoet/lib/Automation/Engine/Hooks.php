@@ -32,18 +32,18 @@ class Hooks {
 
   public const AUTOMATION_RUN_LOG_AFTER_STEP_RUN = 'mailpoet/automation/step/after_run';
 
-  public const AUTOMATION_TEMPLATES = 'mailpoet/automation/templates';
+  public const AUTOMATION_RUN_CREATE = 'mailpoet/automation/run/create';
 
   public function doAutomationBeforeSave(Automation $automation): void {
     $this->wordPress->doAction(self::AUTOMATION_BEFORE_SAVE, $automation);
   }
 
-  public function doAutomationStepBeforeSave(Step $step): void {
-    $this->wordPress->doAction(self::AUTOMATION_STEP_BEFORE_SAVE, $step);
+  public function doAutomationStepBeforeSave(Step $step, Automation $automation): void {
+    $this->wordPress->doAction(self::AUTOMATION_STEP_BEFORE_SAVE, $step, $automation);
   }
 
-  public function doAutomationStepByKeyBeforeSave(Step $step): void {
-    $this->wordPress->doAction(self::AUTOMATION_STEP_BEFORE_SAVE . '/key=' . $step->getKey(), $step);
+  public function doAutomationStepByKeyBeforeSave(Step $step, Automation $automation): void {
+    $this->wordPress->doAction(self::AUTOMATION_STEP_BEFORE_SAVE . '/key=' . $step->getKey(), $step, $automation);
   }
 
   public function doAutomationStepAfterRun(AutomationRunLog $automationRunLog): void {

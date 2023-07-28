@@ -149,7 +149,6 @@ abstract class WPSEO_Option {
 		$this->add_default_filters(); // Return defaults if option not set.
 		$this->add_option_filters(); // Merge with defaults if option *is* set.
 
-
 		if ( $this->multisite_only !== true ) {
 			/**
 			 * The option validation routines remove the default filters to prevent failing
@@ -181,7 +180,6 @@ abstract class WPSEO_Option {
 			add_action( 'update_site_option_' . $this->option_name, [ 'WPSEO_Options', 'clear_cache' ], 1, 0 );
 		}
 
-
 		/*
 		 * Make sure the option will always get validated, independently of register_setting()
 		 * (only available on back-end).
@@ -193,7 +191,6 @@ abstract class WPSEO_Option {
 
 		/* Register our option for the admin pages */
 		add_action( 'admin_init', [ $this, 'register_setting' ] );
-
 
 		/* Set option group name if not given */
 		if ( ! isset( $this->group_name ) || $this->group_name === '' ) {
@@ -378,7 +375,7 @@ abstract class WPSEO_Option {
 	public function validate_url( $key, $dirty, $old, &$clean ) {
 		if ( isset( $dirty[ $key ] ) && $dirty[ $key ] !== '' ) {
 
-			$submitted_url = trim( htmlspecialchars( $dirty[ $key ], ENT_COMPAT, get_bloginfo( 'charset' ), true ) );
+			$submitted_url = trim( $dirty[ $key ] );
 			$validated_url = filter_var( WPSEO_Utils::sanitize_url( $submitted_url ), FILTER_VALIDATE_URL );
 
 			if ( $validated_url === false ) {
@@ -392,7 +389,7 @@ abstract class WPSEO_Option {
 						sprintf(
 							/* translators: %s expands to an invalid URL. */
 							__( '%s does not seem to be a valid url. Please correct.', 'wordpress-seo' ),
-							'<strong>' . esc_html( $submitted_url ) . '</strong>'
+							'<strong>' . esc_url( $submitted_url ) . '</strong>'
 						),
 						// Message type.
 						'error'

@@ -137,7 +137,7 @@ class WP_Beta_Tester {
 	 * @param  mixed  $result $result from filter.
 	 * @param  array  $args   Array of filter args.
 	 * @param  string $url    URL from filter.
-	 * @return /stdClass Output from wp_remote_get().
+	 * @return stdClass Output from wp_remote_get().
 	 */
 	public function filter_http_request( $result, $args, $url ) {
 		if ( $result || isset( $args['_beta_tester'] ) ) {
@@ -163,6 +163,7 @@ class WP_Beta_Tester {
 
 		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
 		// $url = add_query_arg( 'pretend_releases', array( '5.6-beta2' ), $url );
+		// pretend_releases[]=5.6-beta2 query arg example.
 
 		return wp_remote_get( $url, $args );
 	}
@@ -179,13 +180,19 @@ class WP_Beta_Tester {
 		$wp_version    = get_bloginfo( 'version' );
 		$channel       = self::$core_update_channel_constant ? self::$core_update_channel_constant : self::$options['channel'];
 
+		if ( false !== strpos( $channel, 'development' )
+			&& version_compare( $wp_version, $next_versions['point'], '<' )
+		) {
+			return $url;
+		}
+
 		switch ( $channel ) {
 			case 'branch-development':
 				$url = add_query_arg( 'version', $next_versions['point'] . '-alpha', $url );
 				break;
 			case 'development':
 				if ( false !== strpos( $wp_version, $next_versions['point'] )
-				|| version_compare( $wp_version, $next_versions['point'], '<' )
+					|| version_compare( $wp_version, $next_versions['point'], '<' )
 				) {
 					$url = add_query_arg( 'version', $next_versions['release'] . '-alpha', $url );
 				}
@@ -296,6 +303,28 @@ class WP_Beta_Tester {
 		$next_version = explode( '-', $wp_version );
 		$milestone    = array_shift( $next_version );
 
+		$bug            = '<span class="dashicons dashicons-buddicons-replies"></span>';
+		$preferred      = $this->get_preferred_from_update_core();
+		$update_version = ( new WPBT_Core( $this, self::$options ) )->get_next_version( $preferred->version );
+		$report_url     = '';
+
+		if ( ! apply_filters( 'wpbt_hide_report_a_bug', false ) ) {
+			$report_url = add_query_arg(
+				array(
+					'page' => 'wp-beta-tester',
+					'tab'  => 'wp_beta_tester_bug_report',
+				),
+				is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
+			);
+		} elseif ( is_plugin_active( 'report-a-bug/report-a-bug.php' ) ) {
+			$report_url = add_query_arg(
+				array(
+					'page' => 'report-a-bug',
+				),
+				is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
+			);
+		}
+
 		/* translators: %s: WordPress version */
 		printf( wp_kses_post( '<p>' . __( 'Please help test <strong>WordPress %s</strong>.', 'wordpress-beta-tester' ) . '</p>' ), esc_attr( $milestone ) );
 
@@ -305,16 +334,33 @@ class WP_Beta_Tester {
 		/* translators: %1: link to closed and reopened trac tickets on current milestone */
 		printf( wp_kses_post( '<p>' . __( 'Here are the <a href="%s" target="_blank">commits for the milestone</a>.', 'wordpress-beta-tester' ) . '</p>' ), esc_url( "https://core.trac.wordpress.org/query?status=closed&status=reopened&milestone=$milestone" ) );
 
-		/* translators: %s: link to trac search */
-		printf( wp_kses_post( '<p>' . __( '&#128027; Did you find a bug? Search for a <a href="%s" target="_blank">trac ticket</a> to see if it has already been reported.', 'wordpress-beta-tester' ) . '</p>' ), 'https://core.trac.wordpress.org/search' );
+		if ( empty( $report_url ) ) {
+			$report_url = add_query_arg(
+				array(
+					'page' => 'wp-beta-tester',
+					'tab'  => 'wp_beta_tester_extras',
+				),
+				is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
+			);
+		}
+		/* translators: %s: link to Report a Bug tab */
+		printf( wp_kses_post( '<p>' . "&nbsp;$bug&nbsp;" . __( 'Found a bug? <a href="%s">Report it</a>!', 'wordpress-beta-tester' ) . '</p>' ), esc_url( $report_url ) );
 
 		$capability = is_multisite() ? 'manage_network_options' : 'manage_options';
 		if ( current_user_can( $capability ) ) {
 			$parent             = is_multisite() ? 'settings.php' : 'tools.php';
 			$wpbt_settings_page = add_query_arg( 'page', 'wp-beta-tester', network_admin_url( $parent ) );
 
-			/* translators: %s: WP Beta Tester settings URL */
-			printf( wp_kses_post( '<p>' . __( 'Head over to your <a href="%s">WordPress Beta Tester Settings</a> and make sure the <strong>beta/RC</strong> stream is selected.', 'wordpress-beta-tester' ) . '</p>' ), esc_url( $wpbt_settings_page ) );
+			printf(
+				/* translators: %s: update version */
+				wp_kses_post( '<p>' . __( 'Currently your site is set to update to <strong>%s</strong>.', 'wordpress-beta-tester' ) . '</p>' ),
+				esc_html( $update_version )
+			);
+
+			if ( 'beta' !== self::$options['stream-option'] ) {
+				/* translators: %s: WP Beta Tester settings URL */
+				printf( wp_kses_post( '<p>' . __( 'Head over to your <a href="%s">WordPress Beta Tester Settings</a> and make sure the <strong>beta/RC</strong> stream is selected.', 'wordpress-beta-tester' ) . '</p>' ), esc_url( $wpbt_settings_page ) );
+			}
 		}
 	}
 
@@ -331,8 +377,10 @@ class WP_Beta_Tester {
 			'show_summary' => 0,
 			'items'        => 10,
 		);
+		$urls     = array( "https://wordpress.org/news/tag/development/feed/?s=$milestone", "https://make.wordpress.org/core/tag/development/feed/?s=$milestone" );
+
 		ob_start();
-		wp_widget_rss_output( 'https://wordpress.org/news/category/development/feed/', $rss_args );
+		wp_widget_rss_output( array( 'url' => $urls ), $rss_args );
 		$feed = ob_get_contents();
 		ob_end_clean();
 
@@ -365,7 +413,7 @@ class WP_Beta_Tester {
 			$dev_note_link = sprintf(
 			/* translators: %1$s Link to dev notes, %2$s: Link title */
 				'<a href="%1$s">%2$s</a>',
-				"https://make.wordpress.org/core/tag/$milestone_dash+dev-notes/",
+				"https://make.wordpress.org/core/tag/dev-notes+$milestone_dash/",
 				/* translators: %s: Milestone version */
 				sprintf( __( 'WordPress %s Dev Notes', 'wordpress-beta-tester' ), $milestone )
 			);
@@ -375,7 +423,7 @@ class WP_Beta_Tester {
 			$field_guide_link = sprintf(
 			/* translators: %1$s Link to field guide, %2$s: Link title */
 				'<a href="%1$s">%2$s</a>',
-				"https://make.wordpress.org/core/tag/$milestone_dash+field-guide/",
+				"https://make.wordpress.org/core/wordpress-$milestone_dash-field-guide/",
 				/* translators: %s: Milestone version */
 				sprintf( __( 'WordPress %s Field Guide', 'wordpress-beta-tester' ), $milestone )
 			);

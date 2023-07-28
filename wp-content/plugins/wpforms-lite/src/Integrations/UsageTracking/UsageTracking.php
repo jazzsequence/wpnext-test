@@ -130,6 +130,8 @@ class UsageTracking implements IntegrationInterface {
 	 * @since 1.6.1
 	 *
 	 * @return array
+	 * @noinspection PhpUndefinedConstantInspection
+	 * @noinspection PhpUndefinedFunctionInspection
 	 */
 	public function get_data() {
 
@@ -152,9 +154,12 @@ class UsageTracking implements IntegrationInterface {
 			'server_version'                 => isset( $_SERVER['SERVER_SOFTWARE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) : '',
 			'is_ssl'                         => is_ssl(),
 			'is_multisite'                   => is_multisite(),
+			'is_network_activated'           => $this->is_active_for_network(),
 			'is_wpcom'                       => defined( 'IS_WPCOM' ) && IS_WPCOM,
 			'is_wpcom_vip'                   => ( defined( 'WPCOM_IS_VIP_ENV' ) && WPCOM_IS_VIP_ENV ) || ( function_exists( 'wpcom_is_vip' ) && wpcom_is_vip() ),
 			'is_wp_cache'                    => defined( 'WP_CACHE' ) && WP_CACHE,
+			'is_wp_rest_api_enabled'         => $this->is_rest_api_enabled(),
+			'is_user_logged_in'              => is_user_logged_in(),
 			'sites_count'                    => $this->get_sites_total(),
 			'active_plugins'                 => $this->get_active_plugins(),
 			'theme_name'                     => $theme_data->name,
@@ -554,7 +559,7 @@ class UsageTracking implements IntegrationInterface {
 					global $wpdb;
 					$count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
 						"SELECT SUM(meta_value)
-						FROM {$wpdb->postmeta}
+						FROM $wpdb->postmeta
 						WHERE meta_key = 'wpforms_entries_count';"
 					);
 			}
@@ -614,6 +619,33 @@ class UsageTracking implements IntegrationInterface {
 		$field_types    = array_column( $fields_flatten, 'type' );
 
 		return array_count_values( $field_types );
+	}
+
+	/**
+	 * Determines whether the plugin is active for the entire network.
+	 *
+	 * This is a copy of the WP core is_plugin_active_for_network() function.
+	 *
+	 * @since 1.8.2
+	 *
+	 * @return bool
+	 */
+	private function is_active_for_network() {
+
+		// Bail early, in case we are not in multisite.
+		if ( ! is_multisite() ) {
+			return false;
+		}
+
+		// Get all active plugins.
+		$plugins = get_site_option( 'active_sitewide_plugins' );
+
+		// Bail early, in case the plugin is active for the entire network.
+		if ( isset( $plugins[ plugin_basename( WPFORMS_PLUGIN_FILE ) ] ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -677,5 +709,54 @@ class UsageTracking implements IntegrationInterface {
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * Test if the REST API is accessible.
+	 *
+	 * The REST API might be inaccessible due to various security measures,
+	 * or it might be completely disabled by a plugin.
+	 *
+	 * @since 1.8.2.2
+	 *
+	 * @return bool
+	 */
+	private function is_rest_api_enabled() {
+
+		// phpcs:disable WPForms.PHP.ValidateHooks.InvalidHookName
+		/** This filter is documented in wp-includes/class-wp-http-streams.php */
+		$sslverify = apply_filters( 'https_local_ssl_verify', false );
+
+		$url      = rest_url( 'wp/v2/types/post' );
+		$response = wp_remote_get(
+			$url,
+			[
+				'timeout'   => 10,
+				'cookies'   => is_user_logged_in() ? wp_unslash( $_COOKIE ) : [],
+				'sslverify' => $sslverify,
+				'headers'   => [
+					'Cache-Control' => 'no-cache',
+					'X-WP-Nonce'    => wp_create_nonce( 'wp_rest' ),
+				],
+			]
+		);
+
+		// When testing the REST API, an error was encountered, leave early.
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+
+		// When testing the REST API, an unexpected result was returned, leave early.
+		if ( wp_remote_retrieve_response_code( $response ) !== 200 ) {
+			return false;
+		}
+
+		// The REST API did not behave correctly, leave early.
+		if ( ! wpforms_is_json( wp_remote_retrieve_body( $response ) ) ) {
+			return false;
+		}
+
+		// We are all set. Confirm the connection.
+		return true;
 	}
 }

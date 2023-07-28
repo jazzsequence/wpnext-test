@@ -6,11 +6,12 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\AdminPages\PageRenderer;
-use MailPoet\Config\Menu;
 use MailPoet\Entities\SubscriberEntity;
+use MailPoet\Form\AssetsController;
 use MailPoet\Form\Util\CustomFonts;
 use MailPoet\Newsletter\Renderer\Blocks\Coupon;
 use MailPoet\Newsletter\Shortcodes\ShortcodesHelper;
+use MailPoet\NewsletterTemplates\BrandStyles;
 use MailPoet\Settings\SettingsController;
 use MailPoet\Settings\UserFlagsController;
 use MailPoet\Subscribers\ConfirmationEmailCustomizer;
@@ -57,6 +58,12 @@ class NewsletterEditor {
   /** @var CustomFonts  */
   private $customFonts;
 
+  /*** @var AssetsController */
+  private $assetsController;
+
+  /** @var BrandStyles */
+  private $brandStyles;
+
   public function __construct(
     PageRenderer $pageRenderer,
     SettingsController $settings,
@@ -68,7 +75,9 @@ class NewsletterEditor {
     SubscribersRepository $subscribersRepository,
     TransactionalEmailHooks $wooEmailHooks,
     WPPostListLoader $wpPostListLoader,
-    CustomFonts $customFonts
+    CustomFonts $customFonts,
+    AssetsController $assetsController,
+    BrandStyles $brandStyles
   ) {
     $this->pageRenderer = $pageRenderer;
     $this->settings = $settings;
@@ -81,9 +90,12 @@ class NewsletterEditor {
     $this->wooEmailHooks = $wooEmailHooks;
     $this->wpPostListLoader = $wpPostListLoader;
     $this->customFonts = $customFonts;
+    $this->assetsController = $assetsController;
+    $this->brandStyles = $brandStyles;
   }
 
   public function render() {
+    $this->assetsController->setupNewsletterEditorDependencies();
     $newsletterId = (isset($_GET['id']) ? (int)$_GET['id'] : 0);
     $woocommerceTemplateId = (int)$this->settings->get(TransactionalEmails::SETTING_EMAIL_ID, null);
     if (
@@ -142,17 +154,18 @@ class NewsletterEditor {
       'settings' => $this->settings->getAll(),
       'editor_tutorial_seen' => $this->userFlags->get('editor_tutorial_seen'),
       'current_wp_user' => array_merge($subscriberData, $this->wp->wpGetCurrentUser()->to_array()),
-      'sub_menu' => Menu::EMAILS_PAGE_SLUG,
       'woocommerce' => $woocommerceData,
       'is_wc_transactional_email' => $newsletterId === $woocommerceTemplateId,
       'is_confirmation_email_template' => $newsletterId === $confirmationEmailTemplateId,
       'is_confirmation_email_customizer_enabled' => (bool)$this->settings->get('signup_confirmation.use_mailpoet_editor', false),
       'product_categories' => $this->wpPostListLoader->getWooCommerceCategories(),
       'products' => $this->wpPostListLoader->getProducts(),
+      'brand_styles' => [
+        'available' => $this->brandStyles->isAvailable(),
+      ],
     ];
     $this->wp->wpEnqueueMedia();
     $this->wp->wpEnqueueStyle('editor', $this->wp->includesUrl('css/editor.css'));
-
     $this->pageRenderer->displayPage('newsletter/editor.html', $data);
   }
 

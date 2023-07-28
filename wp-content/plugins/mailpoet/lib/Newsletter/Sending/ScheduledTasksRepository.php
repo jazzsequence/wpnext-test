@@ -67,6 +67,18 @@ class ScheduledTasksRepository extends Repository {
     return ($scheduledTask instanceof ScheduledTaskEntity) ? $scheduledTask : null;
   }
 
+  public function findOneBySendingQueue(SendingQueueEntity $sendingQueue): ?ScheduledTaskEntity {
+    $scheduledTask = $this->doctrineRepository->createQueryBuilder('st')
+      ->join(SendingQueueEntity::class, 'sq', Join::WITH, 'st = sq.task')
+      ->andWhere('sq.id = :sendingQueue')
+      ->setMaxResults(1)
+      ->setParameter('sendingQueue', $sendingQueue)
+      ->getQuery()
+      ->getOneOrNullResult();
+    // for phpstan because it detects mixed instead of entity
+    return ($scheduledTask instanceof ScheduledTaskEntity) ? $scheduledTask : null;
+  }
+
   /**
    * @param NewsletterEntity $newsletter
    * @return ScheduledTaskEntity[]
@@ -267,6 +279,28 @@ class ScheduledTasksRepository extends Repository {
       ->getResult();
   }
 
+  /**
+   * @param string $type
+   * @param SubscriberEntity $subscriber
+   * @return ScheduledTaskEntity[]
+   * @throws \MailPoetVendor\Doctrine\ORM\NonUniqueResultException
+   */
+  public function findByTypeAndSubscriber(string $type, SubscriberEntity $subscriber): array {
+    $query = $this->doctrineRepository->createQueryBuilder('st')
+      ->select('st')
+      ->join(ScheduledTaskSubscriberEntity::class, 'sts', Join::WITH, 'st = sts.task')
+      ->where('st.type = :type')
+      ->andWhere('sts.subscriber = :subscriber')
+      ->andWhere('st.deletedAt IS NULL')
+      ->andWhere('st.status = :status')
+      ->setParameter('type', $type)
+      ->setParameter('subscriber', $subscriber->getId())
+      ->setParameter('status', ScheduledTaskEntity::STATUS_SCHEDULED)
+      ->getQuery();
+    $tasks = $query->getResult();
+    return $tasks;
+  }
+
   public function touchAllByIds(array $ids): void {
     $now = CarbonImmutable::createFromTimestamp((int)$this->wp->currentTime('timestamp'));
     $this->entityManager->createQueryBuilder()
@@ -298,6 +332,12 @@ class ScheduledTasksRepository extends Repository {
       ->setParameter('type', SendingQueue::TASK_TYPE)
       ->getQuery()
       ->getResult();
+  }
+
+  public function invalidateTask(ScheduledTaskEntity $task): void {
+    $task->setStatus( ScheduledTaskEntity::STATUS_INVALID);
+    $this->persist($task);
+    $this->flush();
   }
 
   protected function findByTypeAndStatus($type, $status, $limit = null, $future = false) {

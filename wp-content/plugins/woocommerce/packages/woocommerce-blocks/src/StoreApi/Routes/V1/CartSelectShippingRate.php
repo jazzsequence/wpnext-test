@@ -37,7 +37,7 @@ class CartSelectShippingRate extends AbstractCartRoute {
 				'args'                => [
 					'package_id' => array(
 						'description' => __( 'The ID of the package being shipped. Leave blank to apply to all packages.', 'woocommerce' ),
-						'type'        => [ 'integer', 'string' ],
+						'type'        => [ 'integer', 'string', 'null' ],
 						'required'    => false,
 					),
 					'rate_id'    => [
@@ -89,6 +89,8 @@ class CartSelectShippingRate extends AbstractCartRoute {
 		 *
 		 * This allows extensions to perform addition actions after a shipping method has been chosen, but before the
 		 * cart totals are recalculated.
+		 *
+		 * @since 9.0.0
 		 *
 		 * @param string|null $package_id The sanitized ID of the package being updated. Null if all packages are being updated.
 		 * @param string $rate_id The sanitized chosen rate ID for the package.

@@ -28,6 +28,7 @@ class SubscriberEntity {
   public const HOOK_SUBSCRIBER_CREATED = 'mailpoet_subscriber_created';
   public const HOOK_SUBSCRIBER_DELETED = 'mailpoet_subscriber_deleted';
   public const HOOK_SUBSCRIBER_UPDATED = 'mailpoet_subscriber_updated';
+  public const HOOK_SUBSCRIBER_STATUS_CHANGED = 'mailpoet_subscriber_status_changed';
   public const HOOK_MULTIPLE_SUBSCRIBERS_CREATED = 'mailpoet_multiple_subscribers_created';
   public const HOOK_MULTIPLE_SUBSCRIBERS_DELETED = 'mailpoet_multiple_subscribers_deleted';
   public const HOOK_MULTIPLE_SUBSCRIBERS_UPDATED = 'mailpoet_multiple_subscribers_updated';
@@ -156,6 +157,36 @@ class SubscriberEntity {
    * @var DateTimeInterface|null
    */
   private $lastEngagementAt;
+
+  /**
+   * @ORM\Column(type="datetimetz", nullable=true)
+   * @var DateTimeInterface|null
+   */
+  private $lastSendingAt;
+
+  /**
+   * @ORM\Column(type="datetimetz", nullable=true)
+   * @var DateTimeInterface|null
+   */
+  private $lastOpenAt;
+
+  /**
+   * @ORM\Column(type="datetimetz", nullable=true)
+   * @var DateTimeInterface|null
+   */
+  private $lastClickAt;
+
+  /**
+   * @ORM\Column(type="datetimetz", nullable=true)
+   * @var DateTimeInterface|null
+   */
+  private $lastPurchaseAt;
+
+  /**
+   * @ORM\Column(type="datetimetz", nullable=true)
+   * @var DateTimeInterface|null
+   */
+  private $lastPageViewAt;
 
   /**
    * @ORM\Column(type="datetimetz", nullable=true)
@@ -459,6 +490,7 @@ class SubscriberEntity {
     return $subscriberSegments;
   }
 
+  /** * @return Collection<int, SegmentEntity> */
   public function getSegments() {
     return $this->subscriberSegments->map(function (SubscriberSegmentEntity $subscriberSegment) {
       return $subscriberSegment->getSegment();
@@ -472,6 +504,13 @@ class SubscriberEntity {
    */
   public function getSubscriberCustomFields() {
     return $this->subscriberCustomFields;
+  }
+
+  public function getSubscriberCustomField(CustomFieldEntity $customField): ?SubscriberCustomFieldEntity {
+    $criteria = Criteria::create()
+      ->where(Criteria::expr()->eq('customField', $customField))
+      ->setMaxResults(1);
+    return $this->getSubscriberCustomFields()->matching($criteria)->first() ?: null;
   }
 
   /**
@@ -522,6 +561,46 @@ class SubscriberEntity {
 
   public function setLastEngagementAt(DateTimeInterface $lastEngagementAt): void {
     $this->lastEngagementAt = $lastEngagementAt;
+  }
+
+  public function getLastSendingAt(): ?DateTimeInterface {
+    return $this->lastSendingAt;
+  }
+
+  public function setLastSendingAt(?DateTimeInterface $dateTime): void {
+    $this->lastSendingAt = $dateTime;
+  }
+
+  public function getLastOpenAt(): ?DateTimeInterface {
+    return $this->lastOpenAt;
+  }
+
+  public function setLastOpenAt(?DateTimeInterface $dateTime): void {
+    $this->lastOpenAt = $dateTime;
+  }
+
+  public function getLastClickAt(): ?DateTimeInterface {
+    return $this->lastClickAt;
+  }
+
+  public function setLastClickAt(?DateTimeInterface $dateTime): void {
+    $this->lastClickAt = $dateTime;
+  }
+
+  public function getLastPurchaseAt(): ?DateTimeInterface {
+    return $this->lastPurchaseAt;
+  }
+
+  public function setLastPurchaseAt(?DateTimeInterface $dateTime): void {
+    $this->lastPurchaseAt = $dateTime;
+  }
+
+  public function getLastPageViewAt(): ?DateTimeInterface {
+    return $this->lastPageViewAt;
+  }
+
+  public function setLastPageViewAt(?DateTimeInterface $dateTime): void {
+    $this->lastPageViewAt = $dateTime;
   }
 
   public function setWoocommerceSyncedAt(?DateTimeInterface $woocommerceSyncedAt): void {

@@ -1,3 +1,11 @@
 .wc-block-components-product-price {
-	margin-bottom: $gap-small;
+	display: block;
+
+	.wc-block-all-products & {
+		margin-bottom: $gap-small;
+	}
+
+	ins {
+		text-decoration: none;
+	}
 }

@@ -11,6 +11,7 @@ use MailPoet\AutomaticEmails\AutomaticEmails;
 use MailPoet\Automation\Engine\Engine;
 use MailPoet\Automation\Engine\Hooks as AutomationHooks;
 use MailPoet\Automation\Integrations\MailPoet\MailPoetIntegration;
+use MailPoet\Automation\Integrations\WooCommerce\WooCommerceIntegration;
 use MailPoet\Cron\CronTrigger;
 use MailPoet\Cron\DaemonActionSchedulerRunner;
 use MailPoet\InvalidStateException;
@@ -111,6 +112,9 @@ class Initializer {
   /** @var MailPoetIntegration */
   private $automationMailPoetIntegration;
 
+  /** @var WooCommerceIntegration */
+  private $woocommerceIntegration;
+
   /** @var PersonalDataExporters */
   private $personalDataExporters;
 
@@ -151,6 +155,7 @@ class Initializer {
     AssetsLoader $assetsLoader,
     Engine $automationEngine,
     MailPoetIntegration $automationMailPoetIntegration,
+    WooCommerceIntegration $woocommerceIntegration,
     PersonalDataExporters $personalDataExporters,
     DaemonActionSchedulerRunner $actionSchedulerRunner,
     Url $urlHelper
@@ -181,6 +186,7 @@ class Initializer {
     $this->assetsLoader = $assetsLoader;
     $this->automationEngine = $automationEngine;
     $this->automationMailPoetIntegration = $automationMailPoetIntegration;
+    $this->woocommerceIntegration = $woocommerceIntegration;
     $this->personalDataExporters = $personalDataExporters;
     $this->actionSchedulerRunner = $actionSchedulerRunner;
     $this->urlHelper = $urlHelper;
@@ -261,6 +267,10 @@ class Initializer {
 
     WPFunctions::get()->addAction(AutomationHooks::INITIALIZE, [
       $this->automationMailPoetIntegration,
+      'register',
+    ]);
+    WPFunctions::get()->addAction(AutomationHooks::INITIALIZE, [
+      $this->woocommerceIntegration,
       'register',
     ]);
 
@@ -353,10 +363,10 @@ class Initializer {
     $activatedByWpAdmin = !empty(strpos($currentUrl, 'plugins.php')) && isset($_GET['activate']) && (bool)$_GET['activate'];
     if (!$activatedByWpAdmin) return; // not activated by wp. Do not redirect e.g WooCommerce NUX
 
-    $this->changelog->redirectToLandingPage();
-
-    // done with afterPluginActivation actions
+    // done with afterPluginActivation actions. Delete before redirect
     $this->wpFunctions->deleteOption(self::PLUGIN_ACTIVATED);
+
+    $this->changelog->redirectToLandingPage();
   }
 
   public function maybeDbUpdate() {

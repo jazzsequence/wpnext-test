@@ -1,5 +1,70 @@
 [unreleased]
 
+#### 3.5.2 / 2023-07-12
+* fix dev-notes URL
+
+#### 3.5.1 / 2023-07-06
+* add setting in `Extra Settings` to hide `Report a Bug`
+* add filter `wpbt_hide_report_a_bug`
+* update if `Report a Bug` plugin active
+* link to settings if `Report a Bug` is hidden
+* update for latest WP API responses, thanks @dd32
+
+#### 3.5.0 / 2023-06-30
+* update dashboard widget for MarComm publishing of posts
+* update to correctly identify Opera browser in `Report a Bug`
+* update API query when channel set to beta or RC and version is non-current
+* fix `WP_Beta_Tester::switch_update_offer()` to correctly display 'Update' or 'Re-install' buttons on update-core.php
+* remove unused item from **Extra Settings** tab
+
+#### 3.4.1 / 2023-05-26
+* **Report a Bug** only for logged in users
+
+#### 3.4.0 / 2023-05-21
+* update to point release if set for development beta/rc and new point release occurs
+
+#### 3.3.8 / 2023-05-18
+* update composer.json
+* update GitHub Actions
+* update to correctly return 'upgrade' or 'latest' offer when set to 'beta' or 'rc' stream
+
+#### 3.3.7 / 2023-03-28
+* better fix for spacing of bug report copy
+* `Report a Bug`: update database data for SQLite
+
+#### 3.3.6 / 2023-02-25
+* fix spacing of bug report copy
+
+#### 3.3.5 / 2023-02-22
+* updated dashboard widget with some better dynamic information
+* `Report a Bug`: introduce search button
+* updated strings
+* `Report a Bug`: Truncate the value of mysqli::$client_info
+
+#### 3.3.4 / 2023-03-20
+* PHP 5.6 and `EOD`, why we can't have nice looking code in the editor
+
+#### 3.3.3 / 2023-03-20
+* add an icon 🐞
+* improved environment data and display
+* improve clipboard text for insertion
+* lots of other stuff for Colin to do
+
+#### 3.3.2 / 2023-03-17 🇮🇪☘️
+* more fixes for 'Report a Bug'
+* updated/added strings
+* some developery stuff
+
+#### 3.3.1 / 2023-03-17 ☘️
+* update readme
+* sort listed plugins in 'Report a Bug'
+* add mu-plugins in 'Report a Bug'
+* fix for multisite
+* initiate plugin in `plugins_loaded`
+
+#### 3.3.0 / 2023-03-16
+* added `Report a Bug` feature, thanks @costdev, @ironprogrammer
+
 #### 3.2.9 / 2023-02-27
 * mitigate some issues/possible issues with PHP 8.1/8.2
 

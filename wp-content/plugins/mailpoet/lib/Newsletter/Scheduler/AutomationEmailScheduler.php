@@ -31,11 +31,11 @@ class AutomationEmailScheduler {
     $this->wp = $wp;
   }
 
-  public function createSendingTask(NewsletterEntity $email, SubscriberEntity $subscriber): ScheduledTaskEntity {
-    if ($email->getType() !== NewsletterEntity::TYPE_AUTOMATION) {
+  public function createSendingTask(NewsletterEntity $email, SubscriberEntity $subscriber, array $meta): ScheduledTaskEntity {
+    if (!in_array($email->getType(), [NewsletterEntity::TYPE_AUTOMATION, NewsletterEntity::TYPE_AUTOMATION_TRANSACTIONAL], true)) {
       throw InvalidStateException::create()->withMessage(
         // translators: %s is the type which was given.
-        sprintf(__("Email with type 'automation' expected, '%s' given.", 'mailpoet'), $email->getType())
+        sprintf(__("Email with type 'automation' or 'automation_transactional' expected, '%s' given.", 'mailpoet'), $email->getType())
       );
     }
 
@@ -44,6 +44,7 @@ class AutomationEmailScheduler {
     $task->setStatus(ScheduledTaskEntity::STATUS_SCHEDULED);
     $task->setScheduledAt(Carbon::createFromTimestamp($this->wp->currentTime('timestamp')));
     $task->setPriority(ScheduledTaskEntity::PRIORITY_MEDIUM);
+    $task->setMeta($meta);
     $this->entityManager->persist($task);
 
     $taskSubscriber = new ScheduledTaskSubscriberEntity($task, $subscriber);
@@ -51,6 +52,7 @@ class AutomationEmailScheduler {
 
     $queue = new SendingQueueEntity();
     $queue->setTask($task);
+    $queue->setMeta($meta);
     $queue->setNewsletter($email);
     $queue->setCountToProcess(1);
     $queue->setCountTotal(1);

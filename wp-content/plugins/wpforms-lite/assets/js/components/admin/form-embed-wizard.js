@@ -92,6 +92,8 @@ var WPFormsFormEmbedWizard = window.WPFormsFormEmbedWizard || ( function( docume
 			}
 
 			app.initSelectPagesChoicesJS();
+
+			$( document ).on( 'wpformsWizardPopupClose', app.enableLetsGoButton );
 		},
 
 		/**
@@ -173,7 +175,8 @@ var WPFormsFormEmbedWizard = window.WPFormsFormEmbedWizard || ( function( docume
 				.on( 'click', '.shortcode-toggle', app.shortcodeToggle )
 				.on( 'click', '.initialstate-toggle', app.initialStateToggle )
 				.on( 'click', '.wpforms-admin-popup-close', app.closePopup )
-				.on( 'click', '#wpforms-admin-form-embed-wizard-shortcode-copy', app.copyShortcodeToClipboard );
+				.on( 'click', '#wpforms-admin-form-embed-wizard-shortcode-copy', app.copyShortcodeToClipboard )
+				.on( 'keyup', '#wpforms-admin-form-embed-wizard-new-page-title', app.enableLetsGoButton );
 		},
 
 		/**
@@ -298,6 +301,18 @@ var WPFormsFormEmbedWizard = window.WPFormsFormEmbedWizard || ( function( docume
 			app.tutorialControl( 'Stop' );
 			el.$shortcodeInput.val( '[wpforms id="' + vars.formId + '" title="false"]' );
 			el.$shortcode.toggle();
+		},
+
+		/**
+		 * Enable the "Let's Go!" button.
+		 *
+		 * @since 1.8.2.3
+		 */
+		enableLetsGoButton: function() {
+
+			const $btn = el.$sectionGo.find( 'button' );
+
+			$btn.prop( 'disabled', false );
 		},
 
 		/**
@@ -516,8 +531,8 @@ var WPFormsFormEmbedWizard = window.WPFormsFormEmbedWizard || ( function( docume
 			}
 
 			var $dot = $( '<span class="wpforms-admin-form-embed-wizard-dot">&nbsp;</span>' ),
-				isGutengerg = app.isGutenberg(),
-				anchor = isGutengerg ? '.block-editor .edit-post-header' : '#wp-content-editor-tools .wpforms-insert-form-button';
+				isGutenberg = app.isGutenberg(),
+				anchor = isGutenberg ? '.block-editor .edit-post-header' : '#wp-content-editor-tools .wpforms-insert-form-button';
 
 			var tooltipsterArgs = {
 				content          : $( '#wpforms-admin-form-embed-wizard-tooltip-content' ),
@@ -526,7 +541,7 @@ var WPFormsFormEmbedWizard = window.WPFormsFormEmbedWizard || ( function( docume
 				animationDuration: 0,
 				delay            : 0,
 				theme            : [ 'tooltipster-default', 'wpforms-admin-form-embed-wizard' ],
-				side             : isGutengerg ? 'bottom' : 'right',
+				side             : isGutenberg ? 'bottom' : 'right',
 				distance         : 3,
 				functionReady    : function( instance, helper ) {
 
@@ -540,7 +555,23 @@ var WPFormsFormEmbedWizard = window.WPFormsFormEmbedWizard || ( function( docume
 				},
 			};
 
-			$dot.insertAfter( anchor ).tooltipster( tooltipsterArgs ).tooltipster( 'open' );
+			if ( ! isGutenberg ) {
+				$dot.insertAfter( anchor ).tooltipster( tooltipsterArgs ).tooltipster( 'open' );
+			}
+
+			// The Gutenberg header can be loaded after the window load event.
+			// We have to wait until the Gutenberg heading is added to the DOM.
+			const closeAnchorListener = wp.data.subscribe( function() {
+
+				if ( ! $( anchor ).length ) {
+					return;
+				}
+
+				// Close the listener to avoid an infinite loop.
+				closeAnchorListener();
+
+				$dot.insertAfter( anchor ).tooltipster( tooltipsterArgs ).tooltipster( 'open' );
+			} );
 		},
 
 		/**

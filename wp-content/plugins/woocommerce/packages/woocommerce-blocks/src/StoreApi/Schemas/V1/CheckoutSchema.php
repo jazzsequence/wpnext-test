@@ -39,6 +39,13 @@ class CheckoutSchema extends AbstractSchema {
 	protected $shipping_address_schema;
 
 	/**
+	 * Image Attachment schema instance.
+	 *
+	 * @var ImageAttachmentSchema
+	 */
+	protected $image_attachment_schema;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ExtendSchema     $extend Rest Extending instance.
@@ -47,7 +54,7 @@ class CheckoutSchema extends AbstractSchema {
 	public function __construct( ExtendSchema $extend, SchemaController $controller ) {
 		parent::__construct( $extend, $controller );
 		$this->billing_address_schema  = $this->controller->get( BillingAddressSchema::IDENTIFIER );
-		$this->shipping_address_schema = $this->controller->get( BillingAddressSchema::IDENTIFIER );
+		$this->shipping_address_schema = $this->controller->get( ShippingAddressSchema::IDENTIFIER );
 		$this->image_attachment_schema = $this->controller->get( ImageAttachmentSchema::IDENTIFIER );
 	}
 
@@ -112,7 +119,9 @@ class CheckoutSchema extends AbstractSchema {
 				'description' => __( 'The ID of the payment method being used to process the payment.', 'woocommerce' ),
 				'type'        => 'string',
 				'context'     => [ 'view', 'edit' ],
-				'enum'        => wc()->payment_gateways->get_payment_gateway_ids(),
+				// Validation may be based on cart contents which is not available here; this returns all enabled
+				// gateways. Further validation occurs during the request.
+				'enum'        => array_values( WC()->payment_gateways->get_payment_gateway_ids() ),
 			],
 			'create_account'    => [
 				'description' => __( 'Whether to create a new user account as part of order processing.', 'woocommerce' ),

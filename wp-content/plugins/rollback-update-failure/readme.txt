@@ -6,8 +6,8 @@ Tags: feature plugin, update, failure
 License: MIT
 Requires PHP: 5.6
 Requires at least: 6.2
-Tested up to: 6.2
-Stable Tag: 5.0.2
+Tested up to: 6.3
+Stable Tag: 5.3.3
 
 This is a feature plugin for testing automatic rollback of a plugin or theme update failure.
 
@@ -15,34 +15,24 @@ This is a feature plugin for testing automatic rollback of a plugin or theme upd
 
 This is a feature plugin for testing automatic rollback of a plugin or theme update failure.
 
-It is based on the [PR](https://github.com/WordPress/wordpress-develop/pull/1492) for [#51857](https://core.trac.wordpress.org/ticket/51857). Current [PR #2225](https://github.com/WordPress/wordpress-develop/pull/2225/) and [PR #3958](https://github.com/WordPress/wordpress-develop/pull/3958) for inclusion to core.
+It is based on [#51857](https://core.trac.wordpress.org/ticket/51857), [PR #2225](https://github.com/WordPress/wordpress-develop/pull/2225/) and [PR #3958](https://github.com/WordPress/wordpress-develop/pull/3958) for inclusion to core.
 
-* When updating a plugin/theme, the old version of the plugin/theme gets moved to a `wp-content/temp-backup/plugins/PLUGINNAME` or `wp-content/temp-backup/themes/THEMENAME` folder. The reason we chose to **move** instead of **zip**, is because zipping/unzipping are very resources-intensive processes, and would increase the risk on low-end, shared hosts. Moving on the other hand is performed instantly and won't be a bottleneck.
-* If the update fails, then the "backup" we kept in the `temp-backup` folder gets restored to its original location
+* When updating a plugin/theme, the old version of the plugin/theme gets moved to a `wp-content/upgrade-temp-backup/plugins/PLUGINNAME` or `wp-content/upgrade-temp-backup/themes/THEMENAME` folder. The reason we chose to **move** instead of **zip**, is because zipping/unzipping are very resources-intensive processes, and would increase the risk on low-end, shared hosts. Moving on the other hand is performed instantly and won't be a bottleneck.
+* If the update fails, then the "backup" we kept in the `upgrade-temp-backup` folder gets restored to its original location
 * If the update succeeds, then the "backup" is deleted
 * 2 new checks were added in the site-health screen:
   * Check to make sure that the rollbacks folder is writable.
   * Check there is enough disk-space available to safely perform updates.
 
-To avoid confusion: The "temp-backup" folder will NOT be used to "roll-back" a plugin to a previous version after an update. This folder will simply contain a **transient backup** of the previous version of a plugins/themes getting updated, and as soon as the update process finishes, the folder will be empty.
+To avoid confusion: The "upgrade-temp-backup" folder will NOT be used to "rollback" a plugin to a previous version after an update. This folder will simply contain a **transient backup** of the previous version of a plugins/themes getting updated, and as soon as the update process finishes, the folder will be empty.
 
 ## Testing
 
-* If the `wp-content/temp-backup` folder is not writable, there should be an error in the site-health screen.
+* If the `wp-content/upgrade-temp-backup` folder is not writable, there should be an error in the site-health screen.
 * If the server has less than 20MB available, there should be an error in the site-health screen that updates may fail.
 * If the server has less than 100MB, it should be a notice that disk space is running low.
-* When updating a plugin, you should be able to see the old plugin in the `wp-content/temp-backup/plugins/PLUGINNAME` folder. The same should apply for themes. Since updates sometimes run fast and we may miss the folder creation during testing, you can simulate an update failure to demonstrate. This will return early and skip deleting the backup on update-success.
-* When a plugin update fails, the previous version should be restored. To test that, change the version of a plugin to a previous number, run the update, and on fail the previous version (the one where you changed the version number) should still be installed on the site. To simulate an update failure and confirm this works, you can use the snippet below:
-
-<pre><code>
-    add_filter( 'upgrader_install_package_result', function() {
-        return new WP_Error( 'simulated_error', 'Simulated Error' );
-    });
-</code></pre>
-
-Alternatively you can install the [Rollback Update Testing](https://gist.github.com/afragen/80b68a6c8826ab37025b05d4519bb4bf) plugin, activating it as needed.
-
-Or use the built-in simulate failure feature. Just activate/deactivate from the `plugins.php` page action link.
+* When updating a plugin, you should be able to see the old plugin in the `wp-content/upgrade-temp-backup/plugins/PLUGINNAME` folder. The same should apply for themes. Since updates sometimes run fast and we may miss the folder creation during testing, you can simulate an update failure to demonstrate. This will return early and skip deleting the backup on update-success.
+* When a plugin update fails, the previous version should be restored. To test that, change the version of a plugin to a previous number, run the update, and on fail the previous version (the one where you changed the version number) should still be installed on the site. To simulate an update failure and confirm this works, use the built-in **Simulate failure** link. Just activate/deactivate from the `plugins.php` page action link. This link will only be present if the plugin has an update pending.
 
 ## Reporting
 
@@ -53,6 +43,53 @@ Logo from a meme generator. [Original artwork](http://hyperboleandahalf.blogspot
 ## Changelog
 
 Please see the Github repository: [CHANGELOG.md](https://github.com/afragen/rollback-update-failure/blob/main/CHANGELOG.md).
+
+#### 5.3.3 / 2023-07-16
+* remove Reflection in `WP_Rollback_Auto_Update::cron_rollback()` as methods are public
+
+#### 5.3.2 / 2023-07-10
+* cleanup
+
+#### 5.3.1 / 2023-06-21
+* cleanup email sending
+
+#### 5.3.0 / 2023-05-21
+* improved language for email
+* ensure `find_core_auto_update()` is available
+* put guard for Rollback part 2 not being committed back
+* add theme update data to failure email
+
+#### 5.2.0 / 2023-05-09
+* restart theme auto-updates
+* remove guard for Rollback not being committed
+* set Plugin_Upgrader via hook
+* cleanup Plugin_Upgrader hook from fatal update
+
+#### 5.1.1 / 2023-05-05
+* update readme
+
+#### 5.1.0 / 2023-05-03
+* align docblocks with PR
+* update for Rollback committed to core
+* change `temp-backup` to `upgrade-temp-backup`
+
+#### 5.0.6 / 2023-04-25
+* update code logic for creating `temp-backup` dir, thanks @azaozz
+
+#### 5.0.5 / 2023-04-14
+* hotfix for no autoload
+
+#### 5.0.4 / 2023-04-14
+* update tests
+* update GitHub Actions
+* ignore vendor directory
+
+#### 5.0.3 / 2023-03-22
+* update @since
+* update using constant to check version for when `move_dir()` was committed
+* update using constant to check version for when `Rollback` was committed
+* update for PR compatibility
+* developery stuff
 
 #### 5.0.2 / 2023-02-05
 * make variables static to retain value during auto-updater run

@@ -28,14 +28,14 @@ $extensions = [
 		'buyUrl'        => WPSEO_Shortlinker::get( 'https://yoa.st/zt' ),
 		'infoUrl'       => WPSEO_Shortlinker::get( 'https://yoa.st/zs' ),
 		'title'         => 'Local SEO',
-		'display_title' => __( 'Reach customers that live near your business', 'wordpress-seo' ),
+		'display_title' => __( 'Maximize your visibility for local searches', 'wordpress-seo' ),
 		'desc'          => __( 'Rank better locally and in Google Maps, without breaking a sweat!', 'wordpress-seo' ),
 		'image'         => plugins_url( 'images/local_plugin_assistant.svg?v=' . WPSEO_VERSION, WPSEO_FILE ),
 		'benefits'      => [
-			__( 'Rank higher with your physical business, office, or store', 'wordpress-seo' ),
-			__( 'Make an optimized contact page in minutes', 'wordpress-seo' ),
-			__( 'Allow customers to pick up their orders locally', 'wordpress-seo' ),
-			__( 'Easily define your organization type to search engines', 'wordpress-seo' ),
+			__( 'Attract more local customers to your website and physical store', 'wordpress-seo' ),
+			__( 'Automatically get technical SEO best practices for local businesses', 'wordpress-seo' ),
+			__( 'Easily add maps, address finders, and opening hours to your content', 'wordpress-seo' ),
+			__( 'Optimize your business for multiple locations', 'wordpress-seo' ),
 		],
 	],
 	WPSEO_Addon_Manager::VIDEO_SLUG => [
@@ -185,7 +185,7 @@ $new_tab_message         = sprintf(
 
 				<?php
 				if ( $has_valid_premium_subscription ) :
-					$number_plugins_active++;
+					++$number_plugins_active;
 					?>
 					<div class="yoast-button yoast-button--noarrow yoast-button--extension yoast-button--extension-activated"><?php esc_html_e( 'Activated', 'wordpress-seo' ); ?></div>
 					<a target="_blank" href="<?php WPSEO_Shortlinker::show( 'https://yoa.st/13k' ); ?>" class="yoast-link--license">
@@ -295,7 +295,7 @@ $new_tab_message         = sprintf(
 
 							<?php
 							if ( $addon_manager->has_valid_subscription( $slug ) ) :
-								$number_plugins_active++;
+								++$number_plugins_active;
 								?>
 								<div class="yoast-button yoast-button--noarrow yoast-button--extension yoast-button--extension-activated"><?php esc_html_e( 'Activated', 'wordpress-seo' ); ?></div>
 								<a target="_blank" href="<?php WPSEO_Shortlinker::show( 'https://yoa.st/13k' ); ?>" class="yoast-link--license">

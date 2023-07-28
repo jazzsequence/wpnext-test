@@ -9,8 +9,8 @@ use MailPoet\Automation\Engine\Data\Field;
 use MailPoet\Automation\Engine\Data\Subject as SubjectData;
 use MailPoet\Automation\Engine\Integration\Payload;
 use MailPoet\Automation\Engine\Integration\Subject;
+use MailPoet\Automation\Integrations\MailPoet\Fields\SubscriberFieldsFactory;
 use MailPoet\Automation\Integrations\MailPoet\Payloads\SubscriberPayload;
-use MailPoet\Entities\SubscriberEntity;
 use MailPoet\NotFoundException;
 use MailPoet\Subscribers\SubscribersRepository;
 use MailPoet\Validator\Builder;
@@ -22,12 +22,17 @@ use MailPoet\Validator\Schema\ObjectSchema;
 class SubscriberSubject implements Subject {
   const KEY = 'mailpoet:subscriber';
 
+  /** @var SubscriberFieldsFactory */
+  private $subscriberFieldsFactory;
+
   /** @var SubscribersRepository */
   private $subscribersRepository;
 
   public function __construct(
+    SubscriberFieldsFactory $subscriberFieldsFactory,
     SubscribersRepository $subscribersRepository
   ) {
+    $this->subscriberFieldsFactory = $subscriberFieldsFactory;
     $this->subscribersRepository = $subscribersRepository;
   }
 
@@ -57,37 +62,6 @@ class SubscriberSubject implements Subject {
 
   /** @return Field[] */
   public function getFields(): array {
-    return [
-      new Field(
-        'mailpoet:subscriber:id',
-        Field::TYPE_INTEGER,
-        __('Subscriber ID', 'mailpoet'),
-        function (SubscriberPayload $payload) {
-          return $payload->getId();
-        }
-      ),
-      new Field(
-        'mailpoet:subscriber:email',
-        Field::TYPE_STRING,
-        __('Subscriber email', 'mailpoet'),
-        function (SubscriberPayload $payload) {
-          return $payload->getEmail();
-        }
-      ),
-      new Field(
-        'mailpoet:subscriber:status',
-        Field::TYPE_ENUM,
-        __('Subscriber status', 'mailpoet'),
-        function (SubscriberPayload $payload) {
-          return $payload->getStatus();
-        },
-        [
-          SubscriberEntity::STATUS_SUBSCRIBED => __('Subscribed', 'mailpoet'),
-          SubscriberEntity::STATUS_UNCONFIRMED => __('Unconfirmed', 'mailpoet'),
-          SubscriberEntity::STATUS_UNSUBSCRIBED => __('Unsubscribed', 'mailpoet'),
-          SubscriberEntity::STATUS_BOUNCED => __('Bounced', 'mailpoet'),
-        ]
-      ),
-    ];
+    return $this->subscriberFieldsFactory->getFields();
   }
 }

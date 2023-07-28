@@ -28,10 +28,6 @@
     'noItemsFound': __('No subscribers were found.'),
     'bouncedSubscribersHelp': __("Email addresses that are invalid or don't exist anymore are called \"bounced addresses\". It's a good practice not to send emails to bounced addresses to keep a good reputation with spam filters. Send your emails with MailPoet and we'll automatically ensure to keep a list of bounced addresses without any setup."),
     'bouncedSubscribersPremiumButtonText': __('Get premium version!'),
-    'selectAllLabel': __('All subscribers on this page are selected.'),
-    'selectedAllLabel': __('All %d subscribers are selected.'),
-    'selectAllLink': __('Select all subscribers on all pages'),
-    'clearSelection': __('Clear selection'),
     'permanentlyDeleted': __('%d subscribers were permanently deleted.'),
     'selectBulkAction': __('Select bulk action'),
     'bulkActions': __('Bulk Actions'),
@@ -79,6 +75,7 @@
     'unsubscribedNewsletter': __('Unsubscribed at %1$d, from newsletter [link].'),
     'unsubscribedManage': __('Unsubscribed at %1$d, using the “Manage my Subscription” page.'),
     'unsubscribedAdmin': __('Unsubscribed at %1$d, by admin "%2$d".'),
+    'unsubscribedMpApi': __('Unsubscribed at %1$d, via the MP API.'),
     'unsubscribedUnknown': __('Unsubscribed at %1$d, for an unknown reason.'),
 
     'subscriber': __('Subscriber'),
@@ -156,10 +153,13 @@
     'tooltipAverage': __('Read 20% or fewer of sent emails'),
     'engagementScoreDescription': __('Average percent of emails subscribers read in the last year'),
 
-    'subscribersCountWereCalculatedWithMinutesAgo': __('Lists and Segments subscribers counts were calculated <abbr>{$mins} minutes ago</abbr>'),
     'recalculateNow': __('Recalculate now'),
     'tags': __('Tags'),
     'addNewTag': __('Add new tag'),
+    'tagAddedToMultipleSubscribers': __('Tag <strong>%1$s</strong> was added to %2$d subscribers.'),
+    'tagRemovedFromMultipleSubscribers': __('Tag <strong>%1$s</strong> was removed from %2$d subscribers.'),
+    'addTag': __('Add tag...'),
+    'removeTag': __('Remove tag...'),
   }) %>
 <% endblock %>
 

@@ -75,16 +75,22 @@ class Functions {
     return add_image_size($name, $width, $height, $crop);
   }
 
-  public function addMenuPage($pageTitle, $menuTitle, $capability, $menuSlug, callable $function = null, $iconUrl = '', $position = null) {
-    if (is_null($function)) {
-      $function = function () {
-      };
-    }
-    return add_menu_page($pageTitle, $menuTitle, $capability, $menuSlug, $function, $iconUrl, $position);
+  /**
+   * @param string $pageTitle
+   * @param string $menuTitle
+   * @param string $capability
+   * @param string $menuSlug
+   * @param callable|'' $callback
+   * @param string $iconUrl
+   * @param int $position
+   * @return string
+   */
+  public function addMenuPage($pageTitle, $menuTitle, $capability, $menuSlug, $callback = '', $iconUrl = '', $position = null) {
+    return add_menu_page($pageTitle, $menuTitle, $capability, $menuSlug, $callback, $iconUrl, $position);
   }
 
   public function addQueryArg($key, $value = false, $url = false) {
-    return add_query_arg($key, $value, $url);
+    return add_query_arg($key, $value, $url); // nosemgrep: tools.wpscan-semgrep-rules.audit.php.wp.security.xss.query-arg
   }
 
   public function addScreenOption($option, $args = []) {
@@ -95,8 +101,18 @@ class Functions {
     return add_shortcode($tag, $callback);
   }
 
-  public function addSubmenuPage($parentSlug, $pageTitle, $menuTitle, $capability, $menuSlug, callable $function) {
-    return add_submenu_page($parentSlug, $pageTitle, $menuTitle, $capability, $menuSlug, $function);
+  /**
+   * @param string $parentSlug
+   * @param string $pageTitle
+   * @param string $menuTitle
+   * @param string $capability
+   * @param string $menuSlug
+   * @param callable|'' $callback
+   * @param int $position
+   * @return string|false
+   */
+  public function addSubmenuPage($parentSlug, $pageTitle, $menuTitle, $capability, $menuSlug, $callback = '', $position = null) {
+    return add_submenu_page($parentSlug, $pageTitle, $menuTitle, $capability, $menuSlug, $callback, $position);
   }
 
   public function adminUrl($path = '', $scheme = 'admin') {
@@ -402,7 +418,7 @@ class Functions {
 
     /**
    * @param string $tag
-   * @param callable $functionToRemove
+   * @param callable|string|array $functionToRemove
    * @param int $priority
    */
   public function removeAction($tag, $functionToRemove, $priority = 10) {
@@ -602,10 +618,6 @@ class Functions {
     return wp_safe_redirect($location, $status);
   }
 
-  public function wpSetCurrentUser($id, $name = '') {
-    return wp_set_current_user($id, $name);
-  }
-
   public function wpStaticizeEmoji($text) {
     return wp_staticize_emoji($text);
   }
@@ -632,6 +644,10 @@ class Functions {
 
   public function isMainQuery(): bool {
     return is_main_query();
+  }
+
+  public function isFrontPage(): bool {
+    return is_front_page();
   }
 
   public function getPrivacyPolicyUrl(): string {
@@ -684,6 +700,18 @@ class Functions {
     return is_archive();
   }
 
+  public function isTag($tag = '') {
+    return is_tag($tag);
+  }
+
+  public function isCategory($category = '') {
+    return is_category($category);
+  }
+
+  public function isTax($taxonomy = '', $term = '') {
+    return is_tax($taxonomy, $term);
+  }
+
   /**
    * Determines whether the query is for an existing post type archive page.
    *
@@ -704,6 +732,7 @@ class Functions {
     require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
     require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
     require_once ABSPATH . 'wp-admin/includes/class-wp-ajax-upgrader-skin.php';
+    // nosemgrep: tools.wpscan-semgrep-rules.audit.php.wp.security.arbitrary-plugin-install
     $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
     return $upgrader->install($package, $args);
   }
@@ -869,5 +898,34 @@ class Functions {
 
   public function getPostMeta(int $postId, string $key, bool $single = false) {
     return get_post_meta($postId, $key, $single);
+  }
+
+  public function getFileData(string $file, array $default_headers, string $context = 'plugin'): array {
+    return get_file_data($file, $default_headers, $context);
+  }
+
+  public function getPluginData(string $plugin_file, bool $markup = true, bool $translate = true): array {
+    return get_plugin_data($plugin_file, $markup, $translate);
+  }
+
+  public function wpIsBlockTheme(): bool {
+    // wp_is_block_theme exists only in WP 5.9+
+    if (function_exists('wp_is_block_theme')) {
+      return wp_is_block_theme();
+    }
+
+    return false;
+  }
+
+  public function getShortcodeRegex($tagnames = null): string {
+    return get_shortcode_regex($tagnames);
+  }
+
+  public function isHome() {
+    return is_home();
+  }
+
+  public function getQueriedObjectId() {
+    return get_queried_object_id();
   }
 }

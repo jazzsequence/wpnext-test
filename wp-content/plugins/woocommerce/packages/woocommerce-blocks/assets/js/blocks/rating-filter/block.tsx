@@ -7,12 +7,7 @@ import { Icon, chevronDown } from '@wordpress/icons';
 import Rating, {
 	RatingValues,
 } from '@woocommerce/base-components/product-rating';
-import {
-	usePrevious,
-	useShallowEqual,
-	useBorderProps,
-} from '@woocommerce/base-hooks';
-import { Notice } from 'wordpress-components';
+import { usePrevious, useShallowEqual } from '@woocommerce/base-hooks';
 import {
 	useQueryStateByKey,
 	useQueryStateByContext,
@@ -27,9 +22,9 @@ import FilterSubmitButton from '@woocommerce/base-components/filter-submit-butto
 import FilterResetButton from '@woocommerce/base-components/filter-reset-button';
 import FormTokenField from '@woocommerce/base-components/form-token-field';
 import { addQueryArgs, removeQueryArgs } from '@wordpress/url';
-import { changeUrl } from '@woocommerce/utils';
+import { changeUrl, normalizeQueryParams } from '@woocommerce/utils';
 import classnames from 'classnames';
-import { difference } from 'lodash';
+import type { ReactElement } from 'react';
 
 /**
  * Internal dependencies
@@ -65,17 +60,15 @@ const translations = {
 
 /**
  * Component displaying a rating filter.
- *
- * @param {Object}  props            Incoming props for the component.
- * @param {Object}  props.attributes Incoming block attributes.
- * @param {boolean} props.isEditor   Whether the component is being rendered in the editor.
  */
 const RatingFilterBlock = ( {
 	attributes: blockAttributes,
 	isEditor,
+	noRatingsNotice = null,
 }: {
-	isEditor: boolean;
 	attributes: Attributes;
+	isEditor: boolean;
+	noRatingsNotice?: ReactElement | null;
 } ) => {
 	const setWrapperVisibility = useSetWraperVisibility();
 
@@ -125,8 +118,6 @@ const RatingFilterBlock = ( {
 		More info: https://github.com/woocommerce/woocommerce-blocks/pull/6920#issuecomment-1222402482
 	 */
 	const [ remountKey, setRemountKey ] = useState( generateUniqueId() );
-
-	const borderProps = useBorderProps( blockAttributes );
 	const [ displayNoProductRatingsNotice, setDisplayNoProductRatingsNotice ] =
 		useState( false );
 
@@ -146,7 +137,7 @@ const RatingFilterBlock = ( {
 				QUERY_PARAM_KEY
 			);
 
-			if ( url !== window.location.href ) {
+			if ( url !== normalizeQueryParams( window.location.href ) ) {
 				changeUrl( url );
 			}
 
@@ -157,7 +148,7 @@ const RatingFilterBlock = ( {
 			[ QUERY_PARAM_KEY ]: checkedRatings.join( ',' ),
 		} );
 
-		if ( newUrl === window.location.href ) {
+		if ( newUrl === normalizeQueryParams( window.location.href ) ) {
 			return;
 		}
 
@@ -335,16 +326,7 @@ const RatingFilterBlock = ( {
 
 	return (
 		<>
-			{ displayNoProductRatingsNotice && (
-				<Notice status="warning" isDismissible={ false }>
-					<p>
-						{ __(
-							"Your store doesn't have any products with ratings yet. This filter option will display when a product receives a review.",
-							'woo-gutenberg-products-block'
-						) }
-					</p>
-				</Notice>
-			) }
+			{ displayNoProductRatingsNotice && noRatingsNotice }
 			<div
 				className={ classnames(
 					'wc-block-rating-filter',
@@ -358,12 +340,11 @@ const RatingFilterBlock = ( {
 					<>
 						<FormTokenField
 							key={ remountKey }
-							className={ classnames( borderProps.className, {
+							className={ classnames( {
 								'single-selection': ! multiple,
 								'is-loading': isLoading,
 							} ) }
 							style={ {
-								...borderProps.style,
 								borderStyle: 'none',
 							} }
 							suggestions={ displayedOptions
@@ -392,13 +373,19 @@ const RatingFilterBlock = ( {
 										: token;
 								} );
 
-								const added = difference( tokens, checked );
+								const added = [ tokens, checked ].reduce(
+									( a, b ) =>
+										a.filter( ( c ) => ! b.includes( c ) )
+								);
 
 								if ( added.length === 1 ) {
 									return onClick( added[ 0 ] );
 								}
 
-								const removed = difference( checked, tokens );
+								const removed = [ checked, tokens ].reduce(
+									( a, b ) =>
+										a.filter( ( c ) => ! b.includes( c ) )
+								);
 								if ( removed.length === 1 ) {
 									onClick( removed[ 0 ] );
 								}
@@ -489,11 +476,11 @@ const RatingFilterBlock = ( {
 			</div>
 			{
 				<div className="wc-block-rating-filter__actions">
-					{ checked.length > 0 && ! isLoading && (
+					{ ( checked.length > 0 || isEditor ) && ! isLoading && (
 						<FilterResetButton
 							onClick={ () => {
 								setChecked( [] );
-								setProductRatings( [] );
+								setProductRatingsQuery( [] );
 								onSubmit( [] );
 							} }
 							screenReaderLabel={ __(

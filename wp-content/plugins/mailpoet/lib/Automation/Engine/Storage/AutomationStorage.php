@@ -8,10 +8,14 @@ if (!defined('ABSPATH')) exit;
 use DateTimeImmutable;
 use MailPoet\Automation\Engine\Data\Automation;
 use MailPoet\Automation\Engine\Data\Step;
+use MailPoet\Automation\Engine\Data\Subject;
 use MailPoet\Automation\Engine\Exceptions;
 use MailPoet\Automation\Engine\Integration\Trigger;
 use wpdb;
 
+/**
+ * @phpstan-type VersionDate array{id: int, created_at: \DateTimeImmutable}
+ */
 class AutomationStorage {
   /** @var string */
   private $automationsTable;
@@ -25,6 +29,9 @@ class AutomationStorage {
   /** @var string */
   private $runsTable;
 
+  /** @var string */
+  private $subjectsTable;
+
   /** @var wpdb */
   private $wpdb;
 
@@ -34,6 +41,7 @@ class AutomationStorage {
     $this->versionsTable = $wpdb->prefix . 'mailpoet_automation_versions';
     $this->triggersTable = $wpdb->prefix . 'mailpoet_automation_triggers';
     $this->runsTable = $wpdb->prefix . 'mailpoet_automation_runs';
+    $this->subjectsTable = $wpdb->prefix . 'mailpoet_automation_run_subjects';
     $this->wpdb = $wpdb;
   }
 
@@ -63,11 +71,73 @@ class AutomationStorage {
     $this->insertAutomationTriggers($automation->getId(), $automation);
   }
 
+  /**
+   * @param int $automationId
+   * @return VersionDate[]
+   * @throws \Exception
+   */
+  public function getAutomationVersionDates(int $automationId): array {
+    $versionsTable = esc_sql($this->versionsTable);
+    $query = (string)$this->wpdb->prepare(
+      "
+        SELECT id, created_at
+        FROM $versionsTable
+        WHERE automation_id = %d
+        ORDER BY id DESC
+      ",
+      $automationId
+    );
+    $data = $this->wpdb->get_results($query, ARRAY_A);
+    return is_array($data) ? array_map(
+      function($row): array {
+        return [
+          'id' => absint($row['id']),
+          'created_at' => new \DateTimeImmutable($row['created_at']),
+        ];
+      },
+      $data
+    ) : [];
+  }
+
+  /**
+   * @param int[] $versionIds
+   * @return Automation[]
+   */
+  public function getAutomationWithDifferentVersions(array $versionIds): array {
+    $versionIds = array_map('intval', $versionIds);
+    if (!$versionIds) {
+      return [];
+    }
+    $automationsTable = esc_sql($this->automationsTable);
+    $versionsTable = esc_sql($this->versionsTable);
+    $query = (string)$this->wpdb->prepare(
+      "
+        SELECT a.*, v.id AS version_id, v.steps
+        FROM $automationsTable as a, $versionsTable as v
+        WHERE v.automation_id = a.id AND v.id IN (" . implode(',', array_fill(0, count($versionIds), '%d')) . ")
+        ORDER BY v.id DESC
+      ",
+      ...$versionIds
+    );
+    $data = $this->wpdb->get_results($query, ARRAY_A);
+    return is_array($data) ? array_map(
+      function($row): Automation {
+        return Automation::fromArray((array)$row);
+      },
+      $data
+    ) : [];
+  }
+
   public function getAutomation(int $automationId, int $versionId = null): ?Automation {
     $automationsTable = esc_sql($this->automationsTable);
     $versionsTable = esc_sql($this->versionsTable);
 
-    $query = !$versionId ? (string)$this->wpdb->prepare(
+    if ($versionId) {
+      $automations = $this->getAutomationWithDifferentVersions([$versionId]);
+      return $automations ? $automations[0] : null;
+    }
+
+    $query = (string)$this->wpdb->prepare(
       "
         SELECT a.*, v.id AS version_id, v.steps
         FROM $automationsTable as a, $versionsTable as v
@@ -76,13 +146,6 @@ class AutomationStorage {
         LIMIT 1
       ",
       $automationId
-    ) : (string)$this->wpdb->prepare(
-      "
-        SELECT a.*, v.id AS version_id, v.steps
-        FROM $automationsTable as a, $versionsTable as v
-        WHERE v.automation_id = a.id AND v.id = %d
-      ",
-      $versionId
     );
     $data = $this->wpdb->get_row($query, ARRAY_A);
     return $data ? Automation::fromArray((array)$data) : null;
@@ -92,26 +155,47 @@ class AutomationStorage {
   public function getAutomations(array $status = null): array {
     $automationsTable = esc_sql($this->automationsTable);
     $versionsTable = esc_sql($this->versionsTable);
-    $query = $status ?
-      (string)$this->wpdb->prepare("
-        SELECT a.*, v.id AS version_id, v.steps
-        FROM $automationsTable AS a
-        INNER JOIN $versionsTable as v ON (v.automation_id = a.id)
-        WHERE v.id = (
-          SELECT MAX(id) FROM $versionsTable WHERE automation_id = v.automation_id
-        )
-        AND a.status IN (%s)
-        ORDER BY a.id DESC",
-        implode(",", $status)
-      ) : "
-        SELECT a.*, v.id AS version_id, v.steps
-        FROM $automationsTable AS a
-        INNER JOIN $versionsTable as v ON (v.automation_id = a.id)
-        WHERE v.id = (
-          SELECT MAX(id) FROM $versionsTable WHERE automation_id = v.automation_id
-        )
-        ORDER BY a.id DESC
-      ";
+
+    $statusFilter = $status ? 'AND a.status IN(' . implode(',', array_fill(0, count($status), '%s')) . ')' : '';
+    $sql = "
+      SELECT a.*, v.id AS version_id, v.steps
+      FROM $automationsTable AS a
+      INNER JOIN $versionsTable as v ON (v.automation_id = a.id)
+      WHERE v.id = (
+        SELECT MAX(id) FROM $versionsTable WHERE automation_id = v.automation_id
+      )
+      $statusFilter
+      ORDER BY a.id DESC
+    ";
+
+    $query = $status ? (string)$this->wpdb->prepare($sql, ...$status) : $sql;
+    $data = $this->wpdb->get_results($query, ARRAY_A);
+    return array_map(function (array $automationData) {
+      return Automation::fromArray($automationData);
+    }, (array)$data);
+  }
+
+  /** @return Automation[] */
+  public function getAutomationsBySubject(Subject $subject, array $runStatus = null): array {
+    $automationsTable = esc_sql($this->automationsTable);
+    $versionsTable = esc_sql($this->versionsTable);
+    $runsTable = esc_sql($this->runsTable);
+    $subjectTable = esc_sql($this->subjectsTable);
+
+    $statusFilter = $runStatus ? 'AND r.status IN(' . implode(',', array_fill(0, count($runStatus), '%s')) . ')' : '';
+    $query = (string)$this->wpdb->prepare("
+      SELECT DISTINCT a.*, v.id AS version_id, v.steps
+      FROM $automationsTable a
+      INNER JOIN $versionsTable v ON v.automation_id = a.id
+      INNER JOIN $runsTable r ON r.automation_id = a.id
+      INNER JOIN $subjectTable s ON s.automation_run_id = r.id
+      WHERE v.id = (
+        SELECT MAX(id) FROM $versionsTable WHERE automation_id = v.automation_id
+      )
+      AND s.hash = %s
+      $statusFilter
+      ORDER BY a.id DESC
+    ", ...array_merge([$subject->getHash()], $runStatus ?? []));
 
     $data = $this->wpdb->get_results($query, ARRAY_A);
     return array_map(function (array $automationData) {
@@ -144,6 +228,11 @@ class AutomationStorage {
 
   /** @return Automation[] */
   public function getActiveAutomationsByTrigger(Trigger $trigger): array {
+    return $this->getActiveAutomationsByTriggerKey($trigger->getKey());
+  }
+
+  public function getActiveAutomationsByTriggerKey(string $triggerKey): array {
+
     $automationsTable = esc_sql($this->automationsTable);
     $versionsTable = esc_sql($this->versionsTable);
     $triggersTable = esc_sql($this->triggersTable);
@@ -161,7 +250,7 @@ class AutomationStorage {
         )
       ",
       Automation::STATUS_ACTIVE,
-      $trigger->getKey()
+      $triggerKey
     );
 
     $data = $this->wpdb->get_results($query, ARRAY_A);

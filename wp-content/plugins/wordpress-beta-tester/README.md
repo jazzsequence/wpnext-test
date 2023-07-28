@@ -1,6 +1,6 @@
 # WordPress Beta Tester
 * Tags: beta, advanced, testing
-* Contributors: [westi](https://github.com/westi), [mlteal](https://github.com/mlteal), [afragen](https://github.com/afragen), [pbiron](https://github.com/pbiron)
+* Contributors: [westi](https://github.com/westi), [mlteal](https://github.com/mlteal), [afragen](https://github.com/afragen), [pbiron](https://github.com/pbiron), [costdev](https:/github.com/costdev)
 * License: GPLv2
 * License URI: https://www.opensource.org/licenses/GPL-2.0
 * Requires at least: 3.1
@@ -26,14 +26,12 @@ Please enable auto-updates for this plugin to ensure future changes are properly
 
 There is a setting to **Skip successful autoupdate emails**. It functions to disable sending emails to the admin user for successful autoupdates. Only emails indicating failures of the autoupdate process are sent.
 
-The **Extra Settings** tab may contain choices for testing new features in trunk that require constants to be set. A checked feature will add a constant to the user's `wp-config.php` file in the format as follows:
+There is a setting to **Hide** the **Report a Bug** feature.
 
-`define( 'WP_BETA_TESTER_{$feature}', true );`
+### Report a Bug
 
-Unchecking the feature will remove the constant.
+This feature will hopefully promote the testing and reporting of issues to the appropriate location.
 
-This plugin resets the constants in `wp-config.php` on plugin activation and removes them on plugin deactivation. Use the filter `wp_beta_tester_config_path` to return a non-standard `wp-config.php` file path.
-
-If no settings are present there is no testing to be done that requires this feature.
+There is a **Report a Bug** admin menu item to directly take the user to the **Report a Bug** tab in WordPress Beta Tester. In the **Report a Bug** tab you can copy a bug report template for use in Trac or GitHub.
 
 PRs are welcome on [GitHub](https://github.com/afragen/wordpress-beta-tester).

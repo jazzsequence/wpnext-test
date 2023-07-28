@@ -27,9 +27,11 @@ class NewsletterEntity {
   // types
   const TYPE_AUTOMATIC = 'automatic';
   const TYPE_AUTOMATION = 'automation';
+  const TYPE_AUTOMATION_TRANSACTIONAL = 'automation_transactional';
   const TYPE_STANDARD = 'standard';
   const TYPE_WELCOME = 'welcome';
   const TYPE_NOTIFICATION = 'notification';
+  const TYPE_AUTOMATION_NOTIFICATION = 'automation_notification';
   const TYPE_NOTIFICATION_HISTORY = 'notification_history';
   const TYPE_WC_TRANSACTIONAL_EMAIL = 'wc_transactional';
   const TYPE_RE_ENGAGEMENT = 're_engagement';
@@ -40,6 +42,7 @@ class NewsletterEntity {
   const STATUS_SCHEDULED = 'scheduled';
   const STATUS_SENDING = 'sending';
   const STATUS_SENT = 'sent';
+  const STATUS_CORRUPT = 'corrupt';
 
   /**
    * Newsletters that their body HTML can get re-generated

@@ -1,13 +1,13 @@
 # WordPress Beta Tester
 
 Tags: beta, advanced, testing
-Contributors: westi, mlteal, afragen, pbiron
+Contributors: westi, mlteal, afragen, pbiron, costdev
 License: GPLv2
 License URI: https://www.opensource.org/licenses/GPL-2.0
 Requires at least: 3.1
 Requires PHP: 5.6
-Tested up to: 6.2
-Stable Tag: 3.2.9
+Tested up to: 6.3
+Stable Tag: 3.5.2
 
 Allows you to easily upgrade for testing the next versions of WordPress.
 
@@ -28,19 +28,82 @@ Please enable auto-updates for this plugin to ensure future changes are properly
 
 There is a setting to **Skip successful autoupdate emails**.  It functions to disable sending emails to the admin user for successful autoupdates. Only emails indicating failures of the autoupdate process are sent.
 
-The **Extra Settings** tab may contain choices for testing new features in trunk that require constants to be set. A checked feature will add a constant to the user's `wp-config.php` file in the format as follows:
+There is a setting to **Hide** the **Report a Bug** feature.
 
-`define( 'WP_BETA_TESTER_{$feature}', true );`
+### Report a Bug
 
-Unchecking the feature will remove the constant.
+This feature will hopefully promote the testing and reporting of issues to the appropriate location.
 
-This plugin resets the constants in `wp-config.php` on plugin activation and removes them on plugin deactivation. Use the filter `wp_beta_tester_config_path` to return a non-standard `wp-config.php` file path.
-
-If no settings are present there is no testing to be done that requires this feature.
+There is a **Report a Bug** admin menu item to directly take the user to the **Report a Bug** tab in WordPress Beta Tester. In the **Report a Bug** tab you can copy a bug report template for use in Trac or GitHub.
 
 PRs are welcome on [GitHub](https://github.com/afragen/wordpress-beta-tester).
 
 ## Changelog
+
+#### 3.5.2 / 2023-07-12
+* fix dev-notes URL
+
+#### 3.5.1 / 2023-07-06
+* add setting in `Extra Settings` to hide `Report a Bug`
+* add filter `wpbt_hide_report_a_bug`
+* update if `Report a Bug` plugin active
+* link to settings if `Report a Bug` is hidden
+* update for latest WP API responses, thanks @dd32
+
+#### 3.5.0 / 2023-06-30
+* update dashboard widget for MarComm publishing of posts
+* update to correctly identify Opera browser in `Report a Bug`
+* update API query when channel set to beta or RC and version is non-current
+* fix `WP_Beta_Tester::switch_update_offer()` to correctly display 'Update' or 'Re-install' buttons on update-core.php
+* remove unused item from **Extra Settings** tab
+
+#### 3.4.1 / 2023-05-26
+* **Report a Bug** only for logged in users
+
+#### 3.4.0 / 2023-05-21
+* update to point release if set for development beta/rc and new point release occurs
+
+#### 3.3.8 / 2023-05-18
+* update composer.json
+* update GitHub Actions
+* update to correctly return 'upgrade' or 'latest' offer when set to 'beta' or 'rc' stream
+
+#### 3.3.7 / 2023-03-28
+* better fix for spacing of bug report copy
+* `Report a Bug`: update database data for SQLite
+
+#### 3.3.6 / 2023-02-25
+* fix spacing of bug report copy
+
+#### 3.3.5 / 2023-02-22
+* updated dashboard widget with some better dynamic information
+* `Report a Bug`: introduce search button
+* updated strings
+* `Report a Bug`: Truncate the value of mysqli::$client_info
+
+#### 3.3.4 / 2023-03-20
+* PHP 5.6 and `EOD`, why we can't have nice looking code in the editor
+
+#### 3.3.3 / 2023-03-20
+* add an icon 🐞
+* improved environment data and display
+* improve clipboard text for insertion
+* lots of other stuff for Colin to do
+
+#### 3.3.2 / 2023-03-17 🇮🇪☘️
+* more fixes for 'Report a Bug'
+* updated/added strings
+* some developery stuff
+
+#### 3.3.1 / 2023-03-17 ☘️
+* update readme
+* sort listed plugins in 'Report a Bug'
+* add mu-plugins in 'Report a Bug'
+* fix for multisite
+* initiate plugin in `plugins_loaded`
+
+#### 3.3.0 / 2023-03-16
+* added `Report a Bug` feature, thanks @costdev, @ironprogrammer
 
 #### 3.2.9 / 2023-02-27
 * mitigate some issues/possible issues with PHP 8.1/8.2
@@ -279,3 +342,4 @@ PRs are welcome on [GitHub](https://github.com/afragen/wordpress-beta-tester).
 1. This shows the main administration page for the plugin
 2. This shows the Extra Settings page for the plugin
 3. This shows the Dashboard callout
+4. This shows the 'Report a Bug' tab

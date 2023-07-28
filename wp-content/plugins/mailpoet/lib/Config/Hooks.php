@@ -15,7 +15,10 @@ use MailPoet\Subscription\Comment;
 use MailPoet\Subscription\Form;
 use MailPoet\Subscription\Manage;
 use MailPoet\Subscription\Registration;
+use MailPoet\WooCommerce\Integrations\AutomateWooHooks;
+use MailPoet\WooCommerce\WooSystemInfoController;
 use MailPoet\WP\Functions as WPFunctions;
+use MailPoet\WPCOM\DotcomLicenseProvisioner;
 
 class Hooks {
   /** @var Form */
@@ -57,6 +60,15 @@ class Hooks {
   /** @var SubscriberChangesNotifier */
   private $subscriberChangesNotifier;
 
+  /** @var DotcomLicenseProvisioner */
+  private $dotcomLicenseProvisioner;
+
+  /** @var AutomateWooHooks */
+  private $automateWooHooks;
+
+  /** @var WooSystemInfoController */
+  private $wooSystemInfoController;
+
   public function __construct(
     Form $subscriptionForm,
     Comment $subscriptionComment,
@@ -70,7 +82,10 @@ class Hooks {
     HooksWooCommerce $hooksWooCommerce,
     SubscriberHandler $subscriberHandler,
     SubscriberChangesNotifier $subscriberChangesNotifier,
-    WP $wpSegment
+    WP $wpSegment,
+    DotcomLicenseProvisioner $dotcomLicenseProvisioner,
+    AutomateWooHooks $automateWooHooks,
+    WooSystemInfoController $wooSystemInfoController
   ) {
     $this->subscriptionForm = $subscriptionForm;
     $this->subscriptionComment = $subscriptionComment;
@@ -85,6 +100,9 @@ class Hooks {
     $this->subscriberHandler = $subscriberHandler;
     $this->hooksWooCommerce = $hooksWooCommerce;
     $this->subscriberChangesNotifier = $subscriberChangesNotifier;
+    $this->dotcomLicenseProvisioner = $dotcomLicenseProvisioner;
+    $this->automateWooHooks = $automateWooHooks;
+    $this->wooSystemInfoController = $wooSystemInfoController;
   }
 
   public function init() {
@@ -97,11 +115,14 @@ class Hooks {
     $this->setupListing();
     $this->setupSubscriptionEvents();
     $this->setupWooCommerceSubscriptionEvents();
+    $this->setupAutomateWooSubscriptionEvents();
     $this->setupPostNotifications();
     $this->setupWooCommerceSettings();
+    $this->setupWoocommerceSystemInfo();
     $this->setupFooter();
     $this->setupSettingsLinkInPluginPage();
     $this->setupChangeNotifications();
+    $this->setupLicenseProvisioning();
   }
 
   public function initEarlyHooks() {
@@ -216,6 +237,10 @@ class Hooks {
       'woocommerce_product_loop_end',
       [$this->displayFormInWPContent, 'wooProductListDisplay']
     );
+    $this->wp->addAction(
+      'wp_footer',
+      [$this->displayFormInWPContent, 'maybeRenderFormsInFooter']
+    );
   }
 
   public function setupMailer() {
@@ -256,6 +281,10 @@ class Hooks {
       10,
       1
     );
+  }
+
+  public function setupAutomateWooSubscriptionEvents() {
+    $this->automateWooHooks->setup();
   }
 
   public function setupWPUsers() {
@@ -328,6 +357,30 @@ class Hooks {
     ]);
   }
 
+  public function setupWoocommerceSystemInfo() {
+    $this->wp->addAction(
+      'woocommerce_system_status_report',
+      [
+        $this->wooSystemInfoController,
+        'render',
+      ]
+    );
+    $this->wp->addAction(
+      'woocommerce_rest_prepare_system_status',
+      [
+        $this->wooSystemInfoController,
+        'addFields',
+      ]
+    );
+    $this->wp->addAction(
+      'woocommerce_rest_system_status_schema',
+      [
+        $this->wooSystemInfoController,
+        'addSchema',
+      ]
+    );
+  }
+
   public function setupWooCommerceUsers() {
     // WooCommerce Customers synchronization
     $this->wp->addAction(
@@ -385,6 +438,12 @@ class Hooks {
       'woocommerce_new_order',
       [$this->hooksWooCommerce, 'updateSubscriberEngagement'],
       7
+    );
+    // See class-wc-order.php, which says this about this action
+    // "Fires when the order progresses from a pending payment status to a paid one"
+    $this->wp->addAction(
+      'woocommerce_order_payment_status_changed',
+      [$this->hooksWooCommerce, 'updateSubscriberLastPurchase']
     );
   }
 
@@ -476,6 +535,15 @@ class Hooks {
     $this->wp->addAction(
       'shutdown',
       [$this->subscriberChangesNotifier, 'notify']
+    );
+  }
+
+  public function setupLicenseProvisioning(): void {
+    $this->wp->addFilter(
+      'wpcom_marketplace_webhook_response_mailpoet-business',
+      [$this->dotcomLicenseProvisioner, 'provisionLicense'],
+      10,
+      3
     );
   }
 }

@@ -45,8 +45,11 @@ class Automation {
   /** @var ?DateTimeImmutable */
   private $activatedAt = null;
 
-  /** @var array<string, Step> */
+  /** @var array<string|int, Step> */
   private $steps;
+
+  /** @var array<string, mixed> */
+  private $meta = [];
 
   /** @param array<string, Step> $steps */
   public function __construct(
@@ -118,12 +121,24 @@ class Automation {
     return $this->activatedAt;
   }
 
-  /** @return array<string, Step> */
+  /** @return array<string|int, Step> */
   public function getSteps(): array {
     return $this->steps;
   }
 
-  /** @param array<string, Step> $steps */
+  /**
+   * @return array<string|int, Step>
+   */
+  public function getTriggers(): array {
+    return array_filter(
+      $this->steps,
+      function (Step $step) {
+        return $step->getType() === Step::TYPE_TRIGGER;
+      }
+    );
+  }
+
+  /** @param array<string|int, Step> $steps */
   public function setSteps(array $steps): void {
     $this->steps = $steps;
     $this->setUpdatedAt();
@@ -174,11 +189,44 @@ class Automation {
           return $step->toArray();
         }, $this->steps)
       ),
+      'meta' => Json::encode($this->meta),
     ];
   }
 
   private function setUpdatedAt(): void {
     $this->updatedAt = new DateTimeImmutable();
+  }
+
+  /**
+   * @param string $key
+   * @return mixed|null
+   */
+  public function getMeta(string $key) {
+    return $this->meta[$key] ?? null;
+  }
+
+  public function getAllMetas(): array {
+    return $this->meta;
+  }
+
+  /**
+   * @param string $key
+   * @param mixed $value
+   * @return void
+   */
+  public function setMeta(string $key, $value): void {
+    $this->meta[$key] = $value;
+    $this->setUpdatedAt();
+  }
+
+  public function deleteMeta(string $key): void {
+    unset($this->meta[$key]);
+    $this->setUpdatedAt();
+  }
+
+  public function deleteAllMetas(): void {
+    $this->meta = [];
+    $this->setUpdatedAt();
   }
 
   public static function fromArray(array $data): self {
@@ -196,6 +244,8 @@ class Automation {
     $automation->createdAt = new DateTimeImmutable($data['created_at']);
     $automation->updatedAt = new DateTimeImmutable($data['updated_at']);
     $automation->activatedAt = $data['activated_at'] !== null ? new DateTimeImmutable($data['activated_at']) : null;
+
+    $automation->meta = $data['meta'] ? Json::decode($data['meta']) : [];
     return $automation;
   }
 }

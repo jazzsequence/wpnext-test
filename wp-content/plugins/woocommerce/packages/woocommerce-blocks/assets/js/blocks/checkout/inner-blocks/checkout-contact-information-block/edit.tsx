@@ -8,7 +8,6 @@ import { PanelBody, ExternalLink } from '@wordpress/components';
 import { ADMIN_URL } from '@woocommerce/settings';
 import { innerBlockAreas } from '@woocommerce/blocks-checkout';
 import Noninteractive from '@woocommerce/base-components/noninteractive';
-import { CartCheckoutFeedbackPrompt } from '@woocommerce/editor-components/feedback-prompt';
 
 /**
  * Internal dependencies
@@ -43,7 +42,10 @@ export const Edit = ( {
 		>
 			<InspectorControls>
 				<PanelBody
-					title={ __( 'Account', 'woo-gutenberg-products-block' ) }
+					title={ __(
+						'Account creation and guest checkout',
+						'woo-gutenberg-products-block'
+					) }
 				>
 					<p className="wc-block-checkout__controls-text">
 						{ __(
@@ -60,7 +62,6 @@ export const Edit = ( {
 						) }
 					</ExternalLink>
 				</PanelBody>
-				<CartCheckoutFeedbackPrompt />
 			</InspectorControls>
 			<Noninteractive>
 				<Block />
