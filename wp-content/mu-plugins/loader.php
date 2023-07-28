@@ -1,5 +1,4 @@
 <?php
-
 $_mu_plugins = [
 	'pantheon-mu-plugin/pantheon.php',
 ];
