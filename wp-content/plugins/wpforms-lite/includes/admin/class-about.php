@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * About WPForms admin page class.
  *
@@ -117,7 +121,7 @@ class WPForms_About {
 			) ||
 			wpforms_debug()
 		) {
-			$vs_tab_name = sprintf( /* translators: %1$s - current license type; %2$s - suggested license type. */
+			$vs_tab_name = sprintf( /* translators: %1$s - current license type, %2$s - suggested license type. */
 				esc_html__( '%1$s vs %2$s', 'wpforms-lite' ),
 				ucfirst( $license ),
 				$this->get_next_license( $license )
@@ -246,7 +250,7 @@ class WPForms_About {
 					<?php
 					printf(
 						wp_kses(
-							/* translators: %1$s - WPBeginner URL; %2$s - OptinMonster URL; %3$s - MonsterInsights URL. */
+							/* translators: %1$s - WPBeginner URL, %2$s - OptinMonster URL, %3$s - MonsterInsights URL. */
 							__( 'WPForms is brought to you by the same team that’s behind the largest WordPress resource site, <a href="%1$s" target="_blank" rel="noopener noreferrer">WPBeginner</a>, the most popular lead-generation software, <a href="%2$s" target="_blank" rel="noopener noreferrer">OptinMonster</a>, the best WordPress analytics plugin, <a href="%3$s" target="_blank" rel="noopener noreferrer">MonsterInsights</a>, and more!', 'wpforms-lite' ),
 							[
 								'a' => [
@@ -326,7 +330,7 @@ class WPForms_About {
 									<strong>
 										<?php
 										printf(
-											/* translators: %s - addon status label. */
+											/* translators: %s - status label. */
 											esc_html__( 'Status: %s', 'wpforms-lite' ),
 											'<span class="status-label ' . esc_attr( $plugin_data['status_class'] ) . '">' . wp_kses_post( $plugin_data['status_text'] ) . '</span>'
 										);
@@ -516,7 +520,7 @@ class WPForms_About {
 						<?php
 						printf(
 							wp_kses( /* translators: %s - stars. */
-								__( 'We know that you will truly love WPForms. It has over <strong>12,000+ five star ratings</strong> (%s) and is active on over 5 million websites.', 'wpforms-lite' ),
+								__( 'We know that you will truly love WPForms. It has over <strong>12,000+ five star ratings</strong> (%s) and is active on over 6 million websites.', 'wpforms-lite' ),
 								[
 									'strong' => [],
 								]
@@ -540,7 +544,7 @@ class WPForms_About {
 									<?php
 									printf( /* translators: %s - number of templates. */
 										esc_html__( '%s customizable form templates', 'wpforms-lite' ),
-										'800+'
+										'1000+'
 									);
 									?>
 								</li>
@@ -1226,7 +1230,7 @@ class WPForms_About {
 						'<strong>' .
 						sprintf( /* translators: %s - number of templates. */
 							esc_html__( 'All Form Templates including Bonus %s pre-made form templates', 'wpforms-lite' ),
-							'800+'
+							'1000+'
 						) .
 						'</strong>',
 					],

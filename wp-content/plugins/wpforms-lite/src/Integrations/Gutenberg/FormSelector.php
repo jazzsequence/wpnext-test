@@ -2,8 +2,11 @@
 
 namespace WPForms\Integrations\Gutenberg;
 
+// phpcs:ignore WPForms.PHP.UseStatement.UnusedUseStatement
+use WP_REST_Response;
 use WPForms\Frontend\CSSVars;
 use WPForms\Integrations\IntegrationInterface;
+use WP_Error;
 
 /**
  * Form Selector Gutenberg block with live preview.
@@ -111,6 +114,8 @@ class FormSelector implements IntegrationInterface {
 		add_action( 'init', [ $this, 'register_block' ] );
 		add_action( 'enqueue_block_editor_assets', [ $this, 'enqueue_block_editor_assets' ] );
 		add_action( 'wpforms_frontend_output_container_after', [ $this, 'replace_wpforms_frontend_container_class_filter' ] );
+		add_action( 'init', [ $this, 'enable_block_translations' ] );
+		add_action( 'rest_api_init', [ $this, 'register_api_route' ] );
 	}
 
 	/**
@@ -199,7 +204,7 @@ class FormSelector implements IntegrationInterface {
 			'buttonTextColor'       => [
 				'type' => 'string',
 			],
-			'copyPasteJsonValue'        => [
+			'copyPasteJsonValue'    => [
 				'type' => 'string',
 			],
 		];
@@ -274,7 +279,7 @@ class FormSelector implements IntegrationInterface {
 		wp_enqueue_script(
 			'wpforms-gutenberg-form-selector',
 			WPFORMS_PLUGIN_URL . 'assets/js/components/admin/gutenberg/' . $script,
-			[ 'wp-blocks', 'wp-i18n', 'wp-element' ],
+			[ 'wp-blocks', 'wp-i18n', 'wp-element', 'jquery' ],
 			WPFORMS_VERSION,
 			true
 		);
@@ -294,6 +299,62 @@ class FormSelector implements IntegrationInterface {
 				true
 			);
 		}
+	}
+
+	/**
+	 * Register API route for Gutenberg block.
+	 *
+	 * @since 1.8.4
+	 */
+	public function register_api_route() {
+
+		/**
+		 * Register route with WordPress.
+		 *
+		 * @see https://developer.wordpress.org/reference/functions/register_rest_route/
+		 */
+		register_rest_route(
+			'wpforms/v1',
+			'/forms/',
+			[
+				'methods'             => 'GET',
+				'callback'            => [ $this, 'protected_data_callback' ],
+				'permission_callback' => [ $this, 'protected_permissions_callback' ],
+			]
+		);
+	}
+
+	/**
+	 * Wrap localized data in protected WP_REST_Response object.
+	 *
+	 * @since 1.8.4
+	 *
+	 * @see https://developer.wordpress.org/reference/functions/rest_ensure_response/
+	 *
+	 * @return WP_Error|WP_REST_Response
+	 */
+	public function protected_data_callback() {
+
+		return rest_ensure_response( $this->get_localize_data() );
+	}
+
+	/**
+	 * Check if user has permission to access private data.
+	 *
+	 * @since 1.8.4
+	 *
+	 * @see https://developer.wordpress.org/rest-api/extending-the-rest-api/routes-and-endpoints/#permissions-callback
+	 *
+	 * @return true|WP_Error True if user has permission.
+	 */
+	public function protected_permissions_callback() {
+
+		// Restrict endpoint to only users who have the edit_posts capability.
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return new WP_Error( 'rest_forbidden', esc_html__( 'This route is private.', 'wpforms-lite' ), [ 'status' => 401 ] );
+		}
+
+		return true;
 	}
 
 	/**
@@ -357,6 +418,10 @@ class FormSelector implements IntegrationInterface {
 			'copy_paste_settings'          => esc_html__( 'Copy / Paste Style Settings', 'wpforms-lite' ),
 			'copy_paste_error'             => esc_html__( 'There was an error parsing your JSON code. Please check your code and try again.', 'wpforms-lite' ),
 			'copy_paste_notice'            => esc_html__( 'If you\'ve copied style settings from another form, you can paste them here to add the same styling to this form. Any current style settings will be overwritten.', 'wpforms-lite' ),
+			// Translators: %1$s: Opening strong tag, %2$s: Closing strong tag.
+			'wpforms_empty_info'           => sprintf( esc_html__( 'You can use %1$sWPForms%2$s to build contact forms, surveys, payment forms, and more with just a few clicks.', 'wpforms-lite' ), '<strong>','</strong>' ),
+			// Translators: %1$s: Opening anchor tag, %2$s: Closing achor tag.
+			'wpforms_empty_help'           => sprintf( esc_html__( 'Need some help? Check out our %1$scomprehensive guide.%2$s', 'wpforms-lite' ), '<a target="_blank" href="' . esc_url( wpforms_utm_link( 'https://wpforms.com/docs/creating-first-form/', 'gutenberg', 'Create Your First Form Documentation' ) ) . '">','</a>' ),
 		];
 
 		if ( version_compare( $GLOBALS['wp_version'], '5.1.1', '<=' ) ) {
@@ -366,8 +431,7 @@ class FormSelector implements IntegrationInterface {
 		$forms = wpforms()->get( 'form' )->get( '', [ 'order' => 'DESC' ] );
 		$forms = ! empty( $forms ) ? $forms : [];
 		$forms = array_map(
-			static function( $form ) {
-
+			static function ( $form ) {
 				$form->post_title = htmlspecialchars_decode( $form->post_title, ENT_QUOTES );
 
 				return $form;
@@ -378,18 +442,34 @@ class FormSelector implements IntegrationInterface {
 		return [
 			'logo_url'          => WPFORMS_PLUGIN_URL . 'assets/images/sullie-alt.png',
 			'block_preview_url' => WPFORMS_PLUGIN_URL . 'assets/images/integrations/gutenberg/block-preview.png',
+			'block_empty_url'   => WPFORMS_PLUGIN_URL . 'assets/images/empty-states/no-forms.svg',
 			'wpnonce'           => wp_create_nonce( 'wpforms-gutenberg-form-selector' ),
 			'forms'             => $forms,
 			'strings'           => $strings,
 			'defaults'          => self::DEFAULT_ATTRIBUTES,
 			'is_modern_markup'  => $this->render_engine === 'modern',
 			'is_full_styling'   => $this->disable_css_setting === 1,
+			'wpforms_guide'     => esc_url( wpforms_utm_link( 'https://wpforms.com/docs/creating-first-form/', 'gutenberg', 'Create Your First Form Documentation' ) ),
+			'get_started_url'   => esc_url( admin_url( 'admin.php?page=wpforms-builder' ) ),
 			'sizes'             => [
 				'field-size'  => CSSVars::FIELD_SIZE,
 				'label-size'  => CSSVars::LABEL_SIZE,
 				'button-size' => CSSVars::BUTTON_SIZE,
 			],
+
 		];
+	}
+
+	/**
+	 * Let's WP know that we have translation strings on our block script.
+	 *
+	 * @since 1.8.3
+	 *
+	 * @return void
+	 */
+	public function enable_block_translations() {
+
+		wp_set_script_translations( 'wpforms-gutenberg-form-selector', 'wpforms-lite' );
 	}
 
 	/**
@@ -546,9 +626,9 @@ class FormSelector implements IntegrationInterface {
 
 		if ( empty( $content ) ) {
 			return '<div class="components-placeholder"><div class="components-placeholder__label"></div>' .
-			           '<div class="components-placeholder__fieldset">' .
-			           esc_html__( 'The form cannot be displayed.', 'wpforms-lite' ) .
-			           '</div></div>';
+						'<div class="components-placeholder__fieldset">' .
+						esc_html__( 'The form cannot be displayed.', 'wpforms-lite' ) .
+						'</div></div>';
 		}
 
 		// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export
@@ -556,8 +636,8 @@ class FormSelector implements IntegrationInterface {
 		// This is the hacky way to trigger custom event on form loaded in the Block Editor / GB / FSE.
 		$content .= sprintf(
 			'<img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" onLoad="
-				window.top.dispatchEvent( 
-                    new CustomEvent(
+				window.top.dispatchEvent(
+					new CustomEvent(
 						\'wpformsFormSelectorFormLoaded\',
 						{
 							detail: {
@@ -649,7 +729,7 @@ class FormSelector implements IntegrationInterface {
 			return;
 		}
 
-		$css_vars = $this->get_customized_css_vars( $attr );
+		$css_vars = $this->css_vars_obj->get_customized_css_vars( $attr );
 
 		if ( empty( $css_vars ) ) {
 			return;
@@ -674,64 +754,5 @@ class FormSelector implements IntegrationInterface {
 		);
 
 		$this->css_vars_obj->output_selector_vars( $vars_selector, $css_vars, $style_id );
-	}
-
-	/**
-	 * Get customized CSS vars.
-	 *
-	 * @since 1.8.1
-	 *
-	 * @param array $attr Attributes passed by WPForms Gutenberg block.
-	 *
-	 * @return array
-	 */
-	private function get_customized_css_vars( $attr ) { // phpcs:ignore Generic.Metrics.CyclomaticComplexity.TooHigh
-
-		if ( empty( $this->css_vars_obj ) || ! method_exists( $this->css_vars_obj, 'get_vars' ) ) {
-			return [];
-		}
-
-		$root_css_vars = $this->css_vars_obj->get_vars( ':root' );
-		$css_vars      = [];
-
-		foreach ( $attr as $key => $value ) {
-
-			$var_name = strtolower( preg_replace( '/[A-Z]/', '-$0', $key ) );
-
-			// Skip attribute that is not the CSS var.
-			if ( empty( $root_css_vars[ $var_name ] ) ) {
-				continue;
-			}
-
-			// We do not need to output variable that has the default value.
-			if ( $root_css_vars[ $var_name ] === $value ) {
-				continue;
-			}
-
-			$css_vars[ $var_name ] = $value;
-		}
-
-		if ( ! empty( $attr['fieldSize'] ) && $attr['fieldSize'] !== 'medium' ) {
-			$css_vars = array_merge(
-				$css_vars,
-				$this->css_vars_obj->get_complex_vars( 'field-size', CSSVars::FIELD_SIZE[ $attr['fieldSize'] ] )
-			);
-		}
-
-		if ( ! empty( $attr['labelSize'] ) && $attr['labelSize'] !== 'medium' ) {
-			$css_vars = array_merge(
-				$css_vars,
-				$this->css_vars_obj->get_complex_vars( 'label-size', CSSVars::LABEL_SIZE[ $attr['labelSize'] ] )
-			);
-		}
-
-		if ( ! empty( $attr['buttonSize'] ) && $attr['buttonSize'] !== 'medium' ) {
-			$css_vars = array_merge(
-				$css_vars,
-				$this->css_vars_obj->get_complex_vars( 'button-size', CSSVars::BUTTON_SIZE[ $attr['buttonSize'] ] )
-			);
-		}
-
-		return $css_vars;
 	}
 }

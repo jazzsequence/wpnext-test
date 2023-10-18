@@ -49,6 +49,7 @@ export const DEFAULT_QUERY: ProductCollectionQuery = {
 	woocommerceOnSale: false,
 	woocommerceStockStatus: getDefaultStockStatuses(),
 	woocommerceAttributes: [],
+	woocommerceHandPickedProducts: [],
 };
 
 export const DEFAULT_ATTRIBUTES: Partial< ProductCollectionAttributes > = {
@@ -60,22 +61,29 @@ export const DEFAULT_ATTRIBUTES: Partial< ProductCollectionAttributes > = {
 	},
 };
 
+export const getDefaultQuery = (
+	currentQuery: ProductCollectionQuery
+): ProductCollectionQuery => ( {
+	...currentQuery,
+	orderBy: DEFAULT_QUERY.orderBy as TProductCollectionOrderBy,
+	order: DEFAULT_QUERY.order as TProductCollectionOrder,
+	inherit: DEFAULT_QUERY.inherit,
+} );
+
+export const getDefaultDisplayLayout = () =>
+	DEFAULT_ATTRIBUTES.displayLayout as ProductCollectionDisplayLayout;
+
 export const getDefaultSettings = (
 	currentAttributes: ProductCollectionAttributes
 ): Partial< ProductCollectionAttributes > => ( {
-	displayLayout:
-		DEFAULT_ATTRIBUTES.displayLayout as ProductCollectionDisplayLayout,
-	query: {
-		...currentAttributes.query,
-		orderBy: DEFAULT_QUERY.orderBy as TProductCollectionOrderBy,
-		order: DEFAULT_QUERY.order as TProductCollectionOrder,
-		inherit: DEFAULT_QUERY.inherit,
-	},
+	displayLayout: getDefaultDisplayLayout(),
+	query: getDefaultQuery( currentAttributes.query ),
 } );
 
-export const DEFAULT_FILTERS = {
+export const DEFAULT_FILTERS: Partial< ProductCollectionQuery > = {
 	woocommerceOnSale: DEFAULT_QUERY.woocommerceOnSale,
 	woocommerceStockStatus: getDefaultStockStatuses(),
 	woocommerceAttributes: [],
 	taxQuery: DEFAULT_QUERY.taxQuery,
+	woocommerceHandPickedProducts: [],
 };

@@ -1,33 +1,42 @@
-/* global wpforms_gutenberg_form_selector, Choices */
+/* global wpforms_gutenberg_form_selector, Choices, JSX, DOM */
 /* jshint es3: false, esversion: 6 */
-
-'use strict';
 
 /**
  * Gutenberg editor block.
  *
  * @since 1.8.1
  */
-var WPForms = window.WPForms || {};
+const WPForms = window.WPForms || {};
 
 WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ ) {
-
 	const { serverSideRender: ServerSideRender = wp.components.ServerSideRender } = wp;
-	const { createElement, Fragment, useState } = wp.element;
+	const { createElement, Fragment, useState, createInterpolateElement } = wp.element;
 	const { registerBlockType } = wp.blocks;
 	const { InspectorControls, InspectorAdvancedControls, PanelColorSettings } = wp.blockEditor || wp.editor;
 	const { SelectControl, ToggleControl, PanelBody, Placeholder, Flex, FlexBlock, __experimentalUnitControl, TextareaControl, Button, Modal } = wp.components;
 	const { strings, defaults, sizes } = wpforms_gutenberg_form_selector;
 	const defaultStyleSettings = defaults;
+	const { __ } = wp.i18n;
+
+	/**
+	 * List of forms.
+	 *
+	 * Default value is localized in FormSelector.php.
+	 *
+	 * @since 1.8.4
+	 *
+	 * @type {Object}
+	 */
+	let formList = wpforms_gutenberg_form_selector.forms;
 
 	/**
 	 * Blocks runtime data.
 	 *
 	 * @since 1.8.1
 	 *
-	 * @type {object}
+	 * @type {Object}
 	 */
-	let blocks = {};
+	const blocks = {};
 
 	/**
 	 * Whether it is needed to trigger server rendering.
@@ -39,11 +48,29 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 	let triggerServerRender = true;
 
 	/**
+	 * Popup container.
+	 *
+	 * @since 1.8.3
+	 *
+	 * @type {Object}
+	 */
+	let $popup = {};
+
+	/**
+	 * Track fetch status.
+	 *
+	 * @since 1.8.4
+	 *
+	 * @type {boolean}
+	 */
+	let isFetching = false;
+
+	/**
 	 * Public functions and properties.
 	 *
 	 * @since 1.8.1
 	 *
-	 * @type {object}
+	 * @type {Object}
 	 */
 	const app = {
 
@@ -52,8 +79,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 */
-		init: function() {
-
+		init() {
 			app.initDefaults();
 			app.registerBlock();
 
@@ -65,8 +91,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 */
-		ready: function() {
-
+		ready() {
 			app.events();
 		},
 
@@ -75,11 +100,98 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 */
-		events: function() {
-
+		events() {
 			$( window )
 				.on( 'wpformsFormSelectorEdit', _.debounce( app.blockEdit, 250 ) )
 				.on( 'wpformsFormSelectorFormLoaded', _.debounce( app.formLoaded, 250 ) );
+		},
+
+		/**
+		 * Get fresh list of forms via REST-API.
+		 *
+		 * @since 1.8.4
+		 *
+		 * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-api-fetch/
+		 */
+		async getForms() {
+			// If a fetch is already in progress, exit the function.
+			if ( isFetching ) {
+				return;
+			}
+
+			// Set the flag to true indicating a fetch is in progress.
+			isFetching = true;
+
+			try {
+				// Fetch forms.
+				const response = await wp.apiFetch( {
+					path: '/wpforms/v1/forms/',
+					method: 'GET',
+					cache: 'no-cache',
+				} );
+
+				// Update the form list.
+				formList = response.forms;
+			} catch ( error ) {
+				// eslint-disable-next-line no-console
+				console.error( error );
+			} finally {
+				isFetching = false;
+			}
+		},
+
+		/**
+		 * Open builder popup.
+		 *
+		 * @since 1.6.2
+		 *
+		 * @param {string} clientID Block Client ID.
+		 */
+		openBuilderPopup( clientID ) {
+			if ( $.isEmptyObject( $popup ) ) {
+				const tmpl = $( '#wpforms-gutenberg-popup' );
+				const parent = $( '#wpwrap' );
+
+				parent.after( tmpl );
+
+				$popup = parent.siblings( '#wpforms-gutenberg-popup' );
+			}
+
+			const url = wpforms_gutenberg_form_selector.get_started_url,
+				$iframe = $popup.find( 'iframe' );
+
+			app.builderCloseButtonEvent( clientID );
+			$iframe.attr( 'src', url );
+			$popup.fadeIn();
+		},
+
+		/**
+		 * Close button (inside the form builder) click event.
+		 *
+		 * @since 1.8.3
+		 *
+		 * @param {string} clientID Block Client ID.
+		 */
+		builderCloseButtonEvent( clientID ) {
+			$popup
+				.off( 'wpformsBuilderInPopupClose' )
+				.on( 'wpformsBuilderInPopupClose', function( e, action, formId, formTitle ) {
+					if ( action !== 'saved' || ! formId ) {
+						return;
+					}
+
+					// Insert a new block when a new form is created from the popup to update the form list and attributes.
+					const newBlock = wp.blocks.createBlock( 'wpforms/form-selector', {
+						formId: formId.toString(), // Expects string value, make sure we insert string.
+					} );
+
+					// eslint-disable-next-line camelcase
+					formList = [ { ID: formId, post_title: formTitle } ];
+
+					// Insert a new block.
+					wp.data.dispatch( 'core/block-editor' ).removeBlock( clientID );
+					wp.data.dispatch( 'core/block-editor' ).insertBlocks( newBlock );
+				} );
 		},
 
 		/**
@@ -87,8 +199,8 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 */
-		registerBlock: function() {
-
+		// eslint-disable-next-line max-lines-per-function
+		registerBlock() {
 			registerBlockType( 'wpforms/form-selector', {
 				title: strings.title,
 				description: strings.description,
@@ -96,36 +208,50 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				keywords: strings.form_keywords,
 				category: 'widgets',
 				attributes: app.getBlockAttributes(),
+				supports: {
+					customClassName: app.hasForms(),
+				},
 				example: {
 					attributes: {
 						preview: true,
 					},
 				},
-				edit: function( props ) {
+				edit( props ) {
+					// Get fresh list of forms.
+					app.getForms();
 
 					const { attributes } = props;
 					const formOptions = app.getFormOptions();
-					const sizeOptions = app.getSizeOptions();
 					const handlers = app.getSettingsFieldsHandlers( props );
 
 					// Store block clientId in attributes.
 					if ( ! attributes.clientId ) {
-
 						// We just want client ID to update once.
 						// The block editor doesn't have a fixed block ID, so we need to get it on the initial load, but only once.
 						props.setAttributes( { clientId: props.clientId } );
 					}
 
 					// Main block settings.
-					let jsx = [
+					const jsx = [
 						app.jsxParts.getMainSettings( attributes, handlers, formOptions ),
 					];
+
+					// Block preview picture.
+					if ( ! app.hasForms() ) {
+						jsx.push(
+							app.jsxParts.getEmptyFormsPreview( props ),
+						);
+
+						return jsx;
+					}
+
+					const sizeOptions = app.getSizeOptions();
 
 					// Form style settings & block content.
 					if ( attributes.formId ) {
 						jsx.push(
-							app.jsxParts.getStyleSettings( attributes, handlers, sizeOptions ),
-							app.jsxParts.getAdvancedSettings( attributes, handlers ),
+							app.jsxParts.getStyleSettings( props, handlers, sizeOptions ),
+							app.jsxParts.getAdvancedSettings( props, handlers ),
 							app.jsxParts.getBlockFormContent( props ),
 						);
 
@@ -161,9 +287,19 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 */
-		initDefaults: function() {
+		initDefaults() {
+			[ 'formId', 'copyPasteJsonValue' ].forEach( ( key ) => delete defaultStyleSettings[ key ] );
+		},
 
-			[ 'formId', 'copyPasteJsonValue' ].forEach( key => delete defaultStyleSettings[ key ] );
+		/**
+		 * Check if site has forms.
+		 *
+		 * @since 1.8.3
+		 *
+		 * @return {boolean} Whether site has at least one form.
+		 */
+		hasForms() {
+			return formList.length >= 1;
 		},
 
 		/**
@@ -171,7 +307,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @type {object}
+		 * @type {Object}
 		 */
 		jsxParts: {
 
@@ -180,13 +316,16 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes  Block attributes.
-			 * @param {object} handlers    Block event handlers.
-			 * @param {object} formOptions Form selector options.
+			 * @param {Object} attributes  Block attributes.
+			 * @param {Object} handlers    Block event handlers.
+			 * @param {Object} formOptions Form selector options.
 			 *
-			 * @returns {JSX.Element} Main setting JSX code.
+			 * @return {JSX.Element} Main setting JSX code.
 			 */
-			getMainSettings: function( attributes, handlers, formOptions ) {
+			getMainSettings( attributes, handlers, formOptions ) {
+				if ( ! app.hasForms() ) {
+					return app.jsxParts.printEmptyFormsNotice( attributes.clientId );
+				}
 
 				return (
 					<InspectorControls key="wpforms-gutenberg-form-selector-inspector-main-settings">
@@ -195,23 +334,54 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 								label={ strings.form_selected }
 								value={ attributes.formId }
 								options={ formOptions }
-								onChange={ value => handlers.attrChange( 'formId', value ) }
+								onChange={ ( value ) => handlers.attrChange( 'formId', value ) }
 							/>
 							<ToggleControl
 								label={ strings.show_title }
 								checked={ attributes.displayTitle }
-								onChange={ value => handlers.attrChange( 'displayTitle', value ) }
+								onChange={ ( value ) => handlers.attrChange( 'displayTitle', value ) }
 							/>
 							<ToggleControl
 								label={ strings.show_description }
 								checked={ attributes.displayDesc }
-								onChange={ value => handlers.attrChange( 'displayDesc', value ) }
+								onChange={ ( value ) => handlers.attrChange( 'displayDesc', value ) }
 							/>
 							<p className="wpforms-gutenberg-panel-notice">
 								<strong>{ strings.panel_notice_head }</strong>
 								{ strings.panel_notice_text }
-								<a href={strings.panel_notice_link} rel="noreferrer" target="_blank">{ strings.panel_notice_link_text }</a>
+								<a href={ strings.panel_notice_link } rel="noreferrer" target="_blank">{ strings.panel_notice_link_text }</a>
 							</p>
+						</PanelBody>
+					</InspectorControls>
+				);
+			},
+
+			/**
+			 * Print empty forms notice.
+			 *
+			 * @since 1.8.3
+			 *
+			 * @param {string} clientId Block client ID.
+			 *
+			 * @return {JSX.Element} Field styles JSX code.
+			 */
+			printEmptyFormsNotice( clientId ) {
+				return (
+					<InspectorControls key="wpforms-gutenberg-form-selector-inspector-main-settings">
+						<PanelBody className="wpforms-gutenberg-panel" title={ strings.form_settings }>
+							<p className="wpforms-gutenberg-panel-notice wpforms-warning wpforms-empty-form-notice" style={ { display: 'block' } }>
+								<strong>{ __( 'You haven’t created a form, yet!', 'wpforms-lite' ) }</strong>
+								{ __( 'What are you waiting for?', 'wpforms-lite' ) }
+							</p>
+							<button type="button" className="get-started-button components-button is-secondary"
+								onClick={
+									() => {
+										app.openBuilderPopup( clientId );
+									}
+								}
+							>
+								{ __( 'Get Started', 'wpforms-lite' ) }
+							</button>
 						</PanelBody>
 					</InspectorControls>
 				);
@@ -222,41 +392,40 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes  Block attributes.
-			 * @param {object} handlers    Block event handlers.
-			 * @param {object} sizeOptions Size selector options.
+			 * @param {Object} props       Block properties.
+			 * @param {Object} handlers    Block event handlers.
+			 * @param {Object} sizeOptions Size selector options.
 			 *
-			 * @returns {JSX.Element} Field styles JSX code.
+			 * @return {Object} Field styles JSX code.
 			 */
-			getFieldStyles: function( attributes, handlers, sizeOptions ) { // eslint-disable-line max-lines-per-function
-
+			getFieldStyles( props, handlers, sizeOptions ) { // eslint-disable-line max-lines-per-function
 				return (
-					<PanelBody className={ app.getPanelClass( attributes ) } title={ strings.field_styles }>
+					<PanelBody className={ app.getPanelClass( props ) } title={ strings.field_styles }>
 						<p className="wpforms-gutenberg-panel-notice wpforms-use-modern-notice">
 							<strong>{ strings.use_modern_notice_head }</strong>
-							{ strings.use_modern_notice_text } <a href={strings.use_modern_notice_link} rel="noreferrer" target="_blank">{ strings.learn_more }</a>
+							{ strings.use_modern_notice_text } <a href={ strings.use_modern_notice_link } rel="noreferrer" target="_blank">{ strings.learn_more }</a>
 						</p>
 
-						<p className="wpforms-gutenberg-panel-notice wpforms-warning wpforms-lead-form-notice" style={{ display: 'none' }}>
+						<p className="wpforms-gutenberg-panel-notice wpforms-warning wpforms-lead-form-notice" style={ { display: 'none' } }>
 							<strong>{ strings.lead_forms_panel_notice_head }</strong>
 							{ strings.lead_forms_panel_notice_text }
 						</p>
 
-						<Flex gap={4} align="flex-start" className={'wpforms-gutenberg-form-selector-flex'} justify="space-between">
+						<Flex gap={ 4 } align="flex-start" className={ 'wpforms-gutenberg-form-selector-flex' } justify="space-between">
 							<FlexBlock>
 								<SelectControl
 									label={ strings.size }
-									value={ attributes.fieldSize }
+									value={ props.attributes.fieldSize }
 									options={ sizeOptions }
-									onChange={ value => handlers.styleAttrChange( 'fieldSize', value ) }
+									onChange={ ( value ) => handlers.styleAttrChange( 'fieldSize', value ) }
 								/>
 							</FlexBlock>
 							<FlexBlock>
 								<__experimentalUnitControl
 									label={ strings.border_radius }
-									value={ attributes.fieldBorderRadius }
+									value={ props.attributes.fieldBorderRadius }
 									isUnitSelectTabbable
-									onChange={ value => handlers.styleAttrChange( 'fieldBorderRadius', value ) }
+									onChange={ ( value ) => handlers.styleAttrChange( 'fieldBorderRadius', value ) }
 								/>
 							</FlexBlock>
 						</Flex>
@@ -268,23 +437,23 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 								enableAlpha
 								showTitle={ false }
 								className="wpforms-gutenberg-form-selector-color-panel"
-								colorSettings={[
+								colorSettings={ [
 									{
-										value: attributes.fieldBackgroundColor,
-										onChange: value => handlers.styleAttrChange( 'fieldBackgroundColor', value ),
+										value: props.attributes.fieldBackgroundColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'fieldBackgroundColor', value ),
 										label: strings.background,
 									},
 									{
-										value: attributes.fieldBorderColor,
-										onChange: value => handlers.styleAttrChange( 'fieldBorderColor', value ),
+										value: props.attributes.fieldBorderColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'fieldBorderColor', value ),
 										label: strings.border,
 									},
 									{
-										value: attributes.fieldTextColor,
-										onChange: value => handlers.styleAttrChange( 'fieldTextColor', value ),
+										value: props.attributes.fieldTextColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'fieldTextColor', value ),
 										label: strings.text,
 									},
-								]}
+								] }
 							/>
 						</div>
 					</PanelBody>
@@ -296,22 +465,21 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes  Block attributes.
-			 * @param {object} handlers    Block event handlers.
-			 * @param {object} sizeOptions Size selector options.
+			 * @param {Object} props       Block properties.
+			 * @param {Object} handlers    Block event handlers.
+			 * @param {Object} sizeOptions Size selector options.
 			 *
-			 * @returns {JSX.Element} Label styles JSX code.
+			 * @return {Object} Label styles JSX code.
 			 */
-			getLabelStyles: function( attributes, handlers, sizeOptions ) {
-
+			getLabelStyles( props, handlers, sizeOptions ) {
 				return (
-					<PanelBody className={ app.getPanelClass( attributes ) } title={ strings.label_styles }>
+					<PanelBody className={ app.getPanelClass( props ) } title={ strings.label_styles }>
 						<SelectControl
 							label={ strings.size }
-							value={ attributes.labelSize }
+							value={ props.attributes.labelSize }
 							className="wpforms-gutenberg-form-selector-fix-bottom-margin"
-							options={ sizeOptions}
-							onChange={ value => handlers.styleAttrChange( 'labelSize', value ) }
+							options={ sizeOptions }
+							onChange={ ( value ) => handlers.styleAttrChange( 'labelSize', value ) }
 						/>
 
 						<div className="wpforms-gutenberg-form-selector-color-picker">
@@ -321,23 +489,23 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 								enableAlpha
 								showTitle={ false }
 								className="wpforms-gutenberg-form-selector-color-panel"
-								colorSettings={[
+								colorSettings={ [
 									{
-										value: attributes.labelColor,
-										onChange: value => handlers.styleAttrChange( 'labelColor', value ),
+										value: props.attributes.labelColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'labelColor', value ),
 										label: strings.label,
 									},
 									{
-										value: attributes.labelSublabelColor,
-										onChange: value => handlers.styleAttrChange( 'labelSublabelColor', value ),
+										value: props.attributes.labelSublabelColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'labelSublabelColor', value ),
 										label: strings.sublabel_hints.replace( '&amp;', '&' ),
 									},
 									{
-										value: attributes.labelErrorColor,
-										onChange: value => handlers.styleAttrChange( 'labelErrorColor', value ),
+										value: props.attributes.labelErrorColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'labelErrorColor', value ),
 										label: strings.error_message,
 									},
-								]}
+								] }
 							/>
 						</div>
 					</PanelBody>
@@ -349,31 +517,30 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes  Block attributes.
-			 * @param {object} handlers    Block event handlers.
-			 * @param {object} sizeOptions Size selector options.
+			 * @param {Object} props       Block properties.
+			 * @param {Object} handlers    Block event handlers.
+			 * @param {Object} sizeOptions Size selector options.
 			 *
-			 * @returns {JSX.Element}  Button styles JSX code.
+			 * @return {Object}  Button styles JSX code.
 			 */
-			getButtonStyles: function( attributes, handlers, sizeOptions ) {
-
+			getButtonStyles( props, handlers, sizeOptions ) {
 				return (
-					<PanelBody className={ app.getPanelClass( attributes ) } title={ strings.button_styles }>
-						<Flex gap={4} align="flex-start" className={'wpforms-gutenberg-form-selector-flex'} justify="space-between">
+					<PanelBody className={ app.getPanelClass( props ) } title={ strings.button_styles }>
+						<Flex gap={ 4 } align="flex-start" className={ 'wpforms-gutenberg-form-selector-flex' } justify="space-between">
 							<FlexBlock>
 								<SelectControl
 									label={ strings.size }
-									value={ attributes.buttonSize }
+									value={ props.attributes.buttonSize }
 									options={ sizeOptions }
-									onChange={ value => handlers.styleAttrChange( 'buttonSize', value ) }
+									onChange={ ( value ) => handlers.styleAttrChange( 'buttonSize', value ) }
 								/>
 							</FlexBlock>
 							<FlexBlock>
 								<__experimentalUnitControl
-									onChange={ value => handlers.styleAttrChange( 'buttonBorderRadius', value ) }
+									onChange={ ( value ) => handlers.styleAttrChange( 'buttonBorderRadius', value ) }
 									label={ strings.border_radius }
 									isUnitSelectTabbable
-									value={ attributes.buttonBorderRadius } />
+									value={ props.attributes.buttonBorderRadius } />
 							</FlexBlock>
 						</Flex>
 
@@ -384,18 +551,18 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 								enableAlpha
 								showTitle={ false }
 								className="wpforms-gutenberg-form-selector-color-panel"
-								colorSettings={[
+								colorSettings={ [
 									{
-										value: attributes.buttonBackgroundColor,
-										onChange: value => handlers.styleAttrChange( 'buttonBackgroundColor', value ),
+										value: props.attributes.buttonBackgroundColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'buttonBackgroundColor', value ),
 										label: strings.background,
 									},
 									{
-										value: attributes.buttonTextColor,
-										onChange: value => handlers.styleAttrChange( 'buttonTextColor', value ),
+										value: props.attributes.buttonTextColor,
+										onChange: ( value ) => handlers.styleAttrChange( 'buttonTextColor', value ),
 										label: strings.text,
 									},
-								]} />
+								] } />
 							<div className="wpforms-gutenberg-form-selector-legend wpforms-button-color-notice">
 								{ strings.button_color_notice }
 							</div>
@@ -409,19 +576,18 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes  Block attributes.
-			 * @param {object} handlers    Block event handlers.
-			 * @param {object} sizeOptions Size selector options.
+			 * @param {Object} props       Block properties.
+			 * @param {Object} handlers    Block event handlers.
+			 * @param {Object} sizeOptions Size selector options.
 			 *
-			 * @returns {JSX.Element} Inspector controls JSX code.
+			 * @return {Object} Inspector controls JSX code.
 			 */
-			getStyleSettings: function( attributes, handlers, sizeOptions ) {
-
+			getStyleSettings( props, handlers, sizeOptions ) {
 				return (
 					<InspectorControls key="wpforms-gutenberg-form-selector-style-settings">
-						{ app.jsxParts.getFieldStyles( attributes, handlers, sizeOptions ) }
-						{ app.jsxParts.getLabelStyles( attributes, handlers, sizeOptions ) }
-						{ app.jsxParts.getButtonStyles( attributes, handlers, sizeOptions ) }
+						{ app.jsxParts.getFieldStyles( props, handlers, sizeOptions ) }
+						{ app.jsxParts.getLabelStyles( props, handlers, sizeOptions ) }
+						{ app.jsxParts.getButtonStyles( props, handlers, sizeOptions ) }
 					</InspectorControls>
 				);
 			},
@@ -431,42 +597,42 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes Block attributes.
-			 * @param {object} handlers   Block event handlers.
+			 * @param {Object} props    Block properties.
+			 * @param {Object} handlers Block event handlers.
 			 *
-			 * @returns {JSX.Element} Inspector advanced controls JSX code.
+			 * @return {Object} Inspector advanced controls JSX code.
 			 */
-			getAdvancedSettings: function( attributes, handlers ) {
-
+			getAdvancedSettings( props, handlers ) {
+				// eslint-disable-next-line react-hooks/rules-of-hooks
 				const [ isOpen, setOpen ] = useState( false );
 				const openModal = () => setOpen( true );
 				const closeModal = () => setOpen( false );
 
 				return (
 					<InspectorAdvancedControls>
-						<div className={ app.getPanelClass( attributes ) }>
+						<div className={ app.getPanelClass( props ) }>
 							<TextareaControl
 								label={ strings.copy_paste_settings }
 								rows="4"
 								spellCheck="false"
-								value={ attributes.copyPasteJsonValue }
-								onChange={ value => handlers.pasteSettings( value ) }
+								value={ props.attributes.copyPasteJsonValue }
+								onChange={ ( value ) => handlers.pasteSettings( value ) }
 							/>
-							<div className="wpforms-gutenberg-form-selector-legend" dangerouslySetInnerHTML={{ __html: strings.copy_paste_notice }}></div>
+							<div className="wpforms-gutenberg-form-selector-legend" dangerouslySetInnerHTML={ { __html: strings.copy_paste_notice } }></div>
 
-							<Button className='wpforms-gutenberg-form-selector-reset-button' onClick={ openModal }>{ strings.reset_style_settings }</Button>
+							<Button className="wpforms-gutenberg-form-selector-reset-button" onClick={ openModal }>{ strings.reset_style_settings }</Button>
 						</div>
 
 						{ isOpen && (
-							<Modal  className="wpforms-gutenberg-modal"
-								title={ strings.reset_style_settings}
+							<Modal className="wpforms-gutenberg-modal"
+								title={ strings.reset_style_settings }
 								onRequestClose={ closeModal }>
 
 								<p>{ strings.reset_settings_confirm_text }</p>
 
-								<Flex gap={3} align="center" justify="flex-end">
+								<Flex gap={ 3 } align="center" justify="flex-end">
 									<Button isSecondary onClick={ closeModal }>
-										{strings.btn_no}
+										{ strings.btn_no }
 									</Button>
 
 									<Button isPrimary onClick={ () => {
@@ -487,14 +653,12 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} props Block properties.
+			 * @param {Object} props Block properties.
 			 *
-			 * @returns {JSX.Element} Block content JSX code.
+			 * @return {JSX.Element} Block content JSX code.
 			 */
-			getBlockFormContent: function( props ) {
-
+			getBlockFormContent( props ) {
 				if ( triggerServerRender ) {
-
 					return (
 						<ServerSideRender
 							key="wpforms-gutenberg-form-selector-server-side-renderer"
@@ -521,7 +685,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 
 				return (
 					<Fragment key="wpforms-gutenberg-form-selector-fragment-form-html">
-						<div dangerouslySetInnerHTML={{ __html: blocks[ clientId ].blockHTML }} />
+						<div dangerouslySetInnerHTML={ { __html: blocks[ clientId ].blockHTML } } />
 					</Fragment>
 				);
 			},
@@ -531,14 +695,75 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @returns {JSX.Element} Block preview JSX code.
+			 * @return {JSX.Element} Block preview JSX code.
 			 */
-			getBlockPreview: function() {
-
+			getBlockPreview() {
 				return (
 					<Fragment
 						key="wpforms-gutenberg-form-selector-fragment-block-preview">
-						<img src={ wpforms_gutenberg_form_selector.block_preview_url } style={{ width: '100%' }} />
+						<img src={ wpforms_gutenberg_form_selector.block_preview_url } style={ { width: '100%' } } alt="" />
+					</Fragment>
+				);
+			},
+
+			/**
+			 * Get block empty JSX code.
+			 *
+			 * @since 1.8.3
+			 *
+			 * @param {Object} props Block properties.
+			 * @return {JSX.Element} Block empty JSX code.
+			 */
+			getEmptyFormsPreview( props ) {
+				const clientId = props.clientId;
+
+				return (
+					<Fragment
+						key="wpforms-gutenberg-form-selector-fragment-block-empty">
+						<div className="wpforms-no-form-preview">
+							<img src={ wpforms_gutenberg_form_selector.block_empty_url } alt="" />
+							<p>
+								{
+									createInterpolateElement(
+										__(
+											'You can use <b>WPForms</b> to build contact forms, surveys, payment forms, and more with just a few clicks.',
+											'wpforms-lite'
+										),
+										{
+											b: <strong />,
+										}
+									)
+								}
+							</p>
+							<button type="button" className="get-started-button components-button is-primary"
+								onClick={
+									() => {
+										app.openBuilderPopup( clientId );
+									}
+								}
+							>
+								{ __( 'Get Started', 'wpforms-lite' ) }
+							</button>
+							<p className="empty-desc">
+								{
+									createInterpolateElement(
+										__(
+											'Need some help? Check out our <a>comprehensive guide.</a>',
+											'wpforms-lite'
+										),
+										{
+											// eslint-disable-next-line jsx-a11y/anchor-has-content
+											a: <a href={ wpforms_gutenberg_form_selector.wpforms_guide } target="_blank" rel="noopener noreferrer" />,
+										}
+									)
+								}
+							</p>
+
+							{ /* Template for popup with builder iframe */ }
+							<div id="wpforms-gutenberg-popup" className="wpforms-builder-popup">
+								<iframe src="about:blank" width="100%" height="100%" id="wpforms-builder-iframe" title="WPForms Builder Popup"></iframe>
+							</div>
+						</div>
 					</Fragment>
 				);
 			},
@@ -548,25 +773,24 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 			 *
 			 * @since 1.8.1
 			 *
-			 * @param {object} attributes  Block attributes.
-			 * @param {object} handlers    Block event handlers.
-			 * @param {object} formOptions Form selector options.
+			 * @param {Object} attributes  Block attributes.
+			 * @param {Object} handlers    Block event handlers.
+			 * @param {Object} formOptions Form selector options.
 			 *
-			 * @returns {JSX.Element} Block placeholder JSX code.
+			 * @return {JSX.Element} Block placeholder JSX code.
 			 */
-			getBlockPlaceholder: function( attributes, handlers, formOptions ) {
-
+			getBlockPlaceholder( attributes, handlers, formOptions ) {
 				return (
 					<Placeholder
 						key="wpforms-gutenberg-form-selector-wrap"
 						className="wpforms-gutenberg-form-selector-wrap">
-						<img src={wpforms_gutenberg_form_selector.logo_url} />
+						<img src={ wpforms_gutenberg_form_selector.logo_url } alt="" />
 						<h3>{ strings.title }</h3>
 						<SelectControl
 							key="wpforms-gutenberg-form-selector-select-control"
 							value={ attributes.formId }
 							options={ formOptions }
-							onChange={ value => handlers.attrChange( 'formId', value ) }
+							onChange={ ( value ) => handlers.attrChange( 'formId', value ) }
 						/>
 					</Placeholder>
 				);
@@ -578,13 +802,12 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} attributes Block attributes.
+		 * @param {Object} props Block properties.
 		 *
-		 * @returns {string} Style Settings panel class.
+		 * @return {string} Style Settings panel class.
 		 */
-		getPanelClass: function( attributes ) {
-
-			let cssClass = 'wpforms-gutenberg-panel wpforms-block-settings-' + attributes.clientId;
+		getPanelClass( props ) {
+			let cssClass = 'wpforms-gutenberg-panel wpforms-block-settings-' + props.clientId;
 
 			if ( ! app.isFullStylingEnabled() ) {
 				cssClass += ' disabled_panel';
@@ -598,10 +821,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @returns {boolean} Whether the full styling is enabled.
+		 * @return {boolean} Whether the full styling is enabled.
 		 */
-		isFullStylingEnabled: function() {
-
+		isFullStylingEnabled() {
 			return wpforms_gutenberg_form_selector.is_modern_markup && wpforms_gutenberg_form_selector.is_full_styling;
 		},
 
@@ -610,13 +832,12 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} props Block properties.
+		 * @param {Object} props Block properties.
 		 *
-		 * @returns {Element} Block container.
+		 * @return {Element} Block container.
 		 */
-		getBlockContainer: function( props ) {
-
-			const blockSelector = `#block-${props.clientId} > div`;
+		getBlockContainer( props ) {
+			const blockSelector = `#block-${ props.clientId } > div`;
 			let block = document.querySelector( blockSelector );
 
 			// For FSE / Gutenberg plugin we need to take a look inside the iframe.
@@ -634,12 +855,11 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} props Block properties.
+		 * @param {Object} props Block properties.
 		 *
-		 * @returns {object} Object that contains event handlers for the settings fields.
+		 * @return {Object} Object that contains event handlers for the settings fields.
 		 */
-		getSettingsFieldsHandlers: function( props ) { // eslint-disable-line max-lines-per-function
-
+		getSettingsFieldsHandlers( props ) { // eslint-disable-line max-lines-per-function
 			return {
 
 				/**
@@ -650,11 +870,10 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				 * @param {string} attribute Attribute name.
 				 * @param {string} value     New attribute value.
 				 */
-				styleAttrChange: function( attribute, value ) {
-
+				styleAttrChange( attribute, value ) {
 					const block = app.getBlockContainer( props ),
-						container = block.querySelector( `#wpforms-${props.attributes.formId}` ),
-						property = attribute.replace( /[A-Z]/g, letter => `-${letter.toLowerCase()}` ),
+						container = block.querySelector( `#wpforms-${ props.attributes.formId }` ),
+						property = attribute.replace( /[A-Z]/g, ( letter ) => `-${ letter.toLowerCase() }` ),
 						setAttr = {};
 
 					if ( container ) {
@@ -664,7 +883,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 							case 'button-size':
 								for ( const key in sizes[ property ][ value ] ) {
 									container.style.setProperty(
-										`--wpforms-${property}-${key}`,
+										`--wpforms-${ property }-${ key }`,
 										sizes[ property ][ value ][ key ],
 									);
 								}
@@ -672,7 +891,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 								break;
 
 							default:
-								container.style.setProperty( `--wpforms-${property}`, value );
+								container.style.setProperty( `--wpforms-${ property }`, value );
 						}
 					}
 
@@ -695,8 +914,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				 * @param {string} attribute Attribute name.
 				 * @param {string} value     New attribute value.
 				 */
-				attrChange: function( attribute, value ) {
-
+				attrChange( attribute, value ) {
 					const setAttr = {};
 
 					setAttr[ attribute ] = value;
@@ -713,9 +931,8 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				 *
 				 * @since 1.8.1
 				 */
-				resetSettings: function() {
-
-					for ( let key in defaultStyleSettings ) {
+				resetSettings() {
+					for ( const key in defaultStyleSettings ) {
 						this.styleAttrChange( key, defaultStyleSettings[ key ] );
 					}
 				},
@@ -725,16 +942,15 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				 *
 				 * @since 1.8.1
 				 */
-				updateCopyPasteContent: function() {
+				updateCopyPasteContent() {
+					const content = {};
+					const atts = wp.data.select( 'core/block-editor' ).getBlockAttributes( props.clientId );
 
-					let content = {};
-					let atts = wp.data.select( 'core/block-editor' ).getBlockAttributes( props.clientId );
-
-					for ( let key in defaultStyleSettings ) {
-						content[key] = atts[ key ];
+					for ( const key in defaultStyleSettings ) {
+						content[ key ] = atts[ key ];
 					}
 
-					props.setAttributes( { 'copyPasteJsonValue': JSON.stringify( content ) } );
+					props.setAttributes( { copyPasteJsonValue: JSON.stringify( content ) } );
 				},
 
 				/**
@@ -744,12 +960,10 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				 *
 				 * @param {string} value New attribute value.
 				 */
-				pasteSettings: function( value ) {
-
-					let pasteAttributes = app.parseValidateJson( value );
+				pasteSettings( value ) {
+					const pasteAttributes = app.parseValidateJson( value );
 
 					if ( ! pasteAttributes ) {
-
 						wp.data.dispatch( 'core/notices' ).createErrorNotice(
 							strings.copy_paste_error,
 							{ id: 'wpforms-json-parse-error' }
@@ -776,10 +990,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @param {string} value JSON string.
 		 *
-		 * @returns {boolean|object} Parsed JSON object OR false on error.
+		 * @return {boolean|object} Parsed JSON object OR false on error.
 		 */
-		parseValidateJson: function( value ) {
-
+		parseValidateJson( value ) {
 			if ( typeof value !== 'string' ) {
 				return false;
 			}
@@ -800,10 +1013,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @returns {DOM.element} WPForms icon DOM element.
+		 * @return {DOM.element} WPForms icon DOM element.
 		 */
-		getIcon: function() {
-
+		getIcon() {
 			return createElement(
 				'svg',
 				{ width: 20, height: 20, viewBox: '0 0 612 612', className: 'dashicon' },
@@ -822,10 +1034,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @returns {object} Block attributes.
+		 * @return {Object} Block attributes.
 		 */
-		getBlockAttributes: function() { // eslint-disable-line max-lines-per-function
-
+		getBlockAttributes() { // eslint-disable-line max-lines-per-function
 			return {
 				clientId: {
 					type: 'string',
@@ -910,11 +1121,10 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @returns {Array} Form options.
+		 * @return {Array} Form options.
 		 */
-		getFormOptions: function() {
-
-			const formOptions = wpforms_gutenberg_form_selector.forms.map( value => (
+		getFormOptions() {
+			const formOptions = formList.map( ( value ) => (
 				{ value: value.ID, label: value.post_title }
 			) );
 
@@ -928,10 +1138,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @returns {Array} Size options.
+		 * @return {Array} Size options.
 		 */
-		getSizeOptions: function() {
-
+		getSizeOptions() {
 			return [
 				{
 					label: strings.small,
@@ -953,11 +1162,10 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} e     Event object.
-		 * @param {object} props Block properties.
+		 * @param {Object} e     Event object.
+		 * @param {Object} props Block properties.
 		 */
-		blockEdit: function( e, props ) {
-
+		blockEdit( e, props ) {
 			const block = app.getBlockContainer( props );
 
 			if ( ! block || ! block.dataset ) {
@@ -974,8 +1182,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @param {Element} block Block element.
 		 */
-		initLeadFormSettings: function( block ) {
-
+		initLeadFormSettings( block ) {
 			if ( ! block || ! block.dataset ) {
 				return;
 			}
@@ -986,10 +1193,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 
 			const clientId = block.dataset.block;
 			const $form = $( block.querySelector( '.wpforms-container' ) );
-			const $panel = $( `.wpforms-block-settings-${clientId}` );
+			const $panel = $( `.wpforms-block-settings-${ clientId }` );
 
 			if ( $form.hasClass( 'wpforms-lead-forms-container' ) ) {
-
 				$panel
 					.addClass( 'disabled_panel' )
 					.find( '.wpforms-gutenberg-panel-notice.wpforms-lead-form-notice' )
@@ -1017,10 +1223,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} e Event object.
+		 * @param {Object} e Event object.
 		 */
-		formLoaded: function( e ) {
-
+		formLoaded( e ) {
 			app.initLeadFormSettings( e.detail.block );
 			app.updateAccentColors( e.detail );
 			app.loadChoicesJS( e.detail );
@@ -1036,10 +1241,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} e Event object.
+		 * @param {Object} e Event object.
 		 */
-		blockClick: function( e ) {
-
+		blockClick( e ) {
 			app.initLeadFormSettings( e.currentTarget );
 		},
 
@@ -1048,10 +1252,9 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} detail Event details object.
+		 * @param {Object} detail Event details object.
 		 */
-		updateAccentColors: function( detail ) {
-
+		updateAccentColors( detail ) {
 			if (
 				! wpforms_gutenberg_form_selector.is_modern_markup ||
 				! window.WPForms ||
@@ -1061,7 +1264,7 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				return;
 			}
 
-			const $form = $( detail.block.querySelector( `#wpforms-${detail.formId}` ) ),
+			const $form = $( detail.block.querySelector( `#wpforms-${ detail.formId }` ) ),
 				FrontendModern = window.WPForms.FrontendModern;
 
 			FrontendModern.updateGBBlockPageIndicatorColor( $form );
@@ -1074,32 +1277,29 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {object} detail Event details object.
+		 * @param {Object} detail Event details object.
 		 */
-		loadChoicesJS: function( detail ) {
-
+		loadChoicesJS( detail ) {
 			if ( typeof window.Choices !== 'function' ) {
 				return;
 			}
 
-			const $form = $( detail.block.querySelector( `#wpforms-${detail.formId}` ) );
+			const $form = $( detail.block.querySelector( `#wpforms-${ detail.formId }` ) );
 
 			$form.find( '.choicesjs-select' ).each( function( idx, el ) {
-
 				const $el = $( el );
 
 				if ( $el.data( 'choice' ) === 'active' ) {
 					return;
 				}
 
-				var args = window.wpforms_choicesjs_config || {},
+				const args = window.wpforms_choicesjs_config || {},
 					searchEnabled = $el.data( 'search-enabled' ),
 					$field = $el.closest( '.wpforms-field' );
 
 				args.searchEnabled = 'undefined' !== typeof searchEnabled ? searchEnabled : true;
 				args.callbackOnInit = function() {
-
-					var self = this,
+					const self = this,
 						$element = $( self.passedElement.element ),
 						$input = $( self.input.element ),
 						sizeClass = $element.data( 'size-class' );
@@ -1114,7 +1314,6 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 					 * In case if select is empty - we return placeholder text back.
 					 */
 					if ( $element.prop( 'multiple' ) ) {
-
 						// On init event.
 						$input.data( 'placeholder', $input.attr( 'placeholder' ) );
 
@@ -1128,11 +1327,10 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 				};
 
 				try {
-					const choicesInstance =  new Choices( el, args );
+					const choicesInstance = new Choices( el, args );
 
 					// Save Choices.js instance for future access.
 					$el.data( 'choicesjs', choicesInstance );
-
 				} catch ( e ) {} // eslint-disable-line no-empty
 			} );
 		},
@@ -1142,18 +1340,16 @@ WPForms.FormSelector = WPForms.FormSelector || ( function( document, window, $ )
 		 *
 		 * @since 1.8.1
 		 *
-		 * @param {int} formId Form ID.
+		 * @param {number} formId Form ID.
 		 */
-		initRichTextField: function( formId ) {
-
+		initRichTextField( formId ) {
 			// Set default tab to `Visual`.
-			$( `#wpforms-${formId} .wp-editor-wrap` ).removeClass( 'html-active' ).addClass( 'tmce-active' );
+			$( `#wpforms-${ formId } .wp-editor-wrap` ).removeClass( 'html-active' ).addClass( 'tmce-active' );
 		},
 	};
 
 	// Provide access to public functions/properties.
 	return app;
-
 }( document, window, jQuery ) );
 
 // Initialize.

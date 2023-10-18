@@ -36,6 +36,14 @@ class Functions {
     return call_user_func_array('do_action', func_get_args());
   }
 
+  /**
+   * @param string $hookName
+   * @return int
+   */
+  public function didAction($hookName) {
+    return did_action($hookName);
+  }
+
   public function trailingslashit(string $url) {
     return trailingslashit($url);
   }
@@ -831,6 +839,10 @@ class Functions {
 
   public function registerRestRoute(string $namespace, string $route, array $args = [], bool $override = false): bool {
     return register_rest_route($namespace, $route, $args, $override);
+  }
+
+  public function registerRestField($object_type, string $attribute, array $args = []) {
+    return register_rest_field($object_type, $attribute, $args);
   }
 
   /**

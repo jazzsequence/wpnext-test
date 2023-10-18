@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Dropdown field.
  *
@@ -41,6 +45,7 @@ class WPForms_Field_Select extends WPForms_Field {
 
 		// Define field type information.
 		$this->name     = esc_html__( 'Dropdown', 'wpforms-lite' );
+		$this->keywords = esc_html__( 'choice', 'wpforms-lite' );
 		$this->type     = 'select';
 		$this->icon     = 'fa-caret-square-o-down';
 		$this->order    = 70;

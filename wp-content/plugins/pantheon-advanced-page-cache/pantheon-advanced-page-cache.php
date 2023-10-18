@@ -7,7 +7,7 @@
  * Author URI:      https://pantheon.io
  * Text Domain:     pantheon-advanced-page-cache
  * Domain Path:     /languages
- * Version:         1.3.0
+ * Version:         1.4.2
  *
  * @package         Pantheon_Advanced_Page_Cache
  */
@@ -79,7 +79,7 @@ function pantheon_wp_clear_edge_all() {
 
 /**
  * Prefix surrogate keys with the blog ID to provide compatibility with WPMS. See https://github.com/pantheon-systems/pantheon-advanced-page-cache/issues/196.
- * 
+ *
  * @param array $keys Keys to be prefixed.
  */
 function pantheon_wp_prefix_surrogate_keys_with_blog_id( $keys ) {
@@ -104,7 +104,7 @@ function pantheon_wp_prefix_surrogate_keys_with_blog_id( $keys ) {
  * Registers the class autoloader.
  */
 spl_autoload_register(
-	function( $class_autoloader ) {
+	function ( $class_autoloader ) {
 			$class_autoloader = ltrim( $class_autoloader, '\\' );
 		if ( 0 !== stripos( $class_autoloader, 'Pantheon_Advanced_Page_Cache\\' ) ) {
 			return;

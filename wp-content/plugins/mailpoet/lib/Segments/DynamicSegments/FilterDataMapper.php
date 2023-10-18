@@ -12,10 +12,11 @@ use MailPoet\Segments\DynamicSegments\Filters\DateFilterHelper;
 use MailPoet\Segments\DynamicSegments\Filters\EmailAction;
 use MailPoet\Segments\DynamicSegments\Filters\EmailActionClickAny;
 use MailPoet\Segments\DynamicSegments\Filters\EmailOpensAbsoluteCountAction;
+use MailPoet\Segments\DynamicSegments\Filters\FilterHelper;
 use MailPoet\Segments\DynamicSegments\Filters\MailPoetCustomFields;
+use MailPoet\Segments\DynamicSegments\Filters\SubscriberDateField;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberScore;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberSegment;
-use MailPoet\Segments\DynamicSegments\Filters\SubscriberSubscribedDate;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberSubscribedViaForm;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberTag;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberTextField;
@@ -25,11 +26,13 @@ use MailPoet\Segments\DynamicSegments\Filters\WooCommerceCountry;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceCustomerTextField;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceMembership;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceNumberOfOrders;
+use MailPoet\Segments\DynamicSegments\Filters\WooCommerceNumberOfReviews;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceProduct;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommercePurchaseDate;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceSingleOrderValue;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceSubscription;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceTotalSpent;
+use MailPoet\Segments\DynamicSegments\Filters\WooCommerceUsedCouponCode;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceUsedPaymentMethod;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceUsedShippingMethod;
 use MailPoet\WP\Functions as WPFunctions;
@@ -38,13 +41,30 @@ class FilterDataMapper {
   /** @var WPFunctions */
   private $wp;
 
+  /** @var DateFilterHelper */
+  private $dateFilterHelper;
+
+  /** @var WooCommerceNumberOfReviews */
+  private $wooCommerceNumberOfReviews;
+
+  /** @var FilterHelper */
+  private $filterHelper;
+
+  /** @var WooCommerceUsedCouponCode */
+  private $wooCommerceUsedCouponCode;
+
   public function __construct(
-    WPFunctions $wp = null
+    WPFunctions $wp,
+    DateFilterHelper $dateFilterHelper,
+    FilterHelper $filterHelper,
+    WooCommerceNumberOfReviews $wooCommerceNumberOfReviews,
+    WooCommerceUsedCouponCode $wooCommerceUsedCouponCode
   ) {
-    if (!$wp) {
-      $wp = WPFunctions::get();
-    }
     $this->wp = $wp;
+    $this->dateFilterHelper = $dateFilterHelper;
+    $this->filterHelper = $filterHelper;
+    $this->wooCommerceNumberOfReviews = $wooCommerceNumberOfReviews;
+    $this->wooCommerceUsedCouponCode = $wooCommerceUsedCouponCode;
   }
 
   /**
@@ -52,7 +72,6 @@ class FilterDataMapper {
    * @return DynamicSegmentFilterData[]
    */
   public function map(array $data = []): array {
-    $filters = [];
     if (!isset($data['filters']) || count($data['filters'] ?? []) < 1) {
       throw new InvalidFilterException('Filters are missing', InvalidFilterException::MISSING_FILTER);
     }
@@ -69,6 +88,10 @@ class FilterDataMapper {
   }
 
   private function createFilter(array $filterData): DynamicSegmentFilterData {
+    if (isset($filterData['days']) && !isset($filterData['timeframe'])) {
+      // Backwards compatibility for filters created before time period component had "over all time" option
+      $filterData['timeframe'] = DynamicSegmentFilterData::TIMEFRAME_IN_THE_LAST;
+    }
     switch ($this->getSegmentType($filterData)) {
       case DynamicSegmentFilterData::TYPE_AUTOMATIONS:
         return $this->createAutomations($filterData);
@@ -133,16 +156,6 @@ class FilterDataMapper {
   private function createSubscriber(array $data): DynamicSegmentFilterData {
     if (empty($data['action'])) {
       $data['action'] = DynamicSegmentFilterData::TYPE_USER_ROLE;
-    }
-    if ($data['action'] === SubscriberSubscribedDate::TYPE) {
-      if (empty($data['value'])) {
-        throw new InvalidFilterException('Missing number of days', InvalidFilterException::MISSING_VALUE);
-      }
-      return new DynamicSegmentFilterData(DynamicSegmentFilterData::TYPE_USER_ROLE, $data['action'], [
-        'value' => $data['value'],
-        'operator' => $data['operator'] ?? DateFilterHelper::BEFORE,
-        'connect' => $data['connect'],
-      ]);
     }
     if ($data['action'] === SubscriberScore::TYPE) {
       if (!isset($data['value'])) {
@@ -234,6 +247,22 @@ class FilterDataMapper {
         'connect' => $data['connect'],
       ]);
     }
+    if (in_array($data['action'], SubscriberDateField::TYPES)) {
+      if (empty($data['value'])) {
+        throw new InvalidFilterException('Missing date value', InvalidFilterException::MISSING_VALUE);
+      }
+      if (empty($data['operator'])) {
+        throw new InvalidFilterException('Missing operator', InvalidFilterException::MISSING_OPERATOR);
+      }
+      if (!in_array($data['operator'], $this->dateFilterHelper->getValidOperators())) {
+        throw new InvalidFilterException('Invalid operator', InvalidFilterException::MISSING_OPERATOR);
+      }
+      return new DynamicSegmentFilterData(DynamicSegmentFilterData::TYPE_USER_ROLE, $data['action'], [
+        'value' => $data['value'],
+        'operator' => $data['operator'],
+        'connect' => $data['connect'],
+      ]);
+    }
     if (empty($data['wordpressRole'])) {
       throw new InvalidFilterException('Missing role', InvalidFilterException::MISSING_ROLE);
     }
@@ -304,13 +333,12 @@ class FilterDataMapper {
     if (!isset($data['opens'])) {
       throw new InvalidFilterException('Missing number of opens', InvalidFilterException::MISSING_VALUE);
     }
-    if (empty($data['days'])) {
-      throw new InvalidFilterException('Missing number of days', InvalidFilterException::MISSING_VALUE);
-    }
+    $this->filterHelper->validateDaysPeriodData($data);
     $filterData = [
       'opens' => $data['opens'],
-      'days' => $data['days'],
+      'days' => $data['days'] ?? 0,
       'operator' => $data['operator'] ?? 'more',
+      'timeframe' => $data['timeframe'] ?? DynamicSegmentFilterData::TIMEFRAME_IN_THE_LAST, // backwards compatibility
       'connect' => $data['connect'],
     ];
     $filterType = DynamicSegmentFilterData::TYPE_EMAIL;
@@ -355,50 +383,61 @@ class FilterDataMapper {
       $filterData['country_code'] = $data['country_code'];
       $filterData['operator'] = $data['operator'] ?? DynamicSegmentFilterData::OPERATOR_ANY;
     } elseif ($data['action'] === WooCommerceNumberOfOrders::ACTION_NUMBER_OF_ORDERS) {
+      $this->filterHelper->validateDaysPeriodData($data);
       if (
         !isset($data['number_of_orders_type'])
         || !isset($data['number_of_orders_count']) || $data['number_of_orders_count'] < 0
-        || !isset($data['days']) || $data['days'] < 1
       ) {
         throw new InvalidFilterException('Missing required fields', InvalidFilterException::MISSING_NUMBER_OF_ORDERS_FIELDS);
       }
       $filterData['number_of_orders_type'] = $data['number_of_orders_type'];
       $filterData['number_of_orders_count'] = $data['number_of_orders_count'];
+      $filterData['days'] = $data['days'] ?? 0;
+      $filterData['timeframe'] = $data['timeframe'];
+    } elseif ($data['action'] === WooCommerceNumberOfReviews::ACTION) {
+      $this->wooCommerceNumberOfReviews->validateFilterData($data);
       $filterData['days'] = $data['days'];
+      $filterData['count_type'] = $data['count_type'];
+      $filterData['count'] = $data['count'];
+      $filterData['rating'] = $data['rating'];
+      $filterData['timeframe'] = $data['timeframe'];
     } elseif ($data['action'] === WooCommerceTotalSpent::ACTION_TOTAL_SPENT) {
+      $this->filterHelper->validateDaysPeriodData($data);
       if (
         !isset($data['total_spent_type'])
         || !isset($data['total_spent_amount']) || $data['total_spent_amount'] < 0
-        || !isset($data['days']) || $data['days'] < 1
       ) {
         throw new InvalidFilterException('Missing required fields', InvalidFilterException::MISSING_TOTAL_SPENT_FIELDS);
       }
       $filterData['total_spent_type'] = $data['total_spent_type'];
       $filterData['total_spent_amount'] = $data['total_spent_amount'];
-      $filterData['days'] = $data['days'];
+      $filterData['days'] = $data['days'] ?? 0;
+      $filterData['timeframe'] = $data['timeframe'];
     } elseif ($data['action'] === WooCommerceSingleOrderValue::ACTION_SINGLE_ORDER_VALUE) {
+      $this->filterHelper->validateDaysPeriodData($data);
       if (
         !isset($data['single_order_value_type'])
         || !isset($data['single_order_value_amount']) || $data['single_order_value_amount'] < 0
-        || !isset($data['days']) || $data['days'] < 1
       ) {
         throw new InvalidFilterException('Missing required fields', InvalidFilterException::MISSING_SINGLE_ORDER_VALUE_FIELDS);
       }
       $filterData['single_order_value_type'] = $data['single_order_value_type'];
       $filterData['single_order_value_amount'] = $data['single_order_value_amount'];
-      $filterData['days'] = $data['days'];
+      $filterData['days'] = $data['days'] ?? 0;
+      $filterData['timeframe'] = $data['timeframe'];
     } elseif ($data['action'] === WooCommercePurchaseDate::ACTION) {
       $filterData['operator'] = $data['operator'];
       $filterData['value'] = $data['value'];
     } elseif ($data['action'] === WooCommerceAverageSpent::ACTION) {
+      $this->filterHelper->validateDaysPeriodData($data);
       if (
         !isset($data['average_spent_type'])
         || !isset($data['average_spent_amount']) || $data['average_spent_amount'] < 0
-        || !isset($data['days']) || $data['days'] < 1
       ) {
         throw new InvalidFilterException('Missing required fields', InvalidFilterException::MISSING_AVERAGE_SPENT_FIELDS);
       }
-      $filterData['days'] = $data['days'];
+      $filterData['days'] = $data['days'] ?? 0;
+      $filterData['timeframe'] = $data['timeframe'];
       $filterData['average_spent_amount'] = $data['average_spent_amount'];
       $filterData['average_spent_type'] = $data['average_spent_type'];
     } elseif ($data['action'] === WooCommerceUsedPaymentMethod::ACTION) {
@@ -408,12 +447,11 @@ class FilterDataMapper {
       if (!isset($data['payment_methods']) || !is_array($data['payment_methods']) || empty($data['payment_methods'])) {
         throw new InvalidFilterException('Missing payment gateways', InvalidFilterException::MISSING_VALUE);
       }
-      if (!isset($data['used_payment_method_days']) || intval($data['used_payment_method_days']) < 1) {
-        throw new InvalidFilterException('Missing days', InvalidFilterException::MISSING_VALUE);
-      }
+      $this->filterHelper->validateDaysPeriodData($data);
       $filterData['operator'] = $data['operator'];
       $filterData['payment_methods'] = $data['payment_methods'];
-      $filterData['used_payment_method_days'] = intval($data['used_payment_method_days']);
+      $filterData['days'] = intval($data['days'] ?? 0);
+      $filterData['timeframe'] = $data['timeframe'];
     } elseif ($data['action'] === WooCommerceUsedShippingMethod::ACTION) {
       if (!isset($data['operator']) || !in_array($data['operator'], WooCommerceUsedShippingMethod::VALID_OPERATORS, true)) {
         throw new InvalidFilterException('Missing operator', InvalidFilterException::MISSING_OPERATOR);
@@ -421,12 +459,11 @@ class FilterDataMapper {
       if (!isset($data['shipping_methods']) || !is_array($data['shipping_methods']) || empty($data['shipping_methods'])) {
         throw new InvalidFilterException('Missing shipping methods', InvalidFilterException::MISSING_VALUE);
       }
-      if (!isset($data['used_shipping_method_days']) || intval($data['used_shipping_method_days']) < 1) {
-        throw new InvalidFilterException('Missing days', InvalidFilterException::MISSING_VALUE);
-      }
+      $this->filterHelper->validateDaysPeriodData($data);
       $filterData['operator'] = $data['operator'];
       $filterData['shipping_methods'] = $data['shipping_methods'];
-      $filterData['used_shipping_method_days'] = intval($data['used_shipping_method_days']);
+      $filterData['days'] = intval($data['days'] ?? 0);
+      $filterData['timeframe'] = $data['timeframe'];
     } elseif (in_array($data['action'], WooCommerceCustomerTextField::ACTIONS)) {
       if (empty($data['value'])) {
         throw new InvalidFilterException('Missing value', InvalidFilterException::MISSING_VALUE);
@@ -440,6 +477,12 @@ class FilterDataMapper {
       $filterData['value'] = $data['value'];
       $filterData['operator'] = $data['operator'];
       $filterData['action'] = $data['action'];
+    } elseif ($data['action'] === WooCommerceUsedCouponCode::ACTION) {
+      $this->wooCommerceUsedCouponCode->validateFilterData($data);
+      $filterData['operator'] = $data['operator'];
+      $filterData['coupon_code_ids'] = $data['coupon_code_ids'];
+      $filterData['days'] = $data['days'];
+      $filterData['timeframe'] = $data['timeframe'];
     } else {
       throw new InvalidFilterException("Unknown action " . $data['action'], InvalidFilterException::MISSING_ACTION);
     }

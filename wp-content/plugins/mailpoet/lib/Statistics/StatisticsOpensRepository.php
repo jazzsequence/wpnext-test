@@ -7,52 +7,44 @@ if (!defined('ABSPATH')) exit;
 
 use MailPoet\Doctrine\Repository;
 use MailPoet\Entities\SegmentEntity;
-use MailPoet\Entities\StatisticsNewsletterEntity;
 use MailPoet\Entities\StatisticsOpenEntity;
 use MailPoet\Entities\SubscriberEntity;
+use MailPoet\Subscribers\Statistics\SubscriberStatisticsRepository;
 use MailPoetVendor\Carbon\Carbon;
+use MailPoetVendor\Doctrine\ORM\EntityManager;
 use MailPoetVendor\Doctrine\ORM\QueryBuilder;
 
 /**
  * @extends Repository<StatisticsOpenEntity>
  */
 class StatisticsOpensRepository extends Repository {
+  /** @var SubscriberStatisticsRepository */
+  private $subscriberStatisticsRepository;
+
+  public function __construct(
+    EntityManager $entityManager,
+    SubscriberStatisticsRepository $subscriberStatisticsRepository
+  ) {
+    parent::__construct($entityManager);
+    $this->entityManager = $entityManager;
+    $this->subscriberStatisticsRepository = $subscriberStatisticsRepository;
+  }
+
   protected function getEntityClassName(): string {
     return StatisticsOpenEntity::class;
   }
 
   public function recalculateSubscriberScore(SubscriberEntity $subscriber): void {
     $subscriber->setEngagementScoreUpdatedAt(new \DateTimeImmutable());
-    $dateTime = (new Carbon())->subYear();
-    $newslettersSentCount = $this
-      ->entityManager
-      ->createQueryBuilder()
-      ->select('count(DISTINCT statisticsNewsletter.newsletter)')
-      ->from(StatisticsNewsletterEntity::class, 'statisticsNewsletter')
-      ->where('statisticsNewsletter.subscriber = :subscriber')
-      ->andWhere('statisticsNewsletter.sentAt > :dateTime')
-      ->setParameter('subscriber', $subscriber)
-      ->setParameter('dateTime', $dateTime)
-      ->getQuery()
-      ->getSingleScalarResult();
+    $yearAgo = Carbon::now()->subYear();
+    $newslettersSentCount = $this->subscriberStatisticsRepository->getTotalSentCount($subscriber, $yearAgo);
     if ($newslettersSentCount < 3) {
+      $subscriber->setEngagementScore(null);
       $this->entityManager->flush();
       return;
     }
-    $opens = $this
-      ->entityManager
-      ->createQueryBuilder()
-      ->select('count(DISTINCT opens.newsletter)')
-      ->from(StatisticsOpenEntity::class, 'opens')
-      ->join('opens.newsletter', 'newsletter')
-      ->where('opens.subscriber = :subscriberId')
-      ->andWhere('(newsletter.sentAt > :dateTime OR newsletter.sentAt IS NULL)')
-      ->andWhere('opens.createdAt > :dateTime')
-      ->setParameter('subscriberId', $subscriber)
-      ->setParameter('dateTime', $dateTime)
-      ->getQuery()
-      ->getSingleScalarResult();
-    $score = ($opens / $newslettersSentCount) * 100;
+    $opensCount = $this->subscriberStatisticsRepository->getStatisticsOpenCount($subscriber, $yearAgo);
+    $score = ($opensCount / $newslettersSentCount) * 100;
     $subscriber->setEngagementScore($score);
     $this->entityManager->flush();
   }

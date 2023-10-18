@@ -18,9 +18,9 @@ use MailPoet\Segments\DynamicSegments\Filters\EmailAction;
 use MailPoet\Segments\DynamicSegments\Filters\EmailActionClickAny;
 use MailPoet\Segments\DynamicSegments\Filters\EmailOpensAbsoluteCountAction;
 use MailPoet\Segments\DynamicSegments\Filters\MailPoetCustomFields;
+use MailPoet\Segments\DynamicSegments\Filters\SubscriberDateField;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberScore;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberSegment;
-use MailPoet\Segments\DynamicSegments\Filters\SubscriberSubscribedDate;
 use MailPoet\Segments\DynamicSegments\Filters\SubscriberTag;
 use MailPoet\Segments\DynamicSegments\Filters\UserRole;
 use MailPoet\Segments\DynamicSegments\Filters\WooCommerceCategory;
@@ -206,7 +206,7 @@ class Reporter {
       'Segment > MailPoet custom field' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_USER_ROLE, MailPoetCustomFields::TYPE),
       'Segment > purchased in category' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_WOOCOMMERCE, WooCommerceCategory::ACTION_CATEGORY),
       'Segment > purchased product' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_WOOCOMMERCE, WooCommerceCategory::ACTION_PRODUCT),
-      'Segment > subscribed date' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_USER_ROLE, SubscriberSubscribedDate::TYPE),
+      'Segment > subscribed date' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_USER_ROLE, SubscriberDateField::SUBSCRIBED_DATE),
       'Segment > total spent' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_WOOCOMMERCE, WooCommerceTotalSpent::ACTION_TOTAL_SPENT),
       'Segment > WordPress user role' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_USER_ROLE, UserRole::TYPE),
       'Segment > subscriber tags' => $this->isFilterTypeActive(DynamicSegmentFilterData::TYPE_USER_ROLE, SubscriberTag::TYPE),
@@ -258,6 +258,12 @@ class Reporter {
         return $automation->getStatus() === Automation::STATUS_DRAFT;
       }
     );
+    $automationsWithCustomTrigger = array_filter(
+      $activeAutomations,
+      function(Automation $automation): bool {
+        return $automation->getTrigger('mailpoet:custom-trigger') !== null;
+      }
+    );
     $automationsWithWordPressUserSubscribesTrigger = array_filter(
       $activeAutomations,
       function(Automation $automation): bool {
@@ -300,6 +306,36 @@ class Reporter {
     }
     $averageSteps = $activeAutomationCount > 0 ? $totalSteps / $activeAutomationCount : 0;
 
+    $customTriggerHooks = array_unique(array_values(array_map(
+      function(Automation $automation): string {
+        $trigger = $automation->getTrigger('mailpoet:custom-trigger');
+        return $trigger ? (string)$trigger->getArgs()['hook'] : '';
+      },
+      $automationsWithCustomTrigger
+    )));
+    $customActionHooks = array_unique(array_values(array_map(
+      function(Automation $automation): array {
+        $customActionSteps = array_filter(
+          $automation->getSteps(),
+          function(Step $step): bool {
+            return $step->getKey() === 'mailpoet:custom-action';
+          }
+        );
+        if (!$customActionSteps) {
+          return [];
+        }
+
+        return array_map(
+          function(Step $step): string {
+            return (string)$step->getArgs()['hook'];
+          },
+          $customActionSteps
+        );
+
+      },
+      $activeAutomations
+    )));
+    $customActionHooks = array_values(array_filter(array_merge(...$customActionHooks)));
     return [
       'Automation > Number of active automations' => $activeAutomationCount,
       'Automation > Number of draft automations' => count($draftAutomations),
@@ -310,6 +346,8 @@ class Reporter {
       'Automation > Number of steps in shortest active automation' => $minSteps,
       'Automation > Number of steps in longest active automation' => $maxSteps,
       'Automation > Average number of steps in active automations' => $averageSteps,
+      'Automation > Custom Trigger Hooks' => $customTriggerHooks,
+      'Automation > Custom Action Hooks' => $customActionHooks,
     ];
   }
 

@@ -52,7 +52,6 @@ class WP_Beta_Tester {
 		self::$options                      = $options;
 		self::$core_update_stream_constant  = defined( 'WP_AUTO_UPDATE_CORE' ) && in_array( \WP_AUTO_UPDATE_CORE, array( 'beta', 'rc' ), true ) ? \WP_AUTO_UPDATE_CORE : false;
 		self::$core_update_channel_constant = defined( 'WP_AUTO_UPDATE_CORE' ) && in_array( \WP_AUTO_UPDATE_CORE, array( 'development', 'branch-development' ), true ) ? \WP_AUTO_UPDATE_CORE : false;
-
 	}
 
 	/**
@@ -308,18 +307,18 @@ class WP_Beta_Tester {
 		$update_version = ( new WPBT_Core( $this, self::$options ) )->get_next_version( $preferred->version );
 		$report_url     = '';
 
-		if ( ! apply_filters( 'wpbt_hide_report_a_bug', false ) ) {
+		$report_url = add_query_arg(
+			array(
+				'page' => 'wp-beta-tester',
+				'tab'  => 'wp_beta_tester_bug_report',
+			),
+			is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
+		);
+
+		if ( is_plugin_active( 'test-reports/wp-test-reports.php' ) ) {
 			$report_url = add_query_arg(
 				array(
-					'page' => 'wp-beta-tester',
-					'tab'  => 'wp_beta_tester_bug_report',
-				),
-				is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
-			);
-		} elseif ( is_plugin_active( 'report-a-bug/report-a-bug.php' ) ) {
-			$report_url = add_query_arg(
-				array(
-					'page' => 'report-a-bug',
+					'page' => 'wp-test-reports',
 				),
 				is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
 			);
@@ -334,15 +333,6 @@ class WP_Beta_Tester {
 		/* translators: %1: link to closed and reopened trac tickets on current milestone */
 		printf( wp_kses_post( '<p>' . __( 'Here are the <a href="%s" target="_blank">commits for the milestone</a>.', 'wordpress-beta-tester' ) . '</p>' ), esc_url( "https://core.trac.wordpress.org/query?status=closed&status=reopened&milestone=$milestone" ) );
 
-		if ( empty( $report_url ) ) {
-			$report_url = add_query_arg(
-				array(
-					'page' => 'wp-beta-tester',
-					'tab'  => 'wp_beta_tester_extras',
-				),
-				is_multisite() ? network_admin_url( 'settings.php' ) : admin_url( 'tools.php' )
-			);
-		}
 		/* translators: %s: link to Report a Bug tab */
 		printf( wp_kses_post( '<p>' . "&nbsp;$bug&nbsp;" . __( 'Found a bug? <a href="%s">Report it</a>!', 'wordpress-beta-tester' ) . '</p>' ), esc_url( $report_url ) );
 

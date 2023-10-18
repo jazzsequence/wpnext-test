@@ -12,34 +12,72 @@ import {
 	__experimentalToggleGroupControl as ToggleGroupControl,
 } from '@wordpress/components';
 import { getSetting } from '@woocommerce/settings';
-import { __ } from '@wordpress/i18n';
+import { __, isRTL } from '@wordpress/i18n';
 import Noninteractive from '@woocommerce/base-components/noninteractive';
 import { isSiteEditorPage } from '@woocommerce/utils';
 import type { ReactElement } from 'react';
 import { select } from '@wordpress/data';
+import { cartOutline, bag, bagAlt } from '@woocommerce/icons';
+import { Icon } from '@wordpress/icons';
+import { WC_BLOCKS_IMAGE_URL } from '@woocommerce/block-settings';
+import { ColorPanel } from '@woocommerce/editor-components/color-panel';
+import type { ColorPaletteOption } from '@woocommerce/editor-components/color-panel/types';
 
 /**
  * Internal dependencies
  */
 import QuantityBadge from './quantity-badge';
+import { defaultColorItem } from './utils/defaults';
+import { migrateAttributesToColorPanel } from './utils/data';
 import './editor.scss';
 
-interface Attributes {
+export interface Attributes {
+	miniCartIcon: 'cart' | 'bag' | 'bag-alt';
 	addToCartBehaviour: string;
 	hasHiddenPrice: boolean;
 	cartAndCheckoutRenderStyle: boolean;
+	priceColor: ColorPaletteOption;
+	iconColor: ColorPaletteOption;
+	productCountColor: ColorPaletteOption;
 }
 
 interface Props {
 	attributes: Attributes;
 	setAttributes: ( attributes: Record< string, unknown > ) => void;
+	clientId: number;
+	setPriceColor: ( colorValue: string | undefined ) => void;
+	setIconColor: ( colorValue: string | undefined ) => void;
+	setProductCountColor: ( colorValue: string | undefined ) => void;
 }
 
 const Edit = ( { attributes, setAttributes }: Props ): ReactElement => {
-	const { addToCartBehaviour, hasHiddenPrice, cartAndCheckoutRenderStyle } =
-		attributes;
+	const {
+		cartAndCheckoutRenderStyle,
+		addToCartBehaviour,
+		hasHiddenPrice,
+		priceColor = defaultColorItem,
+		iconColor = defaultColorItem,
+		productCountColor = defaultColorItem,
+		miniCartIcon,
+	} = migrateAttributesToColorPanel( attributes );
+
+	const miniCartColorAttributes = {
+		priceColor: {
+			label: __( 'Price', 'woo-gutenberg-products-block' ),
+			context: 'price-color',
+		},
+		iconColor: {
+			label: __( 'Icon', 'woo-gutenberg-products-block' ),
+			context: 'icon-color',
+		},
+		productCountColor: {
+			label: __( 'Product Count', 'woo-gutenberg-products-block' ),
+			context: 'product-count-color',
+		},
+	};
+
 	const blockProps = useBlockProps( {
-		className: `wc-block-mini-cart`,
+		className: 'wc-block-mini-cart',
 	} );
 
 	const isSiteEditor = isSiteEditorPage( select( 'core/edit-site' ) );
@@ -51,29 +89,63 @@ const Edit = ( { attributes, setAttributes }: Props ): ReactElement => {
 
 	const productCount = 0;
 	const productTotal = 0;
-
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
 				<PanelBody
 					title={ __( 'Settings', 'woo-gutenberg-products-block' ) }
 				>
-					<ToggleControl
+					<ToggleGroupControl
+						className="wc-block-editor-mini-cart__cart-icon-toggle"
+						isBlock={ true }
 						label={ __(
-							'Display total price',
+							'Cart Icon',
 							'woo-gutenberg-products-block'
 						) }
-						help={ __(
-							'Toggle to display the total price of products in the shopping cart. If no products have been added, the price will not display.',
-							'woo-gutenberg-products-block'
-						) }
-						checked={ ! hasHiddenPrice }
-						onChange={ () =>
+						value={ miniCartIcon }
+						onChange={ ( value: 'cart' | 'bag' | 'bag-alt' ) => {
 							setAttributes( {
-								hasHiddenPrice: ! hasHiddenPrice,
-							} )
-						}
-					/>
+								miniCartIcon: value,
+							} );
+						} }
+					>
+						<ToggleGroupControlOption
+							value={ 'cart' }
+							label={ <Icon size={ 32 } icon={ cartOutline } /> }
+						/>
+						<ToggleGroupControlOption
+							value={ 'bag' }
+							label={ <Icon size={ 32 } icon={ bag } /> }
+						/>
+						<ToggleGroupControlOption
+							value={ 'bag-alt' }
+							label={ <Icon size={ 32 } icon={ bagAlt } /> }
+						/>
+					</ToggleGroupControl>
+					<BaseControl
+						id="wc-block-mini-cart__display-toggle"
+						label={ __(
+							'Display',
+							'woo-gutenberg-products-block'
+						) }
+					>
+						<ToggleControl
+							label={ __(
+								'Display total price',
+								'woo-gutenberg-products-block'
+							) }
+							help={ __(
+								'Toggle to display the total price of products in the shopping cart. If no products have been added, the price will not display.',
+								'woo-gutenberg-products-block'
+							) }
+							checked={ ! hasHiddenPrice }
+							onChange={ () =>
+								setAttributes( {
+									hasHiddenPrice: ! hasHiddenPrice,
+								} )
+							}
+						/>
+					</BaseControl>
 					{ isSiteEditor && (
 						<ToggleGroupControl
 							className="wc-block-editor-mini-cart__render-in-cart-and-checkout-toggle"
@@ -82,7 +154,7 @@ const Edit = ( { attributes, setAttributes }: Props ): ReactElement => {
 								'woo-gutenberg-products-block'
 							) }
 							value={ cartAndCheckoutRenderStyle }
-							onChange={ ( value ) => {
+							onChange={ ( value: boolean ) => {
 								setAttributes( {
 									cartAndCheckoutRenderStyle: value,
 								} );
@@ -119,7 +191,11 @@ const Edit = ( { attributes, setAttributes }: Props ): ReactElement => {
 						<>
 							<img
 								className="wc-block-editor-mini-cart__drawer-image"
-								src="/wp-content/plugins/woocommerce-blocks/images/blocks/mini-cart/cart-drawer.svg"
+								src={
+									isRTL()
+										? `${ WC_BLOCKS_IMAGE_URL }blocks/mini-cart/cart-drawer-rtl.svg`
+										: `${ WC_BLOCKS_IMAGE_URL }blocks/mini-cart/cart-drawer.svg`
+								}
 								alt=""
 							/>
 							<p>
@@ -166,14 +242,23 @@ const Edit = ( { attributes, setAttributes }: Props ): ReactElement => {
 					</BaseControl>
 				</PanelBody>
 			</InspectorControls>
+			<ColorPanel colorTypes={ miniCartColorAttributes } />
 			<Noninteractive>
 				<button className="wc-block-mini-cart__button">
 					{ ! hasHiddenPrice && (
-						<span className="wc-block-mini-cart__amount">
+						<span
+							className="wc-block-mini-cart__amount"
+							style={ { color: priceColor.color } }
+						>
 							{ formatPrice( productTotal ) }
 						</span>
 					) }
-					<QuantityBadge count={ productCount } />
+					<QuantityBadge
+						count={ productCount }
+						iconColor={ iconColor }
+						productCountColor={ productCountColor }
+						icon={ miniCartIcon }
+					/>
 				</button>
 			</Noninteractive>
 		</div>
