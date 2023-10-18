@@ -14,10 +14,11 @@ export interface ProductCollectionAttributes {
 	templateSlug: string;
 	displayLayout: ProductCollectionDisplayLayout;
 	tagName: string;
+	convertedFromProducts: boolean;
 }
 
 export interface ProductCollectionDisplayLayout {
-	type: string;
+	type: 'flex' | 'list';
 	columns: number;
 }
 
@@ -52,6 +53,7 @@ export interface ProductCollectionQuery {
 	woocommerceStockStatus?: string[];
 	woocommerceAttributes?: AttributeMetadata[];
 	isProductCollectionBlock?: boolean;
+	woocommerceHandPickedProducts?: string[];
 }
 
 export type TProductCollectionOrder = 'asc' | 'desc';
@@ -60,3 +62,12 @@ export type TProductCollectionOrderBy =
 	| 'title'
 	| 'popularity'
 	| 'rating';
+
+export type DisplayLayoutControlProps = {
+	displayLayout: ProductCollectionDisplayLayout;
+	setAttributes: ( attrs: Partial< ProductCollectionAttributes > ) => void;
+};
+export type QueryControlProps = {
+	query: ProductCollectionQuery;
+	setQueryAttribute: ( attrs: Partial< ProductCollectionQuery > ) => void;
+};

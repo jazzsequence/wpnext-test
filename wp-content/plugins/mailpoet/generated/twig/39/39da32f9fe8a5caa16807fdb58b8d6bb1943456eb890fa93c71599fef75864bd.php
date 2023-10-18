@@ -29,7 +29,6 @@ class __TwigTemplate_756448057f537f5715d1a262e5a4bc2ae04cea7f694f005ae4bcfe6c686
 
         $this->blocks = [
             'content' => [$this, 'block_content'],
-            'translations' => [$this, 'block_translations'],
             'after_translations' => [$this, 'block_after_translations'],
         ];
     }
@@ -59,97 +58,82 @@ class __TwigTemplate_756448057f537f5715d1a262e5a4bc2ae04cea7f694f005ae4bcfe6c686
         // line 7
         echo \MailPoetVendor\twig_escape_filter($this->env, ($context["items_per_page"] ?? null), "html", null, true);
         echo ";
-    var mailpoet_beacon_articles = [
-      '5d667fc22c7d3a7a4d77c426', // https://kb.mailpoet.com/article/282-create-a-list
-      '57f47ca3c697914f21035256', // https://kb.mailpoet.com/article/133-the-wordpress-users-list
-      '5d4beee42c7d3a330e3c4207', // https://kb.mailpoet.com/article/278-the-woocommerce-customers-list
-      '5e187a3a2c7d3a7e9ae607ff', // https://kb.mailpoet.com/article/294-managing-your-subscribers-list
-      '57ce079f903360649f6e56fc', // https://kb.mailpoet.com/article/126-importing-subscribers-with-csv-files
-      '5d722c7104286364bc8ecf19', // https://kb.mailpoet.com/article/284-import-old-customers-to-the-woocommerce-customers-list
-      '59a89621042863033a1c82e6' // https://kb.mailpoet.com/article/205-roles-and-permissions
-    ];
     var mailpoet_custom_fields = ";
-        // line 17
+        // line 8
         echo json_encode(($context["custom_fields"] ?? null));
         echo ";
     var mailpoet_static_segments_list = ";
-        // line 18
+        // line 9
         echo json_encode(($context["static_segments_list"] ?? null));
         echo ";
     var wordpress_editable_roles_list = ";
-        // line 19
+        // line 10
         echo json_encode(($context["wordpress_editable_roles_list"] ?? null));
         echo ";
     var mailpoet_newsletters_list = ";
-        // line 20
+        // line 11
         echo json_encode(($context["newsletters_list"] ?? null));
         echo ";
     var mailpoet_product_categories = ";
-        // line 21
+        // line 12
         echo json_encode(($context["product_categories"] ?? null));
         echo ";
     var mailpoet_products = ";
-        // line 22
+        // line 13
         echo json_encode(($context["products"] ?? null));
         echo ";
     var mailpoet_membership_plans = ";
-        // line 23
+        // line 14
         echo json_encode(($context["membership_plans"] ?? null));
         echo ";
     var mailpoet_subscription_products = ";
-        // line 24
+        // line 15
         echo json_encode(($context["subscription_products"] ?? null));
         echo ";
     var mailpoet_can_use_woocommerce_memberships = ";
-        // line 25
+        // line 16
         echo json_encode(($context["can_use_woocommerce_memberships"] ?? null));
         echo ";
     var mailpoet_can_use_woocommerce_subscriptions = ";
-        // line 26
+        // line 17
         echo json_encode(($context["can_use_woocommerce_subscriptions"] ?? null));
         echo ";
     var mailpoet_woocommerce_currency_symbol = ";
-        // line 27
+        // line 18
         echo json_encode(($context["woocommerce_currency_symbol"] ?? null));
         echo ";
     var mailpoet_woocommerce_countries = ";
-        // line 28
+        // line 19
         echo json_encode(($context["woocommerce_countries"] ?? null));
         echo ";
     var mailpoet_woocommerce_payment_methods = ";
-        // line 29
+        // line 20
         echo json_encode(($context["woocommerce_payment_methods"] ?? null));
         echo ";
     var mailpoet_woocommerce_shipping_methods = ";
-        // line 30
+        // line 21
         echo json_encode(($context["woocommerce_shipping_methods"] ?? null));
         echo ";
     var mailpoet_signup_forms = ";
-        // line 31
+        // line 22
         echo json_encode(($context["signup_forms"] ?? null));
         echo ";
     var mailpoet_automations = ";
-        // line 32
+        // line 23
         echo json_encode(($context["automations"] ?? null));
         echo ";
   </script>
-";
+
+  ";
+        // line 26
+        $this->loadTemplate("segments/translations.html", "segments/dynamic.html", 26)->display($context);
     }
 
-    // line 36
-    public function block_translations($context, array $blocks = [])
-    {
-        $macros = $this->macros;
-        // line 37
-        echo "  ";
-        $this->loadTemplate("segments/translations.html", "segments/dynamic.html", 37)->display($context);
-    }
-
-    // line 40
+    // line 30
     public function block_after_translations($context, array $blocks = [])
     {
         $macros = $this->macros;
-        // line 41
+        // line 31
         echo "  ";
         echo do_action("mailpoet_segments_translations_after");
         echo "
@@ -168,7 +152,7 @@ class __TwigTemplate_756448057f537f5715d1a262e5a4bc2ae04cea7f694f005ae4bcfe6c686
 
     public function getDebugInfo()
     {
-        return array (  150 => 41,  146 => 40,  141 => 37,  137 => 36,  130 => 32,  126 => 31,  122 => 30,  118 => 29,  114 => 28,  110 => 27,  106 => 26,  102 => 25,  98 => 24,  94 => 23,  90 => 22,  86 => 21,  82 => 20,  78 => 19,  74 => 18,  70 => 17,  57 => 7,  52 => 4,  48 => 3,  37 => 1,);
+        return array (  134 => 31,  130 => 30,  126 => 26,  120 => 23,  116 => 22,  112 => 21,  108 => 20,  104 => 19,  100 => 18,  96 => 17,  92 => 16,  88 => 15,  84 => 14,  80 => 13,  76 => 12,  72 => 11,  68 => 10,  64 => 9,  60 => 8,  56 => 7,  51 => 4,  47 => 3,  36 => 1,);
     }
 
     public function getSourceContext()

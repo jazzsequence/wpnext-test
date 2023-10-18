@@ -1,5 +1,55 @@
 [unreleased]
 
+#### 7.0.3 / 2023-10-16
+* update kill switch
+* update for PR
+* fix readme.txt, thanks Otto
+
+#### 7.0.2 / 2023-10-12
+* just a bump for dot org
+
+#### 7.0.1 / 2023-10-12
+* needed to require upgrader classes in main plugin file
+
+#### 7.0.0 / 2023-10-11
+* attempt to sync with refactored PR
+* simpler replacement with modified upgrader classes
+* error logging present
+
+#### 6.3.1 / 2023-10-22
+* removed too much stuff
+
+#### 6.3.0 / 2023-10-21
+* refactor RAU for merge
+* update commit conditional
+
+#### 6.2.2 / 2023-09-13
+* re-activate plugins at end of main loop
+
+#### 6.2.1 / 2023-09-02
+* add error exception for defining function in main plugin class
+
+#### 6.2.0 / 2023-08-15
+* minor email message adjustment
+* add default value in email processing for invalid current version
+* use `WP_Automatic_Upgrader::after_plugin_theme_update()` for sending email
+
+#### 6.1.0 / 2023-08-12
+* add failure email back otherwise no update email is sent
+
+#### 6.0.1 / 2023-08-12
+* add back `sleep( 2 )` to prevent potential race condition
+* update error exception list
+
+#### 6.0.0 / 2023-08-09
+* increase requirements to WP 6.3 and PHP 7.0
+* add version check for Rollback part 3
+* deactivate/reactivate plugin during auto-update test similar `plugin_sandbox_scrape()` as Core
+* add shutdown function
+* add method to check if we want an error to pass through, likley caused by calling `include()` on an activated plugin
+* log caught error from error handler, exception handler, and shutdown function
+* temporary halt to failure email
+
 #### 5.3.3 / 2023-07-16
 * remove Reflection in `WP_Rollback_Auto_Update::cron_rollback()` as methods are public
 

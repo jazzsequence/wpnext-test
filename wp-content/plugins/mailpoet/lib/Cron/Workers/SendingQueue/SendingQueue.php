@@ -14,6 +14,7 @@ use MailPoet\Cron\Workers\StatsNotifications\Scheduler as StatsNotificationsSche
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\ScheduledTaskEntity;
 use MailPoet\Entities\SubscriberEntity;
+use MailPoet\InvalidStateException;
 use MailPoet\Logging\LoggerFactory;
 use MailPoet\Mailer\MailerLog;
 use MailPoet\Mailer\MetaInfo;
@@ -31,6 +32,7 @@ use MailPoet\Tasks\Sending as SendingTask;
 use MailPoet\Tasks\Subscribers\BatchIterator;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
+use MailPoetVendor\Doctrine\ORM\EntityManager;
 
 class SendingQueue {
   /** @var MailerTask */
@@ -85,6 +87,9 @@ class SendingQueue {
   /*** @var SendingQueuesRepository */
   private $sendingQueuesRepository;
 
+  /** @var EntityManager */
+  private $entityManager;
+
   public function __construct(
     SendingErrorHandler $errorHandler,
     SendingThrottlingHandler $throttlingHandler,
@@ -100,6 +105,7 @@ class SendingQueue {
     MailerTask $mailerTask,
     SubscribersRepository $subscribersRepository,
     SendingQueuesRepository $sendingQueuesRepository,
+    EntityManager $entityManager,
     $newsletterTask = false
   ) {
     $this->errorHandler = $errorHandler;
@@ -118,6 +124,7 @@ class SendingQueue {
     $this->scheduledTasksRepository = $scheduledTasksRepository;
     $this->subscribersRepository = $subscribersRepository;
     $this->sendingQueuesRepository = $sendingQueuesRepository;
+    $this->entityManager = $entityManager;
   }
 
   public function process($timer = false) {
@@ -194,8 +201,15 @@ class SendingQueue {
     $this->mailerTask->configureMailer($newsletter);
     // get newsletter segments
     $newsletterSegmentsIds = $newsletterEntity->getSegmentIds();
+    $segmentIdsToCheck = $newsletterSegmentsIds;
+    $filterSegmentId = $newsletterEntity->getFilterSegmentId();
+
+    if (is_int($filterSegmentId)) {
+      $segmentIdsToCheck[] = $filterSegmentId;
+    }
+
     // Pause task in case some of related segments was deleted or trashed
-    if ($newsletterSegmentsIds && !$this->checkDeletedSegments($newsletterSegmentsIds)) {
+    if ($newsletterSegmentsIds && !$this->checkDeletedSegments($segmentIdsToCheck)) {
       $this->loggerFactory->getLogger(LoggerFactory::TOPIC_NEWSLETTERS)->info(
         'pause task in sending queue due deleted or trashed segment',
         ['task_id' => $queue->taskId]
@@ -227,7 +241,17 @@ class SendingQueue {
       );
       if (!empty($newsletterSegmentsIds[0])) {
         // Check that subscribers are in segments
-        $foundSubscribersIds = $this->subscribersFinder->findSubscribersInSegments($subscribersToProcessIds, $newsletterSegmentsIds);
+        try {
+          $foundSubscribersIds = $this->subscribersFinder->findSubscribersInSegments($subscribersToProcessIds, $newsletterSegmentsIds, $filterSegmentId);
+        } catch (InvalidStateException $exception) {
+          $this->loggerFactory->getLogger(LoggerFactory::TOPIC_NEWSLETTERS)->info(
+            'paused task in sending queue due to problem finding subscribers: ' . $exception->getMessage(),
+            ['task_id' => $queue->taskId]
+          );
+          $queue->status = ScheduledTaskEntity::STATUS_PAUSED;
+          $queue->save();
+          return;
+        }
         $foundSubscribers = empty($foundSubscribersIds) ? [] : SubscriberModel::whereIn('id', $foundSubscribersIds)
           ->whereNull('deleted_at')
           ->findMany();
@@ -275,8 +299,12 @@ class SendingQueue {
           $timer
         );
         if (!$isTransactional) {
-          $now = Carbon::createFromTimestamp((int)current_time('timestamp'));
-          $this->subscribersRepository->bulkUpdateLastSendingAt($foundSubscribersIds, $now);
+          $this->entityManager->wrapInTransaction(function() use ($foundSubscribersIds) {
+            $now = Carbon::createFromTimestamp((int)current_time('timestamp'));
+            $this->subscribersRepository->bulkUpdateLastSendingAt($foundSubscribersIds, $now);
+            // We're nullifying this value so these subscribers' engagement score will be recalculated the next time the cron runs
+            $this->subscribersRepository->bulkUpdateEngagementScoreUpdatedAt($foundSubscribersIds, null);
+          });
         }
         $this->loggerFactory->getLogger(LoggerFactory::TOPIC_NEWSLETTERS)->info(
           'after queue chunk processing',

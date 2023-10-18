@@ -18,6 +18,7 @@ class Field extends \WPForms_Field {
 
 		// Define field type information.
 		$this->name     = esc_html__( 'Checkbox Items', 'wpforms-lite' );
+		$this->keywords = esc_html__( 'product, store, ecommerce, pay, payment', 'wpforms-lite' );
 		$this->type     = 'payment-checkbox';
 		$this->icon     = 'fa-check-square-o';
 		$this->order    = 50;
@@ -433,7 +434,7 @@ class Field extends \WPForms_Field {
 			foreach ( $choices as $key => $choice ) {
 
 				$label = isset( $choice['label']['text'] ) ? $choice['label']['text'] : '';
-				/* translators: %s - Choice item number. */
+				/* translators: %s - item number. */
 				$label  = $label !== '' ? $label : sprintf( esc_html__( 'Item %s', 'wpforms-lite' ), $key );
 				$label .= ! empty( $field['show_price_after_labels'] ) && isset( $choice['data']['amount'] ) ? ' - ' . wpforms_format_amount( wpforms_sanitize_amount( $choice['data']['amount'] ), true ) : '';
 
@@ -450,14 +451,18 @@ class Field extends \WPForms_Field {
 							wpforms_html_attributes( $choice['label']['id'], $choice['label']['class'], $choice['label']['data'], $choice['label']['attr'] )  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						);
 
+							echo '<span class="wpforms-image-choices-image">';
+
 							if ( ! empty( $choice['image'] ) ) {
 								printf(
-									'<span class="wpforms-image-choices-image"><img src="%s" alt="%s"%s></span>',
+									'<img src="%s" alt="%s"%s>',
 									esc_url( $choice['image'] ),
 									esc_attr( $choice['label']['text'] ),
 									! empty( $choice['label']['text'] ) ? ' title="' . esc_attr( $choice['label']['text'] ) . '"' : ''
 								);
 							}
+
+							echo '</span>';
 
 							if ( $field['choices_images_style'] === 'none' ) {
 								echo '<br>';

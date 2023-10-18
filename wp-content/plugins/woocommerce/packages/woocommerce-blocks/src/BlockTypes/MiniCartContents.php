@@ -46,6 +46,15 @@ class MiniCartContents extends AbstractBlock {
 	}
 
 	/**
+	 * Get the frontend style handle for this block type.
+	 *
+	 * @return string[]
+	 */
+	protected function get_block_type_style() {
+		return array_merge( parent::get_block_type_style(), [ 'wc-blocks-packages-style' ] );
+	}
+
+	/**
 	 * Render the markup for the Mini-Cart Contents block.
 	 *
 	 * @param array    $attributes Block attributes.
@@ -66,10 +75,12 @@ class MiniCartContents extends AbstractBlock {
 	/**
 	 * Enqueue frontend assets for this block, just in time for rendering.
 	 *
-	 * @param array $attributes  Any attributes that currently are available from the block.
+	 * @param array    $attributes  Any attributes that currently are available from the block.
+	 * @param string   $content    The block content.
+	 * @param WP_Block $block    The block object.
 	 */
-	protected function enqueue_assets( array $attributes ) {
-		parent::enqueue_assets( $attributes );
+	protected function enqueue_assets( array $attributes, $content, $block ) {
+		parent::enqueue_assets( $attributes, $content, $block );
 		$text_color = StyleAttributesUtils::get_text_color_class_and_style( $attributes );
 		$bg_color   = StyleAttributesUtils::get_background_color_class_and_style( $attributes );
 

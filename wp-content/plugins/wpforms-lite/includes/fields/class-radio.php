@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Multiple Choice field.
  *
@@ -16,6 +20,7 @@ class WPForms_Field_Radio extends WPForms_Field {
 
 		// Define field type information.
 		$this->name     = esc_html__( 'Multiple Choice', 'wpforms-lite' );
+		$this->keywords = esc_html__( 'radio', 'wpforms-lite' );
 		$this->type     = 'radio';
 		$this->icon     = 'fa-dot-circle-o';
 		$this->order    = 110;
@@ -146,7 +151,7 @@ class WPForms_Field_Radio extends WPForms_Field {
 
 			$value = isset( $field['show_values'] ) ? $choice['value'] : $choice['label'];
 			/* translators: %s - choice number. */
-			$value = ( '' === $value ) ? sprintf( esc_html__( 'Choice %s', 'wpforms-lite' ), $key ) : $value;
+			$value = ( $value === '' ) ? sprintf( esc_html__( 'Choice %s', 'wpforms-lite' ), $key ) : $value;
 
 			$properties['inputs'][ $key ] = [
 				'container'  => [
@@ -463,14 +468,18 @@ class WPForms_Field_Radio extends WPForms_Field {
 							wpforms_html_attributes( $choice['label']['id'], $choice['label']['class'], $choice['label']['data'], $choice['label']['attr'] )
 						);
 
+							echo '<span class="wpforms-image-choices-image">';
+
 							if ( ! empty( $choice['image'] ) ) {
 								printf(
-									'<span class="wpforms-image-choices-image"><img src="%s" alt="%s"%s></span>',
+									'<img src="%s" alt="%s"%s>',
 									esc_url( $choice['image'] ),
 									esc_attr( $choice['label']['text'] ),
 									! empty( $choice['label']['text'] ) ? ' title="' . esc_attr( $choice['label']['text'] ) . '"' : ''
 								);
 							}
+
+							echo '</span>';
 
 							if ( $field['choices_images_style'] === 'none' ) {
 								echo '<br>';
@@ -624,6 +633,7 @@ class WPForms_Field_Radio extends WPForms_Field {
 					/* translators: %s - choice number. */
 					if ( $field_submit === $choice['label'] || $value_raw === sprintf( esc_html__( 'Choice %s', 'wpforms-lite' ), $key ) ) {
 						$choice_key = $key;
+
 						break;
 					}
 				}

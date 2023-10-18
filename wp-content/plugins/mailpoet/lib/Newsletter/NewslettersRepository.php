@@ -26,6 +26,8 @@ use MailPoet\Entities\StatisticsOpenEntity;
 use MailPoet\Entities\StatisticsWooCommercePurchaseEntity;
 use MailPoet\Entities\StatsNotificationEntity;
 use MailPoet\Logging\LoggerFactory;
+use MailPoet\Util\Helpers;
+use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
 use MailPoetVendor\Doctrine\DBAL\Connection;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
@@ -38,11 +40,16 @@ class NewslettersRepository extends Repository {
   /** @var LoggerFactory */
   private $loggerFactory;
 
+  /** @var WPFunctions */
+  private $wp;
+
   public function __construct(
-    EntityManager $entityManager
+    EntityManager $entityManager,
+    WPFunctions $wp
   ) {
     parent::__construct($entityManager);
     $this->loggerFactory = LoggerFactory::getInstance();
+    $this->wp = $wp;
   }
 
   protected function getEntityClassName() {
@@ -215,10 +222,10 @@ class NewslettersRepository extends Repository {
   }
 
   /**
-   * @param array $segmentIds
+   * @param array $params
    * @return NewsletterEntity[]
    */
-  public function getArchives(array $segmentIds = []) {
+  public function getArchives(array $params = []) {
     $types = [
       NewsletterEntity::TYPE_STANDARD,
       NewsletterEntity::TYPE_NOTIFICATION_HISTORY,
@@ -239,10 +246,37 @@ class NewslettersRepository extends Repository {
       ->setParameter('types', $types)
       ->setParameter('statusCompleted', SendingQueueEntity::STATUS_COMPLETED);
 
+    $segmentIds = $params['segmentIds'] ?? [];
     if (!empty($segmentIds)) {
       $queryBuilder->innerJoin(NewsletterSegmentEntity::class, 'ns', Join::WITH, 'ns.newsletter = n.id')
         ->andWhere('ns.segment IN (:segmentIds)')
         ->setParameter('segmentIds', $segmentIds);
+    }
+
+    $startDate = $params['startDate'] ?? null;
+    if ($startDate instanceof DateTimeInterface) {
+      $queryBuilder
+        ->andWhere('st.processedAt >= :startDate')
+        ->setParameter('startDate', $startDate);
+    }
+
+    $endDate = $params['endDate'] ?? null;
+    if ($endDate instanceof DateTimeInterface) {
+      $queryBuilder
+        ->andWhere('st.processedAt <= :endDate')
+        ->setParameter('endDate', $endDate);
+    }
+
+    $subjectContains = $params['subjectContains'] ?? null;
+    if (is_string($subjectContains)) {
+      $queryBuilder
+        ->andWhere($queryBuilder->expr()->like('n.subject', ':subjectContains'))
+        ->setParameter('subjectContains', '%' . Helpers::escapeSearch($subjectContains) . '%');
+    }
+
+    $limit = $params['limit'] ?? null;
+    if (is_int($limit) && $limit > 0) {
+      $queryBuilder->setMaxResults($limit);
     }
 
     return $queryBuilder->getQuery()->getResult();
@@ -357,10 +391,11 @@ class NewslettersRepository extends Repository {
          WHERE s.`newsletter_id` IN (:ids)
       ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
 
+      // Update WooCommerce statistics and remove newsletter and click id
       $statisticsPurchasesTable = $entityManager->getClassMetadata(StatisticsWooCommercePurchaseEntity::class)->getTableName();
       $entityManager->getConnection()->executeStatement("
-         DELETE s FROM $statisticsPurchasesTable s
-         WHERE s.`newsletter_id` IN (:ids)
+         UPDATE $statisticsPurchasesTable s
+         SET s.`newsletter_id` = 0 WHERE s.`newsletter_id` IN (:ids)
       ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
 
       // Delete newsletter posts
@@ -434,6 +469,18 @@ class NewslettersRepository extends Repository {
          WHERE ns.`newsletter_id` IN (:ids)
       ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
 
+      // Fetch WP Posts IDs and delete them
+      $wpPostsIds = $entityManager->createQueryBuilder()->select('n.wpPostId')
+        ->from(NewsletterEntity::class, 'n')
+        ->where('n.id IN (:ids)')
+        ->andWhere('n.wpPostId IS NOT NULL')
+        ->setParameter('ids', $ids)
+        ->getQuery()->getSingleColumnResult();
+      foreach ($wpPostsIds as $wpPostId) {
+        $this->wp->wpDeletePost(intval($wpPostId), true);
+      }
+
+      // Delete newsletter entities
       $queryBuilder = $entityManager->createQueryBuilder();
       $queryBuilder->delete(NewsletterEntity::class, 'n')
         ->where('n.id IN (:ids)')

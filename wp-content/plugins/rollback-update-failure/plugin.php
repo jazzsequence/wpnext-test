@@ -1,21 +1,21 @@
 <?php
 /**
- * Rollback Update Failure
+ * Rollback Auto Update
  *
  * @package rollback-update-failure
  * @license MIT
  */
 
 /**
- * Plugin Name: Rollback Update Failure
+ * Plugin Name: Rollback Auto Update
  * Author: WP Core Contributors
- * Description: Feature plugin to test plugin/theme update failures and rollback to previous installed packages.
- * Version: 5.3.3
+ * Description: A feature plugin now only for testing Rollback Auto Update, aka Rollback part 3. Manual Rollback of update failures has been committed in WordPress 6.3.
+ * Version: 7.0.3
  * Network: true
  * License: MIT
  * Text Domain: rollback-update-failure
- * Requires PHP: 5.6
- * Requires at least: 6.2
+ * Requires PHP: 7.0
+ * Requires at least: 6.3
  * GitHub Plugin URI: https://github.com/WordPress/rollback-update-failure
  * Primary Branch: main
  */
@@ -29,41 +29,70 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-if ( version_compare( get_bloginfo( 'version' ), '6.2-beta1', '>=' ) ) {
-	define( 'WP_ROLLBACK_MOVE_DIR', true );
-} else {
-	define( 'WP_ROLLBACK_MOVE_DIR', false );
-}
-
-if ( version_compare( get_bloginfo( 'version' ), '6.3-alpha-55720', '>=' ) ) {
-	define( 'WP_ROLLBACK_COMMITTED', true );
-} else {
-	define( 'WP_ROLLBACK_COMMITTED', false );
-}
-
-if ( ! WP_ROLLBACK_MOVE_DIR ) {
+// TODO: update with correct version.
+if ( version_compare( get_bloginfo( 'version' ), '6.5-beta1', '>' ) ) {
 	require_once ABSPATH . 'wp-admin/includes/plugin.php';
 	deactivate_plugins( __FILE__ );
-	return;
 }
 
-if ( ! WP_ROLLBACK_COMMITTED ) {
-	require_once __DIR__ . '/src/wp-admin/includes/class-wp-site-health.php';
-	require_once __DIR__ . '/src/wp-admin/includes/class-plugin-theme-upgrader.php';
-	require_once __DIR__ . '/src/wp-admin/includes/class-wp-upgrader.php';
-	require_once __DIR__ . '/src/wp-includes/update.php';
-}
-
-// Insert at end of wp-admin/includes/class-wp-upgrader.php.
-/** WP_Rollback_Auto_Update class */
-require_once __DIR__ . '/src/wp-admin/includes/class-rollback-auto-update.php';
 require_once __DIR__ . '/src/testing/failure-simulator.php';
 
-add_filter( 'upgrader_source_selection', array( new \WP_Rollback_Auto_Update(), 'set_plugin_upgrader' ), 10, 3 );
-add_filter( 'upgrader_install_package_result', array( new \WP_Rollback_Auto_Update(), 'auto_update_check' ), 15, 2 );
+add_action(
+	'plugins_loaded',
+	function () {
+		require_once \ABSPATH . \WPINC . '/class-wp-error.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-wp-upgrader-skin.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-automatic-upgrader-skin.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-theme-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-core-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-language-pack-upgrader.php';
+
+		// phpcs:disable Squiz.Commenting.ClassComment.Missing,Generic.Files.OneObjectStructurePerFile.MultipleFound
+		class WP_Error extends \WP_Error {}
+		class Automatic_Upgrader_Skin extends \Automatic_Upgrader_Skin {}
+		class Theme_Upgrader extends \Theme_Upgrader {}
+		class Core_Upgrader extends \Core_Upgrader {}
+		class Language_Pack_Upgrader extends \Language_Pack_Upgrader {}
+		// phpcs:enable
+
+		require_once __DIR__ . '/src/wp-admin/includes/class-wp-upgrader.php';
+		require_once __DIR__ . '/src/wp-admin/includes/class-wp-automatic-updater.php';
+		require_once __DIR__ . '/src/wp-admin/includes/class-plugin-upgrader.php';
+
+		remove_action( 'wp_maybe_auto_update', 'wp_maybe_auto_update' );
+		add_action(
+			'wp_maybe_auto_update',
+			function () {
+				if ( ! function_exists( 'wp_is_auto_update_enabled_for_type' ) ) {
+					require_once \ABSPATH . 'wp-admin/includes/update.php';
+				}
+				add_filter( 'upgrader_source_selection', __NAMESPACE__ . '\fix_mangled_source', 10, 4 );
+				$upgrader = new WP_Automatic_Updater();
+				delete_option( 'option_auto_updater.lock' );
+				WP_Upgrader::release_lock( 'auto_updater' );
+				$upgrader->run();
+			}
+		);
+	}
+);
+
 /**
- * TODO: For PR add $this as passed parameter for `upgrader_install_package_result` hook.
+ * Correctly rename dependency for activation.
  *
- * WP_Upgrader::init.
- * add_filter( 'upgrader_install_package_result', array( new \WP_Rollback_Auto_Update(), 'auto_update_check' ), 15, 3 );
+ * @param string      $source        File source location.
+ * @param string      $remote_source Remote file source location.
+ * @param WP_Upgrader $upgrader      WP_Upgrader instance.
+ * @param array       $hook_extra    Extra arguments passed to hooked filters.
+ * @return string
  */
+function fix_mangled_source( $source, $remote_source, $upgrader, $hook_extra ) {
+	if ( isset( $hook_extra['temp_backup']['slug'] ) ) {
+		$new_source = trailingslashit( $remote_source ) . $hook_extra['temp_backup']['slug'];
+		move_dir( $source, $new_source, true );
+
+		return trailingslashit( $new_source );
+	}
+
+	return $source;
+}

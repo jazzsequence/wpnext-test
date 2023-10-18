@@ -2,6 +2,10 @@
 
 namespace WPForms\Logger;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use WP_List_Table;
 
 if ( ! class_exists( 'WP_List_Table' ) ) {
@@ -304,7 +308,7 @@ class ListTable extends WP_List_Table {
 				<?php if ( $this->get_request_search_query() ) { ?>
 					<span class="subtitle">
 				<?php
-				echo sprintf( /* translators: %s: search query. */
+				echo sprintf( /* translators: %s - search query. */
 					esc_html__( 'Search results for "%s"', 'wpforms-lite' ),
 					esc_html( $this->get_request_search_query() )
 				);

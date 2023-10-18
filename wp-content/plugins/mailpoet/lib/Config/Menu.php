@@ -28,6 +28,7 @@ use MailPoet\AdminPages\Pages\Upgrade;
 use MailPoet\AdminPages\Pages\WelcomeWizard;
 use MailPoet\AdminPages\Pages\WooCommerceSetup;
 use MailPoet\DI\ContainerWrapper;
+use MailPoet\EmailEditor\Integrations\MailPoet\EmailEditor;
 use MailPoet\Form\Util\CustomFonts;
 use MailPoet\Util\License\License;
 use MailPoet\WP\Functions as WPFunctions;
@@ -114,6 +115,8 @@ class Menu {
   }
 
   public function setup() {
+    global $parent_file;
+    $parent_file = self::EMAILS_PAGE_SLUG;
     if (!$this->accessControl->validatePermission(AccessControl::PERMISSION_ACCESS_PLUGIN_ADMIN)) return;
 
     $this->router->checkRedirects();
@@ -327,14 +330,6 @@ class Menu {
       ]
     );
 
-    // add body class for form editor page
-    $this->wp->addAction('load-' . $formTemplateSelectionEditorPage, function() {
-      $this->wp->addFilter('admin_body_class', function ($classes) {
-        return ltrim($classes . ' block-editor-page');
-      });
-    });
-
-
     // Subscribers page
     $subscribersPage = $this->wp->addSubmenuPage(
       self::MAIN_PAGE_SLUG,
@@ -515,7 +510,11 @@ class Menu {
   private function registerAutomationMenu() {
     $parentSlug = self::MAIN_PAGE_SLUG;
     // Automations menu is hidden when the subscription is part of a bundle and AutomateWoo is active but pages can be accessed directly
-    if ($this->wp->isPluginActive('automatewoo/automatewoo.php') && $this->servicesChecker->isBundledSubscription()) {
+    $showAutomations = !($this->wp->isPluginActive('automatewoo/automatewoo.php') &&
+      $this->servicesChecker->isBundledSubscription());
+    if (
+      !$this->wp->applyFilters('mailpoet_show_automations', $showAutomations)
+    ) {
       $parentSlug = '';
     }
 
@@ -679,12 +678,18 @@ class Menu {
   }
 
   public function highlightNestedMailPoetSubmenus($parentFile) {
-    global $plugin_page, $submenu;
+    global $plugin_page, $submenu, $submenu_file;
 
     $page = $this->getPageFromContext();
     if ($page) {
       $plugin_page = $page;
       return $parentFile;
+    }
+
+    if ($this->checkIsGutenbergEmailEditorPage()) {
+      $plugin_page = self::EMAILS_PAGE_SLUG;
+      $submenu_file = self::EMAILS_PAGE_SLUG;
+      return self::EMAILS_PAGE_SLUG;
     }
 
     if ($parentFile === self::MAIN_PAGE_SLUG || !self::isOnMailPoetAdminPage()) {
@@ -791,5 +796,9 @@ class Menu {
       return self::AUTOMATIONS_PAGE_SLUG;
     }
     return null;
+  }
+
+  private function checkIsGutenbergEmailEditorPage(): bool {
+    return $this->wp->getPostType() === EmailEditor::MAILPOET_EMAIL_POST_TYPE;
   }
 }

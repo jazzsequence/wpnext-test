@@ -1,9 +1,9 @@
 === MailPoet - Newsletters, Email Marketing, and Automation ===
 Contributors: mailpoet, woocommerce, automattic
 Tags: email, email marketing, post notification, woocommerce emails, email automation, newsletter, newsletter builder, newsletter subscribers
-Requires at least: 6.0
-Tested up to: 6.2
-Stable tag: 4.22.0
+Requires at least: 6.2
+Tested up to: 6.3
+Stable tag: 4.32.0
 Requires PHP: 7.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -18,7 +18,7 @@ Our newsletter builder integrates perfectly with WordPress so any website owner 
 
 Schedule your newsletters, send them right away, or set up new blog post notifications to send automatically, in just a few clicks.
 
-Trusted by 600,000 WordPress websites since 2011.
+Trusted by 700,000 WordPress websites since 2011.
 
 **With a free plan for up to 1,000 subscribers, and scaling paid plans with enhanced functionality available, MailPoet is an email marketing solution suitable for both beginners and proficient email marketers.**
 
@@ -152,7 +152,7 @@ To improve user experience, MailPoet may use the following 3rd party libraries i
 
 * Google Fonts - used in Form Editor which you can use to customize your forms, and in the Email Editor to style emails. This can be individually [disabled by a filter](https://kb.mailpoet.com/article/332-how-to-disable-google-fonts)
 
-* HelpScout - used to show help tooltips throughout the plugin, easily access documentation, and contact our customer support team. This functionality may load scripts from [https://beacon-v2.helpscout.net/](https://beacon-v2.helpscout.net/)
+* DocsBot - used for searching in Knowledge Base with the help of AI. This functionality may load scripts from [https://widget.docsbot.ai/chat.js](https://widget.docsbot.ai/chat.js)
 
 * Mixpanel - used to send data about the usage of the MailPoet plugin when you [agree with sharing usage data with us](https://kb.mailpoet.com/article/130-sharing-your-data-with-us)
 
@@ -218,6 +218,94 @@ Check our [Knowledge Base](https://kb.mailpoet.com) or contact us through our [s
 6. WooCommerce emails
 
 == Changelog ==
+
+= 4.32.0 - 2023-10-16 =
+* Added: option to create new segment from the send page;
+* Improved: more robust checks when running migrations;
+* Fixed: in some cases there was no default condition when creating new segment.
+
+= 4.31.1 - 2023-10-13 =
+* Fixes: When editing a newsletter the media dialog did not open in some cases.
+
+= 4.31.0 - 2023-10-09 =
+* Added: show segment filter on email listing and stats pages;
+* Added: automation title on the analytics page;
+* Added: apply segment on top of lists on the send email page;
+* Improved: deferred loading of JS on frontend;
+* Improved: new WordPress-like design when adding or editing a segment;
+* Fixed: plugin conflict with Kubio site builder.
+
+= 4.30.0 - 2023-10-03 =
+* Updated: npm dependencies;
+* Fixed: typo in message when creating a segment;
+* Fixed: The automation filter for products works now also with variable products;
+* Fixed: in some themes, pop-up form on mobiles is larger than the screen;
+* Fixed: occasionally, when a different plugin is installed, website redirects to MailPoet landing page.
+
+= 4.29.0 - 2023-09-26 =
+* Added: a filter to remove restrictions on Woo Express;
+* Added: "buys from a category" trigger in automations;
+* Added: "buys a product" trigger in automations;
+* Improved: more robust migrations for automation tables;
+* Improved: skip migration of WooCommerce-related tables, if WooCommerce is no installed;
+* Improved: the premium plugin is now downloaded and installed instead of downloading a .zip file;
+* Fixed: deleting newsletters with relations to WooCommerce purchase stats;
+* Fixed: email editor breaks when the store has many coupons.
+
+= 4.28.0 - 2023-09-18 =
+* Fixed: in Styles section in email editor, titles overflow to 2nd line;
+* Fixed: blocked sending after deactivating a welcome email;
+* Fixed: two 100% input fields in two column layout don't occupy the full row in form editor.
+* Added: templates when creating a new segment
+
+= 4.27.0 - 2023-09-11 =
+* Improved: [mailpoet_archive] is now filterable (start_date, end_date, in_the_last_days, subject_contains, limit);
+* Improved: run migrations with lower priority to minimize conflitcs with 3rd-party plugins;
+* Changed: "Someone subscribes" automation is no longer triggered by editing a subscriber;
+* Fixed: can't type letter 'n' in chat bot on WordPress.com.
+
+= 4.26.1 - 2023-09-04 =
+* Added: see subscriber stats in the last 30 days, 12 months, and lifetime;
+* Added: compatibility with databases with sql_require_primary_key turned on;
+* Improved: pre-fill "From name" in the onboarding wizard.
+
+= 4.26.0 - 2023-08-28 =
+* Fixed: error "Objects are not valid as a React child" when the premium plugin version is incompatible;
+* Fixed: edge case that could lead to inactive subscribers tasks being blocked in some circumstances;
+* Fixed: incompatibility between the button to close form pop-ups and some themes.
+
+= 4.25.0 - 2023-08-21 =
+* Added: "is blank" and "is not blank" option for custom field segments;
+* Updated: minimum required WordPress version to 6.2 and WooCommerce version to 7.9;
+* Improved: add option to segment used shipping/payment method over all time, not just a specific timeframe;
+* Fixed: email previews in automations showing outdated content;
+* Fixed: filtering subscribers by list and by status doesn't work.
+
+= 4.24.0 - 2023-08-14 =
+* Added: detailed Automation analytics;
+* Added: "used coupon code" segment;
+* Improved: visually align checkboxes in the onboarding wizard;
+* Improved: subscriber engagement score is now recalculated when the underlying data change;
+* Improved: save/update automation button unified with WordPress post editor (including keyboard shortcut);
+* Changed: 3rd-party service to contact support;
+* Changed: when filtering automation trigger by a product category, it will include children categories;
+* Fixed: automation using "is first order" filter fails to trigger for some guest customers;
+* Fixed: tutorial button overlays save button when editing order automation email.
+
+= 4.23.0 - 2023-08-08 =
+* Added: a notice when paid features are available but the premium plugin is not installed;
+* Added: "number of reviews" segment;
+* Improved: fall back to admin email when setting up MailPoet;
+* Improved: messaging when the free 1,000 contacts limit is reached.
+
+= 4.22.2 - 2023-08-02 =
+* Fixed: error of the subscribedDate filter introduced in MailPoet 4.22.1.
+
+= 4.22.1 - 2023-07-31 =
+* Added: segments containing "in the last X days" now also include "over all time" option;
+* Added: new segments for last engagement/purchase/open/click/page view/sending date;
+* Improved: header and footer on form template selection page;
+* Improved: onboarding message explaining the use of 3rd-party libraries.
 
 = 4.22.0 - 2023-07-25 =
 * Added: "on or after" and "on or before" options to date-based segments;
@@ -1605,7 +1693,7 @@ Check our [Knowledge Base](https://kb.mailpoet.com) or contact us through our [s
 
 = 3.34.0 - 2019-07-30 =
 * Added: track all WooCommerce revenues generated by your newsletters;
-* Added: zero-configuration captcha to protect Mailpoet forms against repeated subscriptions by bots;
+* Added: zero-configuration captcha to protect MailPoet forms against repeated subscriptions by bots;
 * Added: stats email notifications for all automatic emails;
 * Improved: education of list hygiene on import;
 * Improved: inactive subscriber filtering based on last day subscribed;
@@ -1766,7 +1854,7 @@ Check our [Knowledge Base](https://kb.mailpoet.com) or contact us through our [s
 * Improved: TinyMCE is hidden on mouse drag;
 * Improved: block and widget controls are hidden on mouse drag;
 * Fixed: cursor position does not get lost with long text on Chrome;
-* Fixed: Mailpoet icon in the Members plugin looks good again.
+* Fixed: MailPoet icon in the Members plugin looks good again.
 
 = 3.19.1 - 2019-02-12 =
 * Added: warning against using free email address in "from" fields;
@@ -1951,7 +2039,7 @@ Check our [Knowledge Base](https://kb.mailpoet.com) or contact us through our [s
 * Fixed: slow sending on sites with a lot of sent newsletters.
 
 = 3.8.4 - 2018-08-07 =
-* Added: activation prompt for Mailpoet Sending Service when API key is verified;
+* Added: activation prompt for MailPoet Sending Service when API key is verified;
 * Added: next scheduled tasks now display in sending queue status;
 * Added: new additional save button to the top of editor page;
 

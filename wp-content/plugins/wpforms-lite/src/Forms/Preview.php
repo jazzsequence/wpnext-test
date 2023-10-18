@@ -126,7 +126,7 @@ class Preview {
 	public function the_title( $title ) {
 
 		if ( in_the_loop() ) {
-			$title = sprintf( /* translators: %s - form title. */
+			$title = sprintf( /* translators: %s - form name. */
 				esc_html__( '%s Preview', 'wpforms-lite' ),
 				! empty( $this->form_data['settings']['form_title'] ) ? sanitize_text_field( $this->form_data['settings']['form_title'] ) : esc_html__( 'Form', 'wpforms-lite' )
 			);
@@ -152,6 +152,8 @@ class Preview {
 			return '';
 		}
 
+		$admin_url = admin_url( 'admin.php' );
+
 		$links = [];
 
 		if ( wpforms_current_user_can( 'edit_form_single', $this->form_data['id'] ) ) {
@@ -163,7 +165,7 @@ class Preview {
 							'view'    => 'fields',
 							'form_id' => absint( $this->form_data['id'] ),
 						],
-						admin_url( 'admin.php' )
+						$admin_url
 					)
 				),
 				'text' => esc_html__( 'Edit Form', 'wpforms-lite' ),
@@ -179,11 +181,29 @@ class Preview {
 							'view'    => 'list',
 							'form_id' => absint( $this->form_data['id'] ),
 						],
-						admin_url( 'admin.php' )
+						$admin_url
 					)
 				),
 				'text' => esc_html__( 'View Entries', 'wpforms-lite' ),
 			];
+		}
+
+		if (
+			wpforms_current_user_can( wpforms_get_capability_manage_options(), $this->form_data['id'] ) &&
+			wpforms()->get( 'payment' )->get_by( 'form_id', $this->form_data['id'] )
+		) {
+				$links[] = [
+					'url'  => esc_url(
+						add_query_arg(
+							[
+								'page'    => 'wpforms-payments',
+								'form_id' => absint( $this->form_data['id'] ),
+							],
+							$admin_url
+						)
+					),
+					'text' => esc_html__( 'View Payments', 'wpforms-lite' ),
+				];
 		}
 
 		if ( ! empty( $_GET['new_window'] ) ) { // phpcs:ignore
@@ -264,7 +284,7 @@ class Preview {
 	 */
 	public function smart_tags_process_page_title_value( $content, $form_data, $fields, $entry_id, $smart_tag_object ) {
 
-		return sprintf( /* translators: %s - form title. */
+		return sprintf( /* translators: %s - form name. */
 			esc_html__( '%s Preview', 'wpforms-lite' ),
 			! empty( $form_data['settings']['form_title'] ) ? sanitize_text_field( $form_data['settings']['form_title'] ) : esc_html__( 'Form', 'wpforms-lite' )
 		);

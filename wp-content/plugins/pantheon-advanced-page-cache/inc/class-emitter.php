@@ -132,8 +132,8 @@ class Emitter {
 	 */
 	public static function filter_rest_post_dispatch( $result, $server ) {
 		$keys = self::get_rest_api_surrogate_keys();
-		if ( ! empty( $keys ) ) {
-			$server->send_header( self::HEADER_KEY, implode( ' ', $keys ) );
+		if ( ! empty( $keys ) && $result instanceof \WP_REST_Response ) {
+			$result->header( self::HEADER_KEY, implode( ' ', $keys ) );
 		}
 		return $result;
 	}
@@ -241,10 +241,25 @@ class Emitter {
 		if ( ! empty( $wp_query->posts ) ) {
 			foreach ( $wp_query->posts as $p ) {
 				$keys[] = 'post-' . $p->ID;
-				if ( $wp_query->is_singular() || $wp_query->is_page() ) {
+				if ( $wp_query->is_singular() ) {
 					if ( post_type_supports( $p->post_type, 'author' ) ) {
 						$keys[] = 'post-user-' . $p->post_author;
 					}
+
+					/**
+					 * Filter pantheon_should_add_terms
+					 * Gives the option to skip taxonomy terms for a given post
+					 *
+					 * @param $add_terms whether or not to create surrogate keys for a given post's taxonomy terms.
+					 * @param $wp_query the full WP_Query object.
+					 * @return bool
+					 * usage: add_filter( 'pantheon_should_add_terms',"__return_false", 10, 2);
+					 */
+					$add_terms = apply_filters( 'pantheon_should_add_terms', true, $wp_query );
+					if ( ! $add_terms ) {
+						continue;
+					}
+
 					foreach ( get_object_taxonomies( $p ) as $tax ) {
 						$terms = get_the_terms( $p->ID, $tax );
 						if ( $terms && ! is_wp_error( $terms ) ) {
@@ -257,7 +272,7 @@ class Emitter {
 			}
 		}
 
-		if ( is_singular() || is_page() ) {
+		if ( is_singular() ) {
 			$keys[] = 'single';
 			if ( is_attachment() ) {
 				$keys[] = 'attachment';
@@ -266,7 +281,15 @@ class Emitter {
 			$keys[] = 'archive';
 			if ( is_post_type_archive() ) {
 				$keys[] = 'post-type-archive';
-				$keys[] = get_query_var( 'post_type' ) . '-archive';
+				$post_types = get_query_var( 'post_type' );
+				// If multiple post types are queried, create a surrogate key for each.
+				if ( is_array( $post_types ) ) {
+					foreach ( $post_types as $post_type ) {
+						$keys[] = "$post_type-archive";
+					}
+				} else {
+					$keys[] = "$post_types-archive";
+				}
 			} elseif ( is_author() ) {
 				$user_id = get_queried_object_id();
 				if ( $user_id ) {
@@ -353,7 +376,7 @@ class Emitter {
 		// Sort by the output length of the key category.
 		uasort(
 			$keycats,
-			function( $a, $b ) {
+			function ( $a, $b ) {
 				$ca = strlen( implode( ' ', $a ) );
 				$cb = strlen( implode( ' ', $b ) );
 				if ( $ca === $cb ) {
