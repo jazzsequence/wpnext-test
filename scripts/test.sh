@@ -33,4 +33,7 @@ echo "Running tests..."
 ./scripts/behat-test.sh
 
 # Clean up the tests
+echo "Cleaning up tests..."
 "$BEHAT_PATH"/cleanup.sh
+# Delete the local copy of the test script.
+[ -f ./behat-test.sh ] && rm ./scripts/behat-test.sh || echo "No local copy found to delete."
