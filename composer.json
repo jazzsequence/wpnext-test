@@ -35,6 +35,7 @@
             "bash ./scripts/update-pre-load.sh"
         ],
         "test": [
+            "Composer\\Config::disableProcessTimeout",
             "bash ./scripts/test.sh"
         ]
     }
