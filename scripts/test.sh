@@ -21,6 +21,10 @@ BEHAT_PATH="./vendor/pantheon-systems/pantheon-wordpress-upstream-tests"
 echo "Preparing tests..."
 "$BEHAT_PATH"/prepare.sh
 
+echo "Setting up the test environment..."
+terminus wp "$SITE_ENV" -- plugin delete --all
+terminus wp "$SITE_ENV" -- plugin install akismet hello-dolly
+
 # Run the tests
 echo "Running tests..."
 ./scripts/behat-test.sh
