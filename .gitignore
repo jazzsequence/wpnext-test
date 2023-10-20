@@ -37,6 +37,7 @@ pantheon.upstream.yml
 *.zip
 *.tgz
 !wp-includes/**/*.gz
+vendor/
 
 # Logs and databases #
 ######################
