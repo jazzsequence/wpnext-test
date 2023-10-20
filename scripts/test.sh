@@ -18,10 +18,19 @@ fi
 BEHAT_PATH="./vendor/pantheon-systems/pantheon-wordpress-upstream-tests"
 
 # Prepare the tests
+echo "Preparing tests..."
 "$BEHAT_PATH"/prepare.sh
 
+# Copy the test to run locally...
+echo "Copying test script..."
+cp "$BEHAT_PATH/test.sh" ./scripts/behat-test.sh || exit 1
+# Modify the temporary script file to include the sessions configuration
+echo "Modifying test script..."
+sed -i '' -e 's|"base_url" : "http://'"$TERMINUS_ENV"'-'"$TERMINUS_SITE"'.pantheonsite.io"}|&,"sessions": {"default": {"goutte": null}}}|' ./scripts/behat-test.sh || exit 1
+
 # Run the tests
-"$BEHAT_PATH"/test.sh
+echo "Running tests..."
+./scripts/behat-test.sh
 
 # Clean up the tests
 "$BEHAT_PATH"/cleanup.sh
