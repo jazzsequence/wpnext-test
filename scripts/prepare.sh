@@ -13,10 +13,14 @@ if [ -z "$TERMINUS_SITE" ] || [ -z "$TERMINUS_ENV" ]; then
 	exit 1
 fi
 
-###
-# Create a new environment for this particular test run.
-###
-terminus env:create $TERMINUS_SITE.test-base $TERMINUS_ENV
+# Only run multidev creation if the TERMINUS_ENV is 'behat'.
+if [ "$TERMINUS_ENV" == 'behat' ]; then
+	###
+	# Create a new environment for this particular test run.
+	###
+	terminus env:create $TERMINUS_SITE.test-base $TERMINUS_ENV
+fi
+
 terminus env:wipe $SITE_ENV --yes
 
 ###
