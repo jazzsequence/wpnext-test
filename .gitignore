@@ -16,6 +16,9 @@ wp-content/wp-cache-config.php
 sitemap.xml
 sitemap.xml.gz
 
+# WordPress plugins managed by Composer
+wp-content/plugins/wordpress-importer
+
 # @TODO writable paths
 wp-content/cache/
 wp-content/backups/
