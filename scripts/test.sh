@@ -35,3 +35,11 @@ echo "Preparing tests..."
 # Run the tests
 echo "Running tests..."
 ./scripts/behat-test.sh
+
+# Cleanup the tests
+echo "Cleaning up tests..."
+if [ -z "$MULTIDEV_ARG" ]; then
+    "$BEHAT_PATH/cleanup.sh"
+else
+    terminus connection:set -n $SITE_ENV git
+fi
