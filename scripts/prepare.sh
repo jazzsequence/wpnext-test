@@ -25,7 +25,14 @@ else
 		exit 1
 	fi
 
+	# Never run this directly on dev.
+	if [ "$TERMINUS_ENV" == 'dev' || "$TERMINUS_ENV" == 'master' ]; then
+		echo "You cannot run this script on the dev environment."
+		exit 1
+	fi
+
 	# If it does exist, make sure there are no plugins that the tests don't expect.
+	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 	terminus wp $SITE_ENV -- plugin delete --all
 	terminus wp $SITE_ENV -- plugin install akismet hello-dolly
 fi
