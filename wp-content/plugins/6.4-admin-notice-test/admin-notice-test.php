@@ -18,7 +18,7 @@ function do_admin_notice() {
 		__( '6.4 Admin notice' ),
 		[
 			'type' => 'warning',
-			'dismissable' => true,
+			'dismissible' => true,
 			'additional_classes' => [ 'pantheon', 'pantheon-notice', '6.4-notice' ],
 			'attributes' => [ 'data-slug' => 'pantheon-admin-notice' ]
 		]
