@@ -13,13 +13,18 @@ if [ -z "$TERMINUS_SITE" ] || [ -z "$TERMINUS_ENV" ]; then
 	exit 1
 fi
 
+###
+# Switch to SFTP mode so the site can install plugins and themes
+###
+terminus connection:set -n $SITE_ENV sftp
+
 # Only run multidev creation if the TERMINUS_ENV is 'behat'.
 if [ "$TERMINUS_ENV" == 'behat' ]; then
 	# Create a new environment for this particular test run.
 	terminus env:create $TERMINUS_SITE.test-base $TERMINUS_ENV
 else
 	# If the environment was specified, make sure it exists.
-	$env_exists=$(terminus env:info $SITE_ENV )
+	env_exists=$(terminus env:info $SITE_ENV)
 	if [ -z "$env_exists" ]; then
 		echo "Environment $TERMINUS_ENV does not exist."
 		exit 1
@@ -46,8 +51,3 @@ PANTHEON_GIT_URL=$(terminus connection:info $SITE_ENV --field=git_url)
 PANTHEON_SITE_URL="$TERMINUS_ENV-$TERMINUS_SITE.pantheonsite.io"
 PREPARE_DIR="/tmp/$TERMINUS_ENV-$TERMINUS_SITE"
 BASH_DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-###
-# Switch to SFTP mode so the site can install plugins and themes
-###
-terminus connection:set -n $SITE_ENV sftp
