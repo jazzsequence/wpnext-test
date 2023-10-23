@@ -9,3 +9,5 @@
  *
  * @package pantheon
  */
+
+define( 'PANTHEON_MU_PLUGIN_VERSION', '1.2.0' );
