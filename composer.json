@@ -11,6 +11,13 @@
     ],
     "minimum-stability": "dev",
     "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org",
+            "only": ["wpackagist-plugin/*", "wpackagist-theme/*"]
+        }
+    ],
     "extra": {
         "installer-paths": {
             "wp-content/mu-plugins/{$name}/": ["type:wordpress-muplugin", "pantheon-systems/pantheon-mu-plugin"],
@@ -23,7 +30,8 @@
         "pantheon-systems/pantheon-mu-plugin": "*",
         "humanmade/wordpress-importer": "dev-master",
         "pantheon-systems/pantheon-wordpress-upstream-tests": "dev-master",
-        "pantheon-systems/customer-secrets-php-sdk": "^1.0"
+        "pantheon-systems/customer-secrets-php-sdk": "^1.0",
+        "wpackagist-plugin/test-reports": "^1.0"
     },
     "config": {
         "allow-plugins": {
