@@ -18,6 +18,7 @@ sitemap.xml.gz
 
 # WordPress plugins managed by Composer
 wp-content/plugins/wordpress-importer
+wp-content/plugins/test-reports
 
 # @TODO writable paths
 wp-content/cache/
