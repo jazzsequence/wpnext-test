@@ -653,7 +653,8 @@ function has_blocks( $post = null ) {
  *
  * This test optimizes for performance rather than strict accuracy, detecting
  * whether the block type exists but not validating its structure and not checking
- * reusable blocks. For strict accuracy, you should use the block parser on post content.
+ * synced patterns (formerly called reusable blocks). For strict accuracy,
+ * you should use the block parser on post content.
  *
  * @since 5.0.0
  *
@@ -757,6 +758,8 @@ function get_hooked_blocks() {
  * where it will inject the `theme` attribute into all Template Part blocks, and prepend the markup for
  * any blocks hooked `before` the given block and as its parent's `first_child`, respectively.
  *
+ * This function is meant for internal use only.
+ *
  * @since 6.4.0
  * @access private
  *
@@ -773,12 +776,12 @@ function make_before_block_visitor( $hooked_blocks, $context ) {
 	 * Furthermore, prepend the markup for any blocks hooked `before` the given block and as its parent's
 	 * `first_child`, respectively, to the serialized markup for the given block.
 	 *
-	 * @param array $block        The block to inject the theme attribute into, and hooked blocks before.
-	 * @param array $parent_block The parent block of the given block.
-	 * @param array $prev         The previous sibling block of the given block.
+	 * @param array $block        The block to inject the theme attribute into, and hooked blocks before. Passed by reference.
+	 * @param array $parent_block The parent block of the given block. Passed by reference. Default null.
+	 * @param array $prev         The previous sibling block of the given block. Default null.
 	 * @return string The serialized markup for the given block, with the markup for any hooked blocks prepended to it.
 	 */
-	return function ( &$block, $parent_block = null, $prev = null ) use ( $hooked_blocks, $context ) {
+	return function ( &$block, &$parent_block = null, $prev = null ) use ( $hooked_blocks, $context ) {
 		_inject_theme_attribute_in_template_part_block( $block );
 
 		$markup = '';
@@ -831,6 +834,8 @@ function make_before_block_visitor( $hooked_blocks, $context ) {
  * where it will append the markup for any blocks hooked `after` the given block and as its parent's
  * `last_child`, respectively.
  *
+ * This function is meant for internal use only.
+ *
  * @since 6.4.0
  * @access private
  *
@@ -846,12 +851,12 @@ function make_after_block_visitor( $hooked_blocks, $context ) {
 	 * Append the markup for any blocks hooked `after` the given block and as its parent's
 	 * `last_child`, respectively, to the serialized markup for the given block.
 	 *
-	 * @param array $block        The block to inject the hooked blocks after.
-	 * @param array $parent_block The parent block of the given block.
-	 * @param array $next         The next sibling block of the given block.
+	 * @param array $block        The block to inject the hooked blocks after. Passed by reference.
+	 * @param array $parent_block The parent block of the given block. Passed by reference. Default null.
+	 * @param array $next         The next sibling block of the given block. Default null.
 	 * @return string The serialized markup for the given block, with the markup for any hooked blocks appended to it.
 	 */
-	return function ( &$block, $parent_block = null, $next = null ) use ( $hooked_blocks, $context ) {
+	return function ( &$block, &$parent_block = null, $next = null ) use ( $hooked_blocks, $context ) {
 		$markup = '';
 
 		$relative_position  = 'after';
@@ -1028,7 +1033,10 @@ function serialize_blocks( $blocks ) {
  * This function should be used when there is a need to modify the saved block, or to inject markup
  * into the return value. Prefer `serialize_block` when preparing a block to be saved to post content.
  *
+ * This function is meant for internal use only.
+ *
  * @since 6.4.0
+ * @access private
  *
  * @see serialize_block()
  *
@@ -1058,22 +1066,24 @@ function traverse_and_serialize_block( $block, $pre_callback = null, $post_callb
 
 				$block_content .= call_user_func_array(
 					$pre_callback,
-					array( &$inner_block, $block, $prev )
+					array( &$inner_block, &$block, $prev )
 				);
 			}
-
-			$block_content .= traverse_and_serialize_block( $inner_block, $pre_callback, $post_callback );
 
 			if ( is_callable( $post_callback ) ) {
 				$next = count( $block['innerBlocks'] ) - 1 === $block_index
 					? null
 					: $block['innerBlocks'][ $block_index + 1 ];
 
-				$block_content .= call_user_func_array(
+				$post_markup = call_user_func_array(
 					$post_callback,
-					array( &$inner_block, $block, $next )
+					array( &$inner_block, &$block, $next )
 				);
 			}
+
+			$block_content .= traverse_and_serialize_block( $inner_block, $pre_callback, $post_callback );
+			$block_content .= isset( $post_markup ) ? $post_markup : '';
+
 			++$block_index;
 		}
 	}
@@ -1108,7 +1118,10 @@ function traverse_and_serialize_block( $block, $pre_callback = null, $post_callb
  * This function should be used when there is a need to modify the saved blocks, or to inject markup
  * into the return value. Prefer `serialize_blocks` when preparing blocks to be saved to post content.
  *
+ * This function is meant for internal use only.
+ *
  * @since 6.4.0
+ * @access private
  *
  * @see serialize_blocks()
  *
@@ -1122,7 +1135,9 @@ function traverse_and_serialize_block( $block, $pre_callback = null, $post_callb
  * @return string Serialized block markup.
  */
 function traverse_and_serialize_blocks( $blocks, $pre_callback = null, $post_callback = null ) {
-	$result = '';
+	$result       = '';
+	$parent_block = null; // At the top level, there is no parent block to pass to the callbacks; yet the callbacks expect a reference.
+
 	foreach ( $blocks as $index => $block ) {
 		if ( is_callable( $pre_callback ) ) {
 			$prev = 0 === $index
@@ -1131,22 +1146,23 @@ function traverse_and_serialize_blocks( $blocks, $pre_callback = null, $post_cal
 
 			$result .= call_user_func_array(
 				$pre_callback,
-				array( &$block, null, $prev ) // At the top level, there is no parent block to pass to the callback.
+				array( &$block, &$parent_block, $prev )
 			);
 		}
-
-		$result .= traverse_and_serialize_block( $block, $pre_callback, $post_callback );
 
 		if ( is_callable( $post_callback ) ) {
 			$next = count( $blocks ) - 1 === $index
 				? null
 				: $blocks[ $index + 1 ];
 
-			$result .= call_user_func_array(
+			$post_markup = call_user_func_array(
 				$post_callback,
-				array( &$block, null, $next ) // At the top level, there is no parent block to pass to the callback.
+				array( &$block, &$parent_block, $next )
 			);
 		}
+
+		$result .= traverse_and_serialize_block( $block, $pre_callback, $post_callback );
+		$result .= isset( $post_markup ) ? $post_markup : '';
 	}
 
 	return $result;
