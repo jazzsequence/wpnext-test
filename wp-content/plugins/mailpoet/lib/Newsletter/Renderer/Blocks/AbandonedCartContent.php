@@ -9,7 +9,7 @@ use MailPoet\AutomaticEmails\WooCommerce\Events\AbandonedCart;
 use MailPoet\AutomaticEmails\WooCommerce\WooCommerce as WooCommerceEmail;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\NewsletterOptionEntity;
-use MailPoet\Tasks\Sending as SendingTask;
+use MailPoet\Entities\SendingQueueEntity;
 
 class AbandonedCartContent {
   /** @var AutomatedLatestContentBlock  */
@@ -25,7 +25,7 @@ class AbandonedCartContent {
     NewsletterEntity $newsletter,
     array $args,
     bool $preview = false,
-    SendingTask $sendingTask = null
+    SendingQueueEntity $sendingQueue = null
   ): array {
     if (
       !in_array(
@@ -41,11 +41,13 @@ class AbandonedCartContent {
       // Do not display the block if not an automatic email
       return [];
     }
-    $groupOption = $newsletter->getOptions()->filter(function (NewsletterOptionEntity $newsletterOption) {
+    $groupOption = $newsletter->getOptions()->filter(function (NewsletterOptionEntity $newsletterOption = null) {
+      if (!$newsletterOption) return false;
       $optionField = $newsletterOption->getOptionField();
       return $optionField && $optionField->getName() === 'group';
     })->first();
-    $eventOption = $newsletter->getOptions()->filter(function (NewsletterOptionEntity $newsletterOption) {
+    $eventOption = $newsletter->getOptions()->filter(function (NewsletterOptionEntity $newsletterOption = null) {
+      if (!$newsletterOption) return false;
       $optionField = $newsletterOption->getOptionField();
       return $optionField && $optionField->getName() === 'event';
     })->first();
@@ -60,11 +62,11 @@ class AbandonedCartContent {
       // Display latest products for preview (no 'posts' argument specified)
       return $this->ALCBlock->render($newsletter, $args);
     }
-    if (!($sendingTask instanceof SendingTask)) {
+    if (!$sendingQueue) {
       // Do not display the block if we're not sending an email
       return [];
     }
-    $meta = $sendingTask->getMeta();
+    $meta = $sendingQueue->getMeta();
     if (empty($meta[AbandonedCart::TASK_META_NAME])) {
       // Do not display the block if a cart is empty
       return [];

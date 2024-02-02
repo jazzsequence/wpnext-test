@@ -371,7 +371,15 @@ class NewslettersRepository extends Repository {
     $childrenIds = $this->fetchChildrenIds($ids);
     $ids = array_merge($ids, $childrenIds);
 
-    $this->entityManager->transactional(function (EntityManager $entityManager) use ($ids) {
+    $isRelatedNewsletterToBeDeleted = function($entity) use ($ids): bool {
+      if (is_string($entity) || !method_exists($entity, 'getNewsletter')) {
+        return false;
+      }
+      $newsletter = $entity->getNewsletter();
+      $newsletterId = $newsletter ? $newsletter->getId() : null;
+      return in_array($newsletterId, $ids, true);
+    };
+    $this->entityManager->transactional(function (EntityManager $entityManager) use ($ids, $isRelatedNewsletterToBeDeleted) {
       // Delete statistics data
       $newsletterStatisticsTable = $entityManager->getClassMetadata(StatisticsNewsletterEntity::class)->getTableName();
       $entityManager->getConnection()->executeStatement("
@@ -470,10 +478,11 @@ class NewslettersRepository extends Repository {
       ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
 
       // Fetch WP Posts IDs and delete them
-      $wpPostsIds = $entityManager->createQueryBuilder()->select('n.wpPostId')
+      /** @var int[] $wpPostsIds */
+      $wpPostsIds = $entityManager->createQueryBuilder()->select('wpp.id')
         ->from(NewsletterEntity::class, 'n')
+        ->join('n.wpPost', 'wpp')
         ->where('n.id IN (:ids)')
-        ->andWhere('n.wpPostId IS NOT NULL')
         ->setParameter('ids', $ids)
         ->getQuery()->getSingleColumnResult();
       foreach ($wpPostsIds as $wpPostId) {
@@ -486,6 +495,27 @@ class NewslettersRepository extends Repository {
         ->where('n.id IN (:ids)')
         ->setParameter('ids', $ids)
         ->getQuery()->execute();
+
+
+      $entityTypesToBeDetached = [
+        StatisticsNewsletterEntity::class,
+        StatisticsOpenEntity::class,
+        StatisticsClickEntity::class,
+        NewsletterPostEntity::class,
+        NewsletterOptionEntity::class,
+        NewsletterLinkEntity::class,
+        StatsNotificationEntity::class,
+        SendingQueueEntity::class,
+        ScheduledTaskSubscriberEntity::class,
+        NewsletterSegmentEntity::class,
+      ];
+      foreach ($entityTypesToBeDetached as $entityType) {
+        $this->detachEntitiesOfType($entityType, $isRelatedNewsletterToBeDeleted);
+      }
+
+      $this->detachEntitiesOfType(ScheduledTaskEntity::class, function($entity) use ($taskIds): bool {
+        return !is_string($entity) && method_exists($entity, 'getId') && in_array($entity->getId(), $taskIds, true);
+      });
     });
     return count($ids);
   }
@@ -493,7 +523,7 @@ class NewslettersRepository extends Repository {
   /**
    * @return NewsletterEntity[]
    */
-  public function findSendingNotificationHistoryWithoutPausedTask(NewsletterEntity $newsletter): array {
+  public function findSendingNotificationHistoryWithoutPausedOrInvalidTask(NewsletterEntity $newsletter): array {
     return $this->entityManager->createQueryBuilder()
       ->select('n')
       ->from(NewsletterEntity::class, 'n')
@@ -503,11 +533,13 @@ class NewslettersRepository extends Repository {
       ->andWhere('n.type = :type')
       ->andWhere('n.status = :status')
       ->andWhere('n.deletedAt IS NULL')
-      ->andWhere('t.status != :taskStatus')
+      ->andWhere('t.status != :taskStatusPaused')
+      ->andWhere('t.status != :taskStatusInvalid')
       ->setParameter('parent', $newsletter)
       ->setParameter('type', NewsletterEntity::TYPE_NOTIFICATION_HISTORY)
       ->setParameter('status', NewsletterEntity::STATUS_SENDING)
-      ->setParameter('taskStatus', ScheduledTaskEntity::STATUS_PAUSED)
+      ->setParameter('taskStatusPaused', ScheduledTaskEntity::STATUS_PAUSED)
+      ->setParameter('taskStatusInvalid', ScheduledTaskEntity::STATUS_INVALID)
       ->getQuery()->getResult();
   }
 
@@ -517,9 +549,10 @@ class NewslettersRepository extends Repository {
    */
   public function getStandardNewsletterList(): array {
     return $this->entityManager->createQueryBuilder()
-      ->select('PARTIAL n.{id,subject,sentAt}')
+      ->select('PARTIAL n.{id,subject,sentAt}, PARTIAL wpPost.{id, postTitle}')
       ->addSelect('CASE WHEN n.sentAt IS NULL THEN 1 ELSE 0 END as HIDDEN sent_at_is_null')
       ->from(NewsletterEntity::class, 'n')
+      ->leftJoin('n.wpPost', 'wpPost')
       ->where('n.type = :typeStandard')
       ->andWhere('n.deletedAt IS NULL')
       ->orderBy('sent_at_is_null', 'DESC')
@@ -527,6 +560,65 @@ class NewslettersRepository extends Repository {
       ->setParameter('typeStandard', NewsletterEntity::TYPE_STANDARD)
       ->getQuery()
       ->getResult();
+  }
+
+  /**
+   * Returns standard newsletters ordered by sentAt
+   * filter by status STATUS_SCHEDULED, STATUS_SENDING, STATUS_SENT
+   * @return NewsletterEntity[]
+   */
+  public function getStandardNewsletterListWithMultipleStatuses($limit): array {
+    $statuses = [
+      NewsletterEntity::STATUS_SCHEDULED,
+      NewsletterEntity::STATUS_SENDING,
+      NewsletterEntity::STATUS_SENT,
+    ];
+
+    $query = $this->entityManager->createQueryBuilder()
+      ->select('PARTIAL n.{id,subject,sentAt}')
+      ->addSelect('CASE WHEN n.sentAt IS NULL THEN 1 ELSE 0 END as HIDDEN sent_at_is_null')
+      ->from(NewsletterEntity::class, 'n')
+      ->where('n.type = :typeStandard')
+      ->andWhere('n.status IN (:statuses)')
+      ->andWhere('n.deletedAt IS NULL')
+      ->orderBy('sent_at_is_null', 'DESC')
+      ->addOrderBy('n.sentAt', 'DESC')
+      ->setParameter('typeStandard', NewsletterEntity::TYPE_STANDARD)
+      ->setParameter('statuses', $statuses);
+
+    if (is_int($limit)) {
+      $query->setMaxResults($limit);
+    }
+
+    $result = $query->getQuery()->getResult();
+
+    return is_array($result) ? $result : [];
+  }
+
+  /**
+   * Returns sent post-notification history newsletters ordered by sentAt
+   * @return NewsletterEntity[]
+   */
+  public function getNotificationHistoryItems($limit): array {
+    $query = $this->entityManager->createQueryBuilder()
+      ->select('PARTIAL n.{id,subject,sentAt}')
+      ->addSelect('CASE WHEN n.sentAt IS NULL THEN 1 ELSE 0 END as HIDDEN sent_at_is_null')
+      ->from(NewsletterEntity::class, 'n')
+      ->where('n.type = :typeNotificationHistory')
+      ->andWhere('n.status = :status')
+      ->andWhere('n.deletedAt IS NULL')
+      ->orderBy('sent_at_is_null', 'DESC')
+      ->addOrderBy('n.sentAt', 'DESC')
+      ->setParameter('typeNotificationHistory', NewsletterEntity::TYPE_NOTIFICATION_HISTORY)
+      ->setParameter('status', NewsletterEntity::STATUS_SENT);
+
+    if (is_int($limit)) {
+      $query->setMaxResults($limit);
+    }
+
+    $result = $query->getQuery()->getResult();
+
+    return is_array($result) ? $result : [];
   }
 
   public function prefetchOptions(array $newsletters) {

@@ -2,19 +2,19 @@
 
 namespace WPForms\Integrations\Stripe\Api;
 
-use Stripe\Customer;
-use Stripe\PaymentIntent;
-use Stripe\PaymentMethod;
-use Stripe\Stripe;
-use Stripe\Subscription;
-use Stripe\Refund;
-use Stripe\Exception\ApiErrorException;
+use WPForms\Vendor\Stripe\Customer;
+use WPForms\Vendor\Stripe\PaymentIntent;
+use WPForms\Vendor\Stripe\PaymentMethod;
+use WPForms\Vendor\Stripe\Stripe;
+use WPForms\Vendor\Stripe\Subscription;
+use WPForms\Vendor\Stripe\Refund;
+use WPForms\Vendor\Stripe\Exception\ApiErrorException;
 use WPForms\Integrations\Stripe\Fields\StripeCreditCard;
 use WPForms\Integrations\Stripe\Fields\PaymentElementCreditCard;
 use WPForms\Integrations\Stripe\Helpers;
 use WPForms\Helpers\Crypto;
 use Exception;
-use Stripe\Charge;
+use WPForms\Vendor\Stripe\Charge;
 
 /**
  * Stripe PaymentIntents API.
@@ -108,20 +108,8 @@ class PaymentIntents extends Common implements ApiInterface {
 	 */
 	public function set_config() {
 
-		/**
-		 * This filter allows to overwrite a Style object, which consists of CSS properties nested under objects.
-		 *
-		 * @since 1.8.2
-		 *
-		 * @link https://stripe.com/docs/js/appendix/style
-		 *
-		 * @param array $styles Style object.
-		 */
-		$element_style = (array) apply_filters( 'wpforms_stripe_api_payment_intents_set_config_element_style', [] ); // phpcs:ignore WPForms.PHP.ValidateHooks.InvalidHookName
-
 		$localize_script = [
 			'element_locale' => $this->filter_config_element_locale(),
-			'element_style'  => $element_style,
 		];
 
 		$this->config = [
@@ -148,6 +136,19 @@ class PaymentIntents extends Common implements ApiInterface {
 
 		$min = wpforms_get_min_suffix();
 
+		/**
+		 * This filter allows to overwrite a Payment element appearance object.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @link https://stripe.com/docs/elements/appearance-api
+		 *
+		 * @param array $appearance Appearance object.
+		 */
+		$element_style = (array) apply_filters( 'wpforms_integrations_stripe_api_payment_intents_set_element_appearance', [] );
+
+		$this->config['localize_script']['element_appearance'] = $element_style;
+
 		$this->config['local_js_url']  = WPFORMS_PLUGIN_URL . "assets/js/integrations/stripe/wpforms-stripe-payment-element{$min}.js";
 		$this->config['local_css_url'] = WPFORMS_PLUGIN_URL . "assets/css/integrations/stripe/wpforms-stripe{$min}.css";
 	}
@@ -159,6 +160,18 @@ class PaymentIntents extends Common implements ApiInterface {
 	 */
 	private function set_card_element_config() {
 
+		/**
+		 * This filter allows to overwrite a Style object, which consists of CSS properties nested under objects.
+		 *
+		 * @since 1.8.2
+		 *
+		 * @link https://stripe.com/docs/js/appendix/style
+		 *
+		 * @param array $styles Style object.
+		 */
+		$element_style = (array) apply_filters( 'wpforms_stripe_api_payment_intents_set_config_element_style', [] ); // phpcs:ignore WPForms.PHP.ValidateHooks.InvalidHookName
+
+		$this->config['localize_script']['element_style']   = $element_style;
 		$this->config['localize_script']['element_classes'] = [
 			'base'           => 'wpforms-stripe-element',
 			'complete'       => 'wpforms-stripe-element-complete',
@@ -422,14 +435,17 @@ class PaymentIntents extends Common implements ApiInterface {
 
 		try {
 
-			if ( isset( $args['customer_email'] ) ) {
+			if ( isset( $args['customer_email'] ) || isset( $args['customer_name'] ) ) {
 
-				$this->set_customer( $args['customer_email'] );
+				$name  = $args['customer_name'] ?? '';
+				$email = $args['customer_email'] ?? '';
+
+				$this->set_customer( $email, $name );
 				$this->attach_customer_to_payment();
 
 				$args['customer'] = $this->get_customer( 'id' );
 
-				unset( $args['customer_email'] );
+				unset( $args['customer_email'], $args['customer_name'] );
 			}
 
 			$this->intent = PaymentIntent::create( $args, Helpers::get_auth_opts() );
@@ -538,21 +554,34 @@ class PaymentIntents extends Common implements ApiInterface {
 
 		try {
 
-			$this->set_customer( $args['email'] );
+			$name = $args['customer_name'] ?? '';
+
+			$this->set_customer( $args['email'], $name );
 			$sub_args['customer'] = $this->get_customer( 'id' );
 
-			$new_payment_method = $this->attach_customer_to_payment();
+			if ( Helpers::is_payment_element_enabled() ) {
 
-			if ( is_null( $new_payment_method ) ) {
-				return;
-			}
+				$sub_args['payment_behavior'] = 'default_incomplete';
+				$sub_args['off_session']      = true;
+				$sub_args['payment_settings'] = [
+					'payment_method_types'        => [ 'card', 'link' ],
+					'save_default_payment_method' => 'on_subscription',
+				];
+			} else {
 
-			// Check whether a default PaymentMethod needs to be explicitly set.
-			$selected_payment_method_id = $this->select_subscription_default_payment_method( $new_payment_method );
+				$new_payment_method = $this->attach_customer_to_payment();
 
-			if ( $selected_payment_method_id ) {
-				// Explicitly set a PaymentMethod for this Subscription because default Customer's PaymentMethod cannot be used.
-				$sub_args['default_payment_method'] = $selected_payment_method_id;
+				if ( is_null( $new_payment_method ) ) {
+					return;
+				}
+
+				// Check whether a default PaymentMethod needs to be explicitly set.
+				$selected_payment_method_id = $this->select_subscription_default_payment_method( $new_payment_method );
+
+				if ( $selected_payment_method_id ) {
+					// Explicitly set a PaymentMethod for this Subscription because default Customer's PaymentMethod cannot be used.
+					$sub_args['default_payment_method'] = $selected_payment_method_id;
+				}
 			}
 
 			// Create the subscription.
@@ -560,7 +589,7 @@ class PaymentIntents extends Common implements ApiInterface {
 
 			$this->intent = $this->subscription->latest_invoice->payment_intent;
 
-			if ( ! $this->intent || ! in_array( $this->intent->status, [ 'succeeded', 'requires_action', 'requires_confirmation' ], true ) ) {
+			if ( ! $this->intent || ! in_array( $this->intent->status, [ 'succeeded', 'requires_action', 'requires_confirmation', 'requires_payment_method' ], true ) ) {
 				$this->error = esc_html__( 'Stripe subscription stopped. invalid PaymentIntent status.', 'wpforms-lite' );
 
 				return;
@@ -572,7 +601,7 @@ class PaymentIntents extends Common implements ApiInterface {
 
 			$this->set_bypass_captcha_3dsecure_token();
 
-			if ( $this->intent->status === 'requires_confirmation' ) {
+			if ( in_array( $this->intent->status , [ 'requires_confirmation', 'requires_payment_method' ], true ) ) {
 				$this->request_confirm_payment_ajax( $this->intent );
 			}
 

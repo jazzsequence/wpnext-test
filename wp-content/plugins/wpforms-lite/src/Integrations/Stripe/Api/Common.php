@@ -2,10 +2,10 @@
 // phpcs:ignoreFile WPForms.PHP.BackSlash.RemoveBackslash
 namespace WPForms\Integrations\Stripe\Api;
 
-use Stripe\Customer;
-use Stripe\Plan;
-use Stripe\Stripe;
-use Stripe\Subscription;
+use WPForms\Vendor\Stripe\Customer;
+use WPForms\Vendor\Stripe\Plan;
+use WPForms\Vendor\Stripe\Stripe;
+use WPForms\Vendor\Stripe\Subscription;
 use WPForms\Integrations\Stripe\Helpers;
 
 /**
@@ -175,10 +175,33 @@ abstract class Common {
 	 * Check if a customer exists in Stripe, if not creates one.
 	 *
 	 * @since 1.8.2
+	 * @since 1.8.6 Added customer name argument and allow empty email.
 	 *
 	 * @param string $email Email to fetch an existing customer.
+	 * @param string $name Customer name.
 	 */
-	protected function set_customer( $email ) {
+	protected function set_customer( $email = '', $name = '' ) {
+
+		if ( ! $email && ! $name  ) {
+			return;
+		}
+
+		// Create a customer with name only if email is empty.
+		if ( ! $email ) {
+
+			try {
+				$customer = Customer::create( [ 'name' => $name ], Helpers::get_auth_opts() );
+			} catch ( \Exception $e ) {
+				$customer = null;
+			}
+
+			if ( ! isset( $customer->id ) ) {
+				return;
+			}
+
+			$this->customer = $customer;
+			return;
+		}
 
 		try {
 			$customers = Customer::all(
@@ -192,14 +215,37 @@ abstract class Common {
 		if ( isset( $customers->data[0]->id ) ) {
 			$this->customer = $customers->data[0];
 
+			if ( ! empty( $name ) && $name !== $this->customer->name ) {
+				try {
+					$this->customer = Customer::update(
+						$this->customer->id,
+						[
+							'name' => $name,
+						],
+						Helpers::get_auth_opts()
+					);
+				} catch ( \Exception $e ) {
+					wpforms_log(
+						'Stripe: Unable to update user name.',
+						$e->getMessage(),
+						[
+							'type' => [ 'payment', 'error' ],
+						]
+					);
+				}
+			}
+
 			return;
 		}
 
 		try {
-			$customer = Customer::create(
-				[ 'email' => $email ],
-				Helpers::get_auth_opts()
-			);
+			$args = [ 'email' => $email ];
+
+			if ( ! empty( $name ) ) {
+				$args['name'] = $name;
+			}
+
+			$customer = Customer::create( $args, Helpers::get_auth_opts() );
 		} catch ( \Exception $e ) {
 			$customer = null;
 		}
@@ -216,7 +262,7 @@ abstract class Common {
 	 *
 	 * @since 1.8.2
 	 *
-	 * @param \Exception|\Stripe\Exception\ApiErrorException $e Stripe API exception to process.
+	 * @param \Exception|\WPForms\Vendor\Stripe\Exception\ApiErrorException $e Stripe API exception to process.
 	 */
 	protected function set_error_from_exception( $e ) {
 
@@ -225,11 +271,11 @@ abstract class Common {
 		 *
 		 * @since 1.8.2
 		 *
-		 * @param \Exception|\Stripe\Exception\ApiErrorException $e Stripe API exception to process.
+		 * @param \Exception|\WPForms\Vendor\Stripe\Exception\ApiErrorException $e Stripe API exception to process.
 		 */
 		do_action( 'wpformsstripe_api_common_set_error_from_exception', $e ); // phpcs:ignore WPForms.PHP.ValidateHooks.InvalidHookName
 
-		if ( is_a( $e, '\Stripe\Exception\CardException' ) ) {
+		if ( is_a( $e, '\WPForms\Vendor\Stripe\Exception\CardException' ) ) {
 			$body        = $e->getJsonBody();
 			$this->error = $body['error']['message'];
 
@@ -237,11 +283,11 @@ abstract class Common {
 		}
 
 		$errors = [
-			'\Stripe\Exception\RateLimitException'      => esc_html__( 'Too many requests made to the API too quickly.', 'wpforms-lite' ),
-			'\Stripe\Exception\InvalidRequestException' => esc_html__( 'Invalid parameters were supplied to Stripe API.', 'wpforms-lite' ),
-			'\Stripe\Exception\AuthenticationException' => esc_html__( 'Authentication with Stripe API failed.', 'wpforms-lite' ),
-			'\Stripe\Exception\ApiConnectionException'  => esc_html__( 'Network communication with Stripe failed.', 'wpforms-lite' ),
-			'\Stripe\Exception\ApiErrorException'       => esc_html__( 'Unable to process Stripe payment.', 'wpforms-lite' ),
+			'\WPForms\Vendor\Stripe\Exception\RateLimitException'      => esc_html__( 'Too many requests made to the API too quickly.', 'wpforms-lite' ),
+			'\WPForms\Vendor\Stripe\Exception\InvalidRequestException' => esc_html__( 'Invalid parameters were supplied to Stripe API.', 'wpforms-lite' ),
+			'\WPForms\Vendor\Stripe\Exception\AuthenticationException' => esc_html__( 'Authentication with Stripe API failed.', 'wpforms-lite' ),
+			'\WPForms\Vendor\Stripe\Exception\ApiConnectionException'  => esc_html__( 'Network communication with Stripe failed.', 'wpforms-lite' ),
+			'\WPForms\Vendor\Stripe\Exception\ApiErrorException'       => esc_html__( 'Unable to process Stripe payment.', 'wpforms-lite' ),
 			'\Exception'                                => esc_html__( 'Unable to process payment.', 'wpforms-lite' ),
 		];
 

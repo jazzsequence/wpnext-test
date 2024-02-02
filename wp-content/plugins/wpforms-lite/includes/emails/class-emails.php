@@ -11,6 +11,11 @@ use WPForms\Tasks\Actions\EntryEmailsTask;
  * Heavily influenced by the great AffiliateWP plugin by Pippin Williamson.
  * https://github.com/AffiliateWP/AffiliateWP/blob/master/includes/emails/class-affwp-emails.php
  *
+ * Note that this mailer class is no longer in active use and has been replaced with the "WPForms\Emails\Notifications" class.
+ * Please refer to the new mailer wrapper extension to extend or add further customizations.
+ *
+ * @deprecated 1.8.5
+ *
  * @since 1.1.3
  */
 class WPForms_WP_Emails {
@@ -415,11 +420,14 @@ class WPForms_WP_Emails {
 			$this
 		);
 
+		$entry_obj = wpforms()->get( 'entry' );
+
+		// phpcs:ignore WPForms.Comments.PHPDocHooks.RequiredHookDocumentation, WPForms.PHP.ValidateHooks.InvalidHookName
 		$send_same_process = apply_filters(
 			'wpforms_tasks_entry_emails_trigger_send_same_process',
 			false,
 			$this->fields,
-			! empty( wpforms()->entry ) ? wpforms()->entry->get( $this->entry_id ) : [],
+			$entry_obj ? $entry_obj->get( $this->entry_id ) : [],
 			$this->form_data,
 			$this->entry_id,
 			'entry'

@@ -327,6 +327,8 @@ class Single implements PaymentsViewsInterface {
 		echo wpforms_render(
 			'admin/payments/single/payment-details',
 			[
+				'id'                  => 'wpforms-payment-info',
+				'class'               => 'payment-details',
 				'title'               => __( 'Payment Details', 'wpforms-lite' ),
 				'payment_id'          => "#{$this->payment->id}",
 				'gateway_link'        => $this->get_gateway_transaction_link(),
@@ -396,6 +398,8 @@ class Single implements PaymentsViewsInterface {
 		echo wpforms_render(
 			'admin/payments/single/payment-details',
 			[
+				'id'                  => 'wpforms-subscription-details',
+				'class'               => 'subscription-details',
 				'title'               => __( 'Subscription Details', 'wpforms-lite' ),
 				'gateway_link'        => $this->get_gateway_subscription_link(),
 				'gateway_text'        => sprintf( /* translators: %s - payment gateway name. */
@@ -796,6 +800,7 @@ class Single implements PaymentsViewsInterface {
 
 		$entry_id_title = '';
 		$fields         = '';
+		$entry_status   = '';
 
 		// Grab submitted values from the entry if it exists.
 		if ( ! empty( $this->payment->entry_id ) && wpforms()->is_pro() ) {
@@ -804,6 +809,7 @@ class Single implements PaymentsViewsInterface {
 			if ( $entry ) {
 				$fields          = wpforms_decode( $entry->fields );
 				$entry_id_title .= "#{$this->payment->entry_id}";
+				$entry_status    = $entry->status;
 			}
 		}
 
@@ -828,6 +834,7 @@ class Single implements PaymentsViewsInterface {
 				'form_data'      => $form_data,
 				'entry_id_title' => $entry_id_title,
 				'entry_id'       => $this->payment->entry_id,
+				'entry_status'   => $entry_status,
 				'entry_url'      => add_query_arg(
 					[
 						'page'     => 'wpforms-entries',
@@ -932,13 +939,12 @@ class Single implements PaymentsViewsInterface {
 	 */
 	private function details() {
 
-		$date = sprintf( /* translators: %1$s - date, %2$s - time when item was created, e.g. "Oct 22 at 11:11am". */
-			__( '%1$s at %2$s', 'wpforms-lite' ),
-			wpforms_datetime_format( $this->payment->date_created_gmt, 'M j, Y', true ),
-			wpforms_datetime_format( $this->payment->date_created_gmt, get_option( 'time_format' ), true )
-		);
-
 		$form_edit_link = $this->get_form_edit_link();
+		$date           = sprintf( /* translators: %1$s - date, %2$s - time when item was created, e.g. "Oct 22, 2022 at 11:11 am". */
+			__( '%1$s at %2$s', 'wpforms-lite' ),
+			wpforms_date_format( $this->payment->date_created_gmt, 'M j, Y', true ),
+			wpforms_time_format( $this->payment->date_created_gmt, '', true )
+		);
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo wpforms_render(

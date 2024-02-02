@@ -372,7 +372,6 @@ class Initializer {
       if ($this->featureController->isSupported(FeaturesController::GUTENBERG_EMAIL_EDITOR)) {
         $this->emailEditor->initialize();
       }
-
       $this->wpFunctions->doAction('mailpoet_initialized', MAILPOET_VERSION);
     } catch (InvalidStateException $e) {
       return $this->handleRunningMigration($e);

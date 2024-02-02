@@ -7,6 +7,13 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 	var app = {
 
 		/**
+		 * Cache.
+		 *
+		 * @since 1.8.5
+		 */
+		cache: {},
+
+		/**
 		 * Start the engine.
 		 *
 		 * @since 1.2.3
@@ -272,46 +279,26 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 				// Validate email by allowlist/blocklist.
 				$.validator.addMethod( 'restricted-email', function( value, element ) {
-
-					var validator = this,
-						$el = $( element ),
-						$field = $el.closest( '.wpforms-field' ),
-						$form = $el.closest( '.wpforms-form' ),
-						isValid = 'pending';
+					const $el = $( element );
 
 					if ( ! $el.val().length ) {
 						return true;
 					}
 
-					this.startRequest( element );
-					$.post( {
-						url: wpforms_settings.ajaxurl,
-						type: 'post',
-						async: false,
-						data: {
-							'action': 'wpforms_restricted_email',
-							'form_id': $form.data( 'formid' ),
-							'field_id': $field.data( 'field-id' ),
-							'email': $el.val(),
-						},
-						dataType: 'json',
-						success: function( response ) {
+					const $form = $el.closest( '.wpforms-form' ),
+						formId = $form.data( 'formid' );
 
-							var errors = {};
+					if (
+						! Object.prototype.hasOwnProperty.call( app.cache, formId ) ||
+						! Object.prototype.hasOwnProperty.call( app.cache[ formId ], 'restrictedEmailValidation' ) ||
+						! Object.prototype.hasOwnProperty.call( app.cache[ formId ].restrictedEmailValidation, value )
+					) {
+						app.restrictedEmailRequest( element, value );
 
-							isValid = response.success && response.data;
+						return 'pending';
+					}
 
-							if ( isValid ) {
-								validator.toHide = validator.errorsFor( element );
-								validator.showErrors();
-							} else {
-								errors[ element.name ] = wpforms_settings.val_email_restricted;
-								validator.showErrors( errors );
-							}
-							validator.stopRequest( element, isValid );
-						},
-					} );
-					return isValid;
+					return app.cache[ formId ].restrictedEmailValidation[ value ];
 				}, wpforms_settings.val_email_restricted );
 
 				// Validate confirmations.
@@ -421,6 +408,22 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 					return app.amountSanitize( value ) > 0;
 				}, wpforms_settings.val_number_positive );
+
+				/**
+				 * Validate Payment item minimum price value.
+				 *
+				 * @since 1.8.6
+				 */
+				$.validator.addMethod( 'required-minimum-price', function( value, element, param ) {
+					const $el = $( element );
+
+					/**
+					 * The validation is passed in the following cases:
+					 * 1) if a field is not filled in and not required.
+					 * 2) if the minimum required price is equal to or less than the typed value.
+					 */
+					return ( value === '' && ! $el.hasClass( 'wpforms-field-required' ) ) || Number( app.amountSanitize( param ) ) <= Number( app.amountSanitize( value ) );
+				}, wpforms_settings.val_minimum_price );
 
 				// Validate US Phone Field.
 				$.validator.addMethod( 'us-phone-field', function( value, element ) {
@@ -696,16 +699,66 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 		},
 
 		/**
+		 * Request to check if email is restricted.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @param {Element} element Email input field.
+		 * @param {string}  value   Field value.
+		 */
+		restrictedEmailRequest( element, value ) {
+			const $el = $( element );
+			const $form = $el.closest( 'form' );
+			const validator = $form.data( 'validator' );
+			const formId = $form.data( 'formid' );
+			const $field = $el.closest( '.wpforms-field' );
+			const fieldId = $field.data( 'field-id' );
+
+			app.cache[ formId ] = app.cache[ formId ] || {};
+
+			validator.startRequest( element );
+
+			$.post( {
+				url: wpforms_settings.ajaxurl,
+				type: 'post',
+				data: {
+					action: 'wpforms_restricted_email',
+					form_id: formId, // eslint-disable-line camelcase
+					field_id: fieldId, // eslint-disable-line camelcase
+					email: value,
+				},
+				dataType: 'json',
+				success( response ) {
+					const errors = {};
+
+					const isValid = response.success && response.data;
+
+					if ( ! isValid ) {
+						errors[ element.name ] = wpforms_settings.val_email_restricted;
+						validator.showErrors( errors );
+					}
+
+					app.cache[ formId ].restrictedEmailValidation = app.cache[ formId ].restrictedEmailValidation || [];
+
+					if ( ! Object.prototype.hasOwnProperty.call( app.cache[ formId ].restrictedEmailValidation, value ) ) {
+						app.cache[ formId ].restrictedEmailValidation[ value ] = isValid;
+					}
+
+					validator.stopRequest( element, isValid );
+				},
+			} );
+		},
+
+		/**
 		 * Is field inside column.
 		 *
 		 * @since 1.6.3
 		 *
 		 * @param {jQuery} element current form element.
 		 *
-		 * @returns {boolean} true/false.
+		 * @return {boolean} true/false.
 		 */
-		isFieldInColumn: function( element ) {
-
+		isFieldInColumn( element ) {
 			return element.parent().hasClass( 'wpforms-one-half' ) ||
 				element.parent().hasClass( 'wpforms-two-fifths' ) ||
 				element.parent().hasClass( 'wpforms-one-fifth' );
@@ -1059,8 +1112,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 		 *
 		 * @since 1.5.3
 		 */
-		loadMailcheck: function() {
-
+		loadMailcheck() { // eslint-disable-line max-lines-per-function
 			// Skip loading if `wpforms_mailcheck_enabled` filter return false.
 			if ( ! wpforms_settings.mailcheck_enabled ) {
 				return;
@@ -1080,27 +1132,30 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 			// Mailcheck suggestion.
 			$( document ).on( 'blur', '.wpforms-field-email input', function() {
-
-				var $input = $( this ),
+				const $input = $( this ),
 					id = $input.attr( 'id' );
 
 				$input.mailcheck( {
-					suggested: function( $el, suggestion ) {
+					suggested( $el, suggestion ) {
+						// decodeURI() will throw an error if the percent sign is not followed by two hexadecimal digits.
+						suggestion.full = suggestion.full.replace( /%(?![0-9][0-9a-fA-F]+)/g, '%25' );
+						suggestion.address = suggestion.address.replace( /%(?![0-9][0-9a-fA-F]+)/g, '%25' );
+						suggestion.domain = suggestion.domain.replace( /%(?![0-9][0-9a-fA-F]+)/g, '%25' );
 
 						if ( suggestion.address.match( /^xn--/ ) ) {
 							suggestion.full = punycode.toUnicode( decodeURI( suggestion.full ) );
 
-							var parts = suggestion.full.split( '@' );
+							const parts = suggestion.full.split( '@' );
 
-							suggestion.address = parts[0];
-							suggestion.domain = parts[1];
+							suggestion.address = parts[ 0 ];
+							suggestion.domain = parts[ 1 ];
 						}
 
 						if ( suggestion.domain.match( /^xn--/ ) ) {
 							suggestion.domain = punycode.toUnicode( decodeURI( suggestion.domain ) );
 						}
 
-						var address = decodeURI( suggestion.address ).replaceAll( /[<>'"()/\\|:;=@%&\s]/ig, '' ).substr( 0, 64 ),
+						const address = decodeURI( suggestion.address ).replaceAll( /[<>'"()/\\|:;=@%&\s]/ig, '' ).substr( 0, 64 ),
 							domain = decodeURI( suggestion.domain ).replaceAll( /[<>'"()/\\|:;=@%&+_\s]/ig, '' );
 
 						suggestion = '<a href="#" class="mailcheck-suggestion" data-id="' + id + '" title="' + wpforms_settings.val_email_suggestion_title + '">' + address + '@' + domain + '</a>';
@@ -1109,8 +1164,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 						$el.closest( '.wpforms-field' ).find( '#' + id + '_suggestion' ).remove();
 						$el.parent().append( '<label class="wpforms-error mailcheck-error" id="' + id + '_suggestion">' + suggestion + '</label>' );
 					},
-					empty: function() {
-
+					empty() {
 						$( '#' + id + '_suggestion' ).remove();
 					},
 				} );
@@ -1118,8 +1172,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 
 			// Apply Mailcheck suggestion.
 			$( document ).on( 'click', '.wpforms-field-email .mailcheck-suggestion', function( e ) {
-
-				var $suggestion = $( this ),
+				const $suggestion = $( this ),
 					$field = $suggestion.closest( '.wpforms-field' ),
 					id = $suggestion.data( 'id' );
 
@@ -1127,7 +1180,6 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				$field.find( '#' + id ).val( $suggestion.text() );
 				$suggestion.parent().remove();
 			} );
-
 		},
 
 		/**
@@ -1510,6 +1562,103 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				.one( 'focus', '.dropzone-input', app.formChanged )
 				.one( 'click touchstart', '.wpforms-signature-canvas', app.formChanged )
 				.one( 'wpformsRichTextContentChange', app.richTextContentChanged );
+
+			$( 'form.wpforms-form' ).on( 'wpformsBeforePageChange', app.skipEmptyPages );
+		},
+
+		/**
+		 * Skip empty pages (by CL, hidden fields etc.) inside multi-steps forms.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @param {Event}  event    Event.
+		 * @param {number} nextPage Next page.
+		 * @param {jQuery} $form    Current form.
+		 * @param {string} action   The navigation action.
+		 */
+		skipEmptyPages( event, nextPage, $form, action ) {
+			const nextNonEmptyPage = app.findNonEmptyPage( nextPage, $form, action );
+
+			if ( nextNonEmptyPage === nextPage ) {
+				return;
+			}
+
+			event.preventDefault();
+
+			if ( nextNonEmptyPage === 1 && action === 'prev' ) {
+				const $secondPage = $form.find( '.wpforms-page-2' );
+				const $currentPage = $form.find( '.wpforms-page-' + nextPage );
+				// The previous button is optional. We pass the fallback to the original previous button
+				// in the case when the previous button on the second page does not exist.
+				const $prevButton = $secondPage.find( '.wpforms-page-prev' ).length
+					? $secondPage.find( '.wpforms-page-prev' )
+					: $currentPage.find( '.wpforms-page-prev' );
+
+				wpforms.navigateToPage( $prevButton, 'prev', 2, $form, $secondPage );
+
+				return;
+			}
+
+			// The next page button is always visible.
+			// So we take the previous page before the next non-empty page
+			// and simulate a jump forward from the next page.
+			const prevPage = nextNonEmptyPage - 1;
+			const $previousPage = $form.find( '.wpforms-page-' + prevPage );
+
+			wpforms.navigateToPage( $previousPage.find( '.wpforms-page-next' ), 'next', prevPage, $form, $previousPage );
+		},
+
+		/**
+		 * Find the next non-empty page.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @param {number} page   Current page.
+		 * @param {jQuery} $form  Current form.
+		 * @param {string} action The navigation action.
+		 *
+		 * @return {number} The next non-empty page number.
+		 */
+		findNonEmptyPage( page, $form, action ) {
+			let nextNonEmptyPage = page;
+
+			while ( app.isEmptyPage( $form, nextNonEmptyPage ) ) {
+				if ( action === 'prev' ) {
+					nextNonEmptyPage--;
+				} else {
+					nextNonEmptyPage++;
+				}
+			}
+
+			return nextNonEmptyPage;
+		},
+
+		/**
+		 * Check is target page is empty.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @param {jQuery} $form Current form.
+		 * @param {number} page  Page number.
+		 *
+		 * @return {boolean} True if page is empty.
+		 */
+		isEmptyPage( $form, page ) {
+			// The first page is always visible.
+			if ( page === 1 ) {
+				return false;
+			}
+
+			const $currentPage = $form.find( '.wpforms-page-' + page );
+
+			// The last page has the submit button, so it's always non-empty.
+			if ( $currentPage.hasClass( 'last' ) ) {
+				return false;
+			}
+
+			const $fieldsOnPage = $currentPage.find( '.wpforms-field:not(.wpforms-field-pagebreak):not(.wpforms-field-hidden)' );
+
+			return $currentPage.find( '.wpforms-conditional-hide' ).length === $fieldsOnPage.length;
 		},
 
 		/**
@@ -2115,7 +2264,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				amountFormatted = app.amountFormat( amount );
 
 			if ( currency.symbol_pos === 'left' ) {
-				return currency.symbol + ' ' + amountFormatted;
+				return currency.symbol + amountFormatted;
 			}
 
 			return amountFormatted + ' ' + currency.symbol;
@@ -2657,37 +2806,71 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 		 * @since 1.8.3
 		 *
 		 * @param {jQuery} $form  Form element.
-		 * @param {object} errors Error Object.
+		 * @param {Object} errors Error Object.
 		 * @param {string} formId Form ID.
 		 */
-		printGeneralErrors: function( $form, errors, formId ) {
+		printGeneralErrors( $form, errors, formId ) {
+			/**
+			 * Handle header error.
+			 *
+			 * @since 1.8.6
+			 *
+			 * @param {string} html Error HTML.
+			 */
+			function handleHeaderError( html ) {
+				$form.prepend( html );
+			}
+
+			/**
+			 * Handle footer error.
+			 *
+			 * @since 1.8.6
+			 *
+			 * @param {string} html Error HTML.
+			 */
+			function handleFooterError( html ) {
+				if ( $form.find( '.wpforms-page-indicator' ).length === 0 ) {
+					$form.find( '.wpforms-submit-container' ).before( html );
+				} else {
+					// Check if it is a multipage form.
+					// If it is a multipage form, we need error only on the first page.
+					$form.find( '.wpforms-page-1' ).append( html );
+				}
+			}
+
+			/**
+			 * Handle reCAPTCHA error.
+			 *
+			 * @since 1.8.6
+			 *
+			 * @param {string} html Error HTML.
+			 */
+			function handleRecaptchaError( html ) {
+				$form.find( '.wpforms-recaptcha-container' ).append( html );
+			}
 
 			$.each( errors, function( type, html ) {
 				switch ( type ) {
 					case 'header':
-						$form.prepend( html );
+						handleHeaderError( html );
 						break;
 					case 'footer':
-						if ( $form.find( '.wpforms-page-indicator' ).length === 0 ) {
-							$form.find( '.wpforms-submit-container' ).before( html );
-						} else {
-
-							// Check if it is a multipage form.
-							// If it is a multipage form, we need error only on the first page.
-							$form.find( '.wpforms-page-1' ).append( html );
-						}
+						handleFooterError( html );
 						break;
 					case 'recaptcha':
-						$form.find( '.wpforms-recaptcha-container' ).append( html );
+						handleRecaptchaError( html );
 						break;
 				}
 
 				if ( app.isModernMarkupEnabled() ) {
 					const errormessage = $form.attr( 'aria-errormessage' ) || '';
-
-					$form.attr( 'aria-errormessage', `${errormessage} wpforms-${formId}-${type}-error` );
+					$form.attr( 'aria-errormessage', `${ errormessage } wpforms-${ formId }-${ type }-error` );
 				}
 			} );
+
+			if ( $form.find( '.wpforms-error-container' ).length ) {
+				app.animateScrollTop( $form.find( '.wpforms-error-container' ).first().offset().top - 100 );
+			}
 		},
 
 		/**
@@ -2887,7 +3070,7 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				return;
 			}
 
-			let $errorPages = [];
+			const $errorPages = [];
 
 			$form.find( '.wpforms-page' ).each( function( index, el ) {
 
@@ -2897,8 +3080,19 @@ var wpforms = window.wpforms || ( function( document, window, $ ) {
 				}
 			} );
 
+			// Do not change the page if there is a captcha error and there are no other field or footer errors.
+			if (
+				$errorPages.length === 0 &&
+				$json.errors !== undefined &&
+				$json.errors.general !== undefined &&
+				$json.errors.general.footer === undefined &&
+				$json.errors.general.recaptcha !== undefined
+			) {
+				return;
+			}
+
 			// Get first page with error.
-			const $currentPage = $errorPages.length > 0 ? $errorPages[0] : $form.find( '.wpforms-page-1' );
+			const $currentPage = $errorPages.length > 0 ? $errorPages[ 0 ] : $form.find( '.wpforms-page-1' );
 			const currentPage = $currentPage.data( 'page' );
 
 			let $page,

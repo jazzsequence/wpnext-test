@@ -64,10 +64,9 @@ var WPFormsStripePaymentElement = window.WPFormsStripePaymentElement || ( functi
 
 				app.initializeFormsDefaultObject();
 
-				$( '.wpforms-stripe form' ).each( app.setupStripeForm );
-
-				// Initialize in Conversational Form on field activation.
-				$( '.wpforms-field-stripe-credit-card' ).on( 'wpformsConvFormsFieldActivationAfter', app.convFormsFieldActivationAfter );
+				$( '.wpforms-stripe form' )
+					.each( app.setupStripeForm )
+					.on( 'wpformsConvFormsFieldActivationAfter', app.convFormsFieldActivationAfter ); // Initialize in Conversational Form on field activation.
 			} );
 
 			$( document )
@@ -287,9 +286,10 @@ var WPFormsStripePaymentElement = window.WPFormsStripePaymentElement || ( functi
 		 */
 		getElementAppearanceOptions: function( $form ) { // eslint-disable-line max-lines-per-function
 
-			// return early if custom styles are passed.
-			if ( typeof window.wpformsStripePaymentElementAppearance === 'object' ) {
-				return window.wpformsStripePaymentElementAppearance;
+			const customAppearanceOptions = app.getCustomAppearanceOptions();
+
+			if ( ! $.isEmptyObject( customAppearanceOptions ) ) {
+				return customAppearanceOptions;
 			}
 
 			const $hiddenInput = $form.find( '.wpforms-stripe-credit-card-hidden-input' ),
@@ -392,6 +392,25 @@ var WPFormsStripePaymentElement = window.WPFormsStripePaymentElement || ( functi
 					},
 				},
 			};
+		},
+
+		/**
+		 * Get custom appearance options.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @return {Object} Element appearance options.
+		 */
+		getCustomAppearanceOptions() {
+			if ( typeof window.wpformsStripePaymentElementAppearance === 'object' ) {
+				return window.wpformsStripePaymentElementAppearance;
+			}
+
+			if ( ! $.isEmptyObject( wpforms_stripe.data.element_appearance ) ) {
+				return wpforms_stripe.data.element_appearance;
+			}
+
+			return {};
 		},
 
 		/**
@@ -932,10 +951,10 @@ var WPFormsStripePaymentElement = window.WPFormsStripePaymentElement || ( functi
 		 *
 		 * @param {jQuery} $form Form object.
 		 */
-		updatePaymentElementStylesModern: function( $form ) {
-
+		// eslint-disable-next-line complexity
+		updatePaymentElementStylesModern( $form ) {
 			// Should work only in Modern Markup mode.
-			if ( ! window.WPForms || ! WPForms.FrontendModern ) {
+			if ( ! $.isEmptyObject( app.getCustomAppearanceOptions() ) || ! window.WPForms || ! WPForms.FrontendModern ) {
 				return;
 			}
 

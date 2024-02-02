@@ -79,7 +79,7 @@ class Mailer {
 	 *
 	 * @since 1.5.4
 	 *
-	 * @var string
+	 * @var string|string[]
 	 */
 	private $attachments;
 
@@ -279,7 +279,7 @@ class Mailer {
 	 */
 	public function get_content_type() {
 
-		$is_html = 'default' === \wpforms_setting( 'email-template', 'default' );
+		$is_html = ! Helpers::is_plain_text_template();
 
 		if ( ! $this->content_type && $is_html ) {
 			$this->content_type = \apply_filters( 'wpforms_emails_mailer_get_content_type_default', 'text/html', $this );
@@ -339,11 +339,23 @@ class Mailer {
 	 *
 	 * @since 1.5.4
 	 *
-	 * @return string
+	 * @return string|string[]
 	 */
 	public function get_attachments() {
 
-		return \apply_filters( 'wpforms_emails_mailer_get_attachments', $this->attachments, $this );
+		if ( $this->attachments === null ) {
+			$this->attachments = [];
+		}
+
+		/**
+		 * Filters the email attachments.
+		 *
+		 * @since 1.5.4
+		 *
+		 * @param string|string[] $attachments Array or string with attachment paths.
+		 * @param Mailer          $this        Mailer instance.
+		 */
+		return apply_filters( 'wpforms_emails_mailer_get_attachments', $this->attachments, $this );
 	}
 
 	/**

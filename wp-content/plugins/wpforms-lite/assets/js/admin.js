@@ -61,6 +61,9 @@
 		 */
 		ready: function() {
 
+			// Scroll to integration.
+			WPFormsAdmin.scrollToIntegration();
+
 			// To prevent jumping (since WP core moves the notices with js),
 			// they are hidden initially with CSS, then revealed below with JS,
 			// which runs after they have been moved.
@@ -306,22 +309,12 @@
 		 *
 		 * @since 1.3.9
 		 */
-		initEntriesList: function() {
-
-			$( document ).on( 'click', '#wpforms-entries-table-edit-columns', function( event ) {
-
-				event.preventDefault();
-
-				WPFormsAdmin.entriesListFieldColumn();
-			} );
-
+		initEntriesList() { // eslint-disable-line max-lines-per-function
 			// Toggle form selector dropdown.
 			$( document ).on( 'click', '#wpforms-entries-list .form-selector .toggle', function( event ) {
-
 				event.preventDefault();
 
 				$( this ).toggleClass( 'active' ).next( '.form-list' ).toggle();
-
 			} );
 
 			// Confirm bulk entry deletion.
@@ -333,16 +326,18 @@
 					$action  = $form.find( 'select[name=action]' ),
 					$checked = $table.find( 'input[name^=entry_id]:checked' );
 
-				if ( 'delete' !== $action.val() || ! $checked.length ) {
+				if ( ( 'delete' !== $action.val() && 'trash' !== $action.val() ) || ! $checked.length ) {
 					return;
 				}
+
+				const $content = 'delete' === $action.val() ? wpforms_admin.entry_delete_n_confirm : wpforms_admin.entry_trash_n_confirm;
 
 				event.preventDefault();
 
 				// Trigger alert modal to confirm.
 				$.confirm( {
 					title: wpforms_admin.heads_up,
-					content: wpforms_admin.entry_delete_n_confirm.replace( '{entry_count}', $checked.length ),
+					content: $content.replace( '{entry_count}', $checked.length ),
 					icon: 'fa fa-exclamation-circle',
 					type: 'orange',
 					buttons: {
@@ -393,15 +388,44 @@
 				} );
 			} );
 
-			// Toggle entry stars.
-			$( document ).on( 'click', '#wpforms-entries-list .wp-list-table .indicator-star', function( event ) {
-
+			// Confirm entry trash.
+			$( document ).on( 'click', '#wpforms-entries-list .wp-list-table .trash', function( event ) {
 				event.preventDefault();
 
-				const $this    = $( this );
-				const $counter = $( '#wpforms-entries-list .starred-num' );
+				const url = $( this ).attr( 'href' );
 
-				let task  = '';
+				// Trigger alert modal to confirm.
+				$.confirm( {
+					title: wpforms_admin.heads_up,
+					content: wpforms_admin.entry_trash_confirm,
+					icon: 'fa fa-exclamation-circle',
+					type: 'orange',
+					buttons: {
+						confirm: {
+							text: wpforms_admin.ok,
+							btnClass: 'btn-confirm',
+							keys: [ 'enter' ],
+							action: () => {
+								window.location = url;
+							},
+						},
+						cancel: {
+							text: wpforms_admin.cancel,
+							keys: [ 'esc' ],
+						},
+					},
+				} );
+			} );
+
+			// Toggle entry stars.
+			$( document ).on( 'click', '#wpforms-entries-list .wp-list-table .indicator-star', function( event ) {
+				event.preventDefault();
+
+				const $this = $( this );
+				const $counter = $( '#wpforms-entries-list .starred-num' );
+				const $table = $this.parents( 'table' );
+
+				let task = '';
 				let total = Number( $counter.text() );
 
 				if ( $this.hasClass( 'star' ) ) {
@@ -416,7 +440,7 @@
 
 				$this.toggleClass( 'star unstar' );
 
-				if ( ! $this.parents( 'table' ).hasClass( 'wpforms-entries-table-spam' ) ) {
+				if ( ! $table.hasClass( 'wpforms-entries-table-spam' ) && ! $table.hasClass( 'wpforms-entries-table-trash' ) ) {
 					$counter.text( total );
 				}
 
@@ -433,13 +457,13 @@
 
 			// Toggle entry read state.
 			$( document ).on( 'click', '#wpforms-entries-list .wp-list-table .indicator-read', function( event ) {
-
 				event.preventDefault();
 
-				const $this    = $( this );
+				const $this = $( this );
 				const $counter = $( '#wpforms-entries-list .unread-num' );
+				const $table = $this.parents( 'table' );
 
-				let task  = '';
+				let task = '';
 				let total = Number( $counter.text() );
 
 				if ( $this.hasClass( 'read' ) ) {
@@ -454,7 +478,7 @@
 
 				$this.toggleClass( 'read unread' );
 
-				if ( ! $this.parents( 'table' ).hasClass( 'wpforms-entries-table-spam' ) ) {
+				if ( ! $table.hasClass( 'wpforms-entries-table-spam' ) && ! $table.hasClass( 'wpforms-entries-table-trash' ) ) {
 					$counter.text( total );
 				}
 
@@ -469,31 +493,33 @@
 				$.post( wpforms_admin.ajax_url, data );
 			} );
 
-			// Confirm mass entry deletion - this deletes ALL entries.
-			$( document ).on( 'click', '#wpforms-entries-list .form-details-actions-deleteall', function( event ) {
-
+			// Confirm mass entry deletion/trash - this deletes/trashes ALL entries.
+			$( document ).on( 'click', '#wpforms-entries-list .form-details-actions-removeall', function( event ) {
 				event.preventDefault();
 
-				var url           = $( this ).attr( 'href' ),
-					$table        = $( '#wpforms-entries-table' ),
-					filteredCount = $table.data( 'filtered-count' ) ? parseInt( $table.data( 'filtered-count' ), 10 ) : 0,
-					data          = {
-						'action': 'wpforms_entry_list_process_delete_all',
-						'form_id': $table.find( 'input[name="form_id"]' ).val(),
-						'date': $table.find( 'input[name="date"]' ).val(),
-						'search': {
-							'field': $table.find( 'select[name="search[field]"]' ).val(),
-							'comparison': $table.find( 'select[name="search[comparison]"]' ).val(),
-							'term': $table.find( 'input[name="search[term]"]' ).val(),
+				const $page = $( this ).data( 'page' ),
+					$noticeData = WPFormsAdmin.getDeleteAllNoticeData( $page ),
+					$url = $( this ).attr( 'href' ),
+					$table = $( '#wpforms-entries-table' ),
+					filteredCount = $table.data( 'filtered-count-trash' ) && $noticeData.action === 'trash' ? parseInt( $table.data( 'filtered-count-trash' ), 10 ) : 0,
+					data = {
+						action: 'wpforms_entry_list_process_' + $noticeData.action + '_all',
+						form_id: $table.find( 'input[name="form_id"]' ).val(), // eslint-disable-line camelcase
+						date: $table.find( 'input[name="date"]' ).val(),
+						page: $page,
+						search: {
+							field: $table.find( 'select[name="search[field]"]' ).val(),
+							comparison: $table.find( 'select[name="search[comparison]"]' ).val(),
+							term: $table.find( 'input[name="search[term]"]' ).val(),
 						},
-						'nonce': wpforms_admin.nonce,
-						'url': url,
+						nonce: wpforms_admin.nonce,
+						url: $url,
 					};
 
 				// Trigger alert modal to confirm.
 				$.confirm( {
 					title: wpforms_admin.heads_up,
-					content: filteredCount && $( '#wpforms-reset-filter' ).length ? wpforms_admin.entry_delete_n_confirm.replace( '{entry_count}', filteredCount ) : wpforms_admin.entry_delete_all_confirm,
+					content: filteredCount && $( '#wpforms-reset-filter' ).length ? $noticeData.content.replace( '{entry_count}', filteredCount ) : $noticeData.contentAll,
 					icon: 'fa fa-exclamation-circle',
 					type: 'orange',
 					buttons: {
@@ -501,18 +527,11 @@
 							text: wpforms_admin.ok,
 							btnClass: 'btn-confirm',
 							keys: [ 'enter' ],
-							action: function() {
-
+							action: () => {
 								$.get( wpforms_admin.ajax_url, data )
 									.done( function( response ) {
-
 										if ( response.success ) {
-											window.location = ! _.isEmpty( response.data ) ? response.data : url;
-											return;
-										}
-
-										if ( ! _.isEmpty( response.data ) ) {
-											console.error( response.data );
+											window.location = ! _.isEmpty( response.data ) ? response.data : $url;
 										}
 									} );
 							},
@@ -599,11 +618,10 @@
 			}
 
 			// Confirm entry deletion.
-			$( document ).on( 'click', '#wpforms-entries-single .submitdelete', function( event ) {
-
+			$( document ).on( 'click', '#wpforms-entries-single .wpforms-entry-delete a', function( event ) {
 				event.preventDefault();
 
-				var url = $( this ).attr( 'href' );
+				const url = $( this ).attr( 'href' );
 
 				// Trigger alert modal to confirm.
 				$.confirm( {
@@ -628,9 +646,37 @@
 				} );
 			} );
 
+			// Confirm entry trash.
+			$( document ).on( 'click', '#wpforms-entries-single .trash', function( event ) {
+				event.preventDefault();
+
+				const url = $( this ).attr( 'href' );
+
+				// Trigger alert modal to confirm.
+				$.confirm( {
+					title: wpforms_admin.heads_up,
+					content: wpforms_admin.entry_trash_confirm,
+					icon: 'fa fa-exclamation-circle',
+					type: 'orange',
+					buttons: {
+						confirm: {
+							text: wpforms_admin.ok,
+							btnClass: 'btn-confirm',
+							keys: [ 'enter' ],
+							action: () => {
+								window.location = url;
+							},
+						},
+						cancel: {
+							text: wpforms_admin.cancel,
+							keys: [ 'esc' ],
+						},
+					},
+				} );
+			} );
+
 			// Open Print preview in new window.
 			$( document ).on( 'click', '#wpforms-entries-single .wpforms-entry-print a', function( event ) {
-
 				event.preventDefault();
 
 				window.open( $( this ).attr( 'href' ) );
@@ -739,60 +785,6 @@
 			} );
 		},
 
-		/**
-		 * Display settings to change the entry list field columns/
-		 *
-		 * @since 1.4.0
-		 */
-		entriesListFieldColumn: function() {
-
-			$.alert( {
-				title: wpforms_admin.entry_field_columns,
-				boxWidth: '500px',
-				content: s.iconSpinner + $( '#wpforms-field-column-select' ).html(),
-				onContentReady: function() {
-
-					var $modalContent = this.$content,
-						$select       = $modalContent.find( 'select' ),
-						choices       = new Choices( $select[0], {
-							shouldSort: false,
-							removeItemButton: true,
-							loadingText: wpforms_admin.choicesjs_loading,
-							noResultsText: wpforms_admin.choicesjs_no_results,
-							noChoicesText: wpforms_admin.choicesjs_no_choices,
-							itemSelectText: wpforms_admin.choicesjs_item_select,
-							fuseOptions: window.wpforms_admin_choicesjs_config.fuseOptions,
-							callbackOnInit: function() {
-								$modalContent.find( '.fa' ).remove();
-								$modalContent.find( 'form' ).show();
-							},
-						} );
-
-					$( '.jconfirm-content-pane, .jconfirm-box' ).css( 'overflow', 'visible' );
-
-					choices.passedElement.element.addEventListener( 'change', function() {
-
-						// Without `true` parameter dropdown will be hidden together with modal window when `Enter` is pressed.
-						choices.hideDropdown( true );
-					}, false );
-				},
-				buttons: {
-					confirm: {
-						text: wpforms_admin.save_refresh,
-						btnClass: 'btn-confirm',
-						keys: [ 'enter' ],
-						action: function() {
-							this.$content.find( 'form' ).trigger( 'submit' );
-						},
-					},
-					cancel: {
-						text: wpforms_admin.cancel,
-						keys: [ 'esc' ],
-					},
-				},
-			} );
-		},
-
 		//--------------------------------------------------------------------//
 		// Welcome Activation.
 		//--------------------------------------------------------------------//
@@ -837,25 +829,61 @@
 			}
 
 			// Addons searching.
-			if ( $( '#wpforms-admin-addons-list' ).length ) {
-				var addonSearch = new List(
-					'wpforms-admin-addons-list',
-					{
-						valueNames: [ 'addon-link' ],
-					}
-				);
+			const $sectionAll = $( '#wpforms-addons-list-section-all' );
+			const $sectionInstalled = $( '#wpforms-addons-list-section-installed' );
 
-				$( '#wpforms-admin-addons-search' ).on(
+			if ( $sectionAll.length || $sectionInstalled.length ) {
+				let addonSearchInstalled;
+				let addonSearchAll;
+
+				if ( $sectionInstalled.length ) {
+					addonSearchInstalled = new List(
+						'wpforms-addons-list-section-installed',
+						{
+							valueNames: [ 'addon-link' ],
+						}
+					);
+				}
+
+				if ( $sectionAll.length ) {
+					addonSearchAll = new List(
+						'wpforms-addons-list-section-all',
+						{
+							valueNames: [ 'addon-link' ],
+						}
+					);
+				}
+
+				$( '#wpforms-addons-search' ).on(
 					'keyup search',
 					function() {
-						WPFormsAdmin.updateAddonSearchResult( this, addonSearch );
+						WPFormsAdmin.updateAddonSearchResult( this, addonSearchAll, addonSearchInstalled );
 					}
 				);
 			}
 
 			// Toggle an addon state.
-			$( document ).on( 'click', '#wpforms-admin-addons .addon-item button', function( event ) {
+			$( document ).on( 'change', '.wpforms-addons-list-item .wpforms-toggle-control input', function( event ) {
+				event.preventDefault();
 
+				if ( $( this ).hasClass( 'disabled' ) ) {
+					return false;
+				}
+
+				WPFormsAdmin.addonToggleNew( $( this ) );
+			} );
+
+			$( document ).on( 'click', '.wpforms-addons-list-item button', function( event ) {
+				event.preventDefault();
+
+				if ( $( this ).hasClass( 'disabled' ) ) {
+					return false;
+				}
+
+				WPFormsAdmin.addonToggleNew( $( this ) );
+			} );
+
+			$( document ).on( 'click', '#wpforms-admin-addons .addon-item button', function( event ) {
 				event.preventDefault();
 
 				if ( $( this ).hasClass( 'disabled' ) ) {
@@ -871,30 +899,31 @@
 		 *
 		 * @since 1.7.4
 		 *
-		 * @param {object} searchField The search field html element.
-		 * @param {object} addonSearch Addons list (uses List.js).
+		 * @param {Object} searchField          The search field html element.
+		 * @param {Object} addonSearchAll       Addons all list (uses List.js).
+		 * @param {Object} addonSearchInstalled Addons installed list (uses List.js).
 		 */
-		updateAddonSearchResult: function( searchField, addonSearch ) {
-
-			var searchTerm = $( searchField ).val(),
-				$heading   = $( '#addons-heading' );
-
-			if ( searchTerm ) {
-				$heading.text( wpforms_admin.addon_search );
-			} else {
-				$heading.text( $heading.data( 'text' ) );
-			}
+		updateAddonSearchResult( searchField, addonSearchAll, addonSearchInstalled ) {
+			let searchTerm = $( searchField ).val();
 
 			/*
 			 * Replace dot and comma with space
-			 * it is workaround for a bug in listjs library.
+			 * it is workaround for a bug in list.js library.
 			 *
 			 * Note: remove when the issue below is fixed:
 			 * @see https://github.com/javve/list.js/issues/699
 			 */
 			searchTerm = searchTerm.replace( /[.,]/g, ' ' );
 
-			addonSearch.search( searchTerm );
+			const $noResultsMessage = $( '#wpforms-addons-no-results' );
+			const $sectionAll = $( '#wpforms-addons-list-section-all' );
+			const $sectionInstalled = $( '#wpforms-addons-list-section-installed' );
+			const searchResultsAll = addonSearchAll ? addonSearchAll.search( searchTerm ) : [];
+			const searchResultsInstalled = addonSearchInstalled ? addonSearchInstalled.search( searchTerm ) : [];
+
+			$noResultsMessage.toggle( searchResultsAll.length === 0 && searchResultsInstalled.length === 0 );
+			$sectionAll.toggle( searchResultsAll.length > 0 );
+			$sectionInstalled.toggle( searchResultsInstalled.length > 0 );
 		},
 
 		/**
@@ -902,51 +931,255 @@
 		 *
 		 * @since 1.6.3
 		 *
-		 * @param {string}   plugin     Plugin slug or URL for download.
-		 * @param {string}   state      State status activate|deactivate|install.
-		 * @param {string}   pluginType Plugin type addon or plugin.
-		 * @param {Function} callback   Callback for get result from AJAX.
+		 * @param {string}   plugin        Plugin slug or URL for download.
+		 * @param {string}   state         State status activate|deactivate|install.
+		 * @param {string}   pluginType    Plugin type addon or plugin.
+		 * @param {Function} callback      Callback for get result from AJAX.
+		 * @param {Function} errorCallback Callback for get error from AJAX.
 		 */
-		setAddonState: function( plugin, state, pluginType, callback ) {
-
-			var actions = {
-					'activate': 'wpforms_activate_addon',
-					'install': 'wpforms_install_addon',
-					'deactivate': 'wpforms_deactivate_addon',
-				},
-				action = actions[ state ];
+		setAddonState( plugin, state, pluginType, callback, errorCallback ) {
+			const actions = {
+				activate: 'wpforms_activate_addon',
+				install: 'wpforms_install_addon',
+				deactivate: 'wpforms_deactivate_addon',
+			};
+			const action = actions[ state ];
 
 			if ( ! action ) {
 				return;
 			}
 
-			var data = {
-				action: action,
+			const data = {
+				action,
 				nonce: wpforms_admin.nonce,
-				plugin: plugin,
+				plugin,
 				type: pluginType,
 			};
 
 			$.post( wpforms_admin.ajax_url, data, function( res ) {
-
 				callback( res );
 			} ).fail( function( xhr ) {
-
-				console.log( xhr.responseText );
+				errorCallback( xhr );
 			} );
 		},
 
 		/**
 		 * Toggle addon state.
 		 *
-		 * @since 1.3.9
+		 * @since 1.8.6
+		 *
+		 * @param {Object} $btn Button element.
 		 */
-		addonToggle: function( $btn ) {
+		// eslint-disable-next-line max-lines-per-function, complexity
+		addonToggleNew( $btn ) {
+			const $footer = $btn.parents( '.wpforms-addons-list-item-footer' );
+			const classes = {
+				active: 'wpforms-addons-list-item-footer-active',
+				activating: 'wpforms-addons-list-item-footer-activating',
+				installed: 'wpforms-addons-list-item-footer-installed',
+				missing: 'wpforms-addons-list-item-footer-missing',
+				goToUrl: 'wpforms-addons-list-item-footer-go-to-url',
+				withError: 'wpforms-addons-list-item-footer-with-error',
+			};
 
-			var $addon = $btn.closest( '.addon-item' ),
-				plugin = $btn.attr( 'data-plugin' ),
-				pluginType = $btn.attr( 'data-type' ),
-				state,
+			// Open url in new tab.
+			if ( $footer.hasClass( classes.goToUrl ) ) {
+				window.open( $btn.attr( 'data-plugin' ), '_blank' );
+				return;
+			}
+
+			$btn.prop( 'disabled', true );
+
+			let checked = $btn.is( ':checked' );
+			let cssClass;
+			const plugin = $footer.attr( 'data-plugin' );
+			const pluginType = $footer.attr( 'data-type' );
+			const $addon = $btn.parents( '.wpforms-addons-list-item' );
+			const state = WPFormsAdmin.getAddonState( $footer, classes, $btn );
+
+			/**
+			 * Handle error.
+			 *
+			 * @param {Object} res Response object.
+			 */
+			function handleError( res ) {
+				$footer.addClass( classes.withError );
+
+				if ( typeof res.data === 'object' ) {
+					$footer.append( `<div class="wpforms-addons-list-item-footer-error"><p>${ pluginType === 'addon' ? wpforms_admin.addon_error : wpforms_admin.plugin_error }</p></div>` );
+				} else {
+					$footer.append( `<div class="wpforms-addons-list-item-footer-error"><p>${ res.data }</p></div>` );
+				}
+
+				if ( state === 'install' ) {
+					checked = false;
+					WPFormsAdmin.removeSpinnerFromButton( $btn );
+				} else if ( state === 'deactivate' ) {
+					checked = true;
+				} else if ( state === 'activate' ) {
+					checked = false;
+				}
+			}
+
+			/**
+			 * Handle success.
+			 *
+			 * @param {Object} res Response object.
+			 */
+			function handleSuccess( res ) {
+				if ( state === 'install' ) {
+					cssClass = classes.active;
+					checked = true;
+
+					$footer.attr( 'data-plugin', res.data.basename );
+
+					if ( ! res.data.is_activated ) {
+						cssClass = classes.installed;
+						checked = false;
+					}
+
+					$btn.hide();
+					$btn = $btn.closest( '.wpforms-addons-list-item' ).find( '.wpforms-toggle-control input' );
+				} else if ( state === 'activate' ) {
+					$footer.find( '.wpforms-addons-list-item-footer-settings-link' ).fadeIn( 150 );
+					cssClass = classes.active;
+					checked = true;
+				} else if ( state === 'deactivate' ) {
+					$footer.find( '.wpforms-addons-list-item-footer-settings-link' ).fadeOut( 150 );
+					cssClass = classes.installed;
+					checked = false;
+				}
+
+				$footer.removeClass( classes.active + ' ' + classes.installed + ' ' + classes.missing ).addClass( cssClass );
+			}
+
+			WPFormsAdmin.setAddonState( plugin, state, pluginType, function( res ) {
+				if ( res.success ) {
+					handleSuccess( res );
+				} else {
+					handleError( res );
+				}
+
+				WPFormsAdmin.updateAddonButtonPropertiesAndUI( $btn, $addon, $footer, classes, checked );
+			}, function() {
+				handleError( {
+					data: wpforms_admin.server_error,
+				} );
+
+				WPFormsAdmin.updateAddonButtonPropertiesAndUI( $btn, $addon, $footer, classes, checked );
+			} );
+		},
+
+		/**
+		 * Add spinner to button.
+		 *
+		 * @since 1.8.6
+		 *
+		 * @param {Object} $button Button element.
+		 */
+		addSpinnerToButton( $button ) {
+			const spinnerBlue = '<i class="wpforms-loading-spinner wpforms-loading-blue wpforms-loading-inline"></i>';
+			const originalWidth = $button.width();
+
+			$button.data( 'original-text', $button.html() );
+			$button.width( originalWidth ).html( spinnerBlue );
+		},
+
+		/**
+		 * Remove spinner from button.
+		 *
+		 * @since 1.8.6
+		 *
+		 * @param {Object} $button Button element.
+		 */
+		removeSpinnerFromButton( $button ) {
+			$button.html( $button.data( 'original-text' ) );
+		},
+
+		/**
+		 * Get addon state.
+		 *
+		 * @since 1.8.6
+		 *
+		 * @param {Object} $footer Footer element.
+		 * @param {Object} classes Classes object.
+		 * @param {Object} $button Button element.
+		 *
+		 * @return {string} State.
+		 */
+		getAddonState( $footer, classes, $button ) {
+			let state;
+
+			if ( $footer.hasClass( classes.active ) ) {
+				state = 'deactivate';
+			} else if ( $footer.hasClass( classes.installed ) ) {
+				state = 'activate';
+			} else if ( $footer.hasClass( classes.missing ) ) {
+				WPFormsAdmin.addSpinnerToButton( $button );
+				state = 'install';
+			}
+
+			return state;
+		},
+
+		/**
+		 * Update button properties and UI.
+		 *
+		 * @since 1.8.6
+		 *
+		 * @param {Object}  $btn    Button element.
+		 * @param {Object}  $addon  Addon element.
+		 * @param {Object}  $footer Footer element.
+		 * @param {Object}  classes Classes object.
+		 * @param {boolean} checked Checked state.
+		 */
+		updateAddonButtonPropertiesAndUI( $btn, $addon, $footer, classes, checked ) {
+			$btn.prop( 'checked', checked );
+			$btn.prop( 'disabled', false );
+			$btn.siblings( '.wpforms-toggle-control-status' ).html( $btn.siblings( '.wpforms-toggle-control-status' ).data( checked ? 'on' : 'off' ) );
+
+			if ( $addon.find( '.wpforms-addons-list-item-footer-error' ).length > 0 ) {
+				setTimeout( function() {
+					$footer.removeClass( classes.withError );
+					$addon.find( '.wpforms-addons-list-item-footer-error' ).remove();
+				}, 6000 );
+			}
+		},
+
+		/**
+		 * Scroll to integration.
+		 *
+		 * @since 1.8.6
+		 */
+		scrollToIntegration() {
+			const currentURL = window.location.href;
+			// eslint-disable-next-line compat/compat
+			const urlObject = new URL( currentURL );
+			const searchParams = urlObject.searchParams;
+			const addon = searchParams.get( 'addon' );
+
+			if ( addon ) {
+				const $elementToScrollTo = $( '.wpforms-settings-provider[id*="' + addon + '"]' );
+
+				if ( $elementToScrollTo.length ) {
+					$( window ).scrollTop( $elementToScrollTo.offset().top );
+					searchParams.delete( 'addon' );
+
+					window.history.pushState( {}, document.title, urlObject.toString() );
+				}
+			}
+		},
+
+		/**
+		 * Toggle addon state.
+		 *
+		 * @since 1.3.9
+		 *
+		 * @param {Object} $btn Button element.
+		 */
+		// eslint-disable-next-line max-lines-per-function,complexity
+		addonToggle( $btn ) {
+			let state,
 				cssClass,
 				stateText,
 				buttonText,
@@ -954,7 +1187,6 @@
 				successText;
 
 			if ( $btn.hasClass( 'status-go-to-url' ) ) {
-
 				// Open url in new tab.
 				window.open( $btn.attr( 'data-plugin' ), '_blank' );
 				return;
@@ -963,8 +1195,9 @@
 			$btn.prop( 'disabled', true ).addClass( 'loading' );
 			$btn.html( s.iconSpinner );
 
-			if ( $btn.hasClass( 'status-active' ) ) {
+			const pluginType = $btn.attr( 'data-type' );
 
+			if ( $btn.hasClass( 'status-active' ) ) {
 				// Deactivate.
 				state = 'deactivate';
 				cssClass = 'status-installed';
@@ -973,14 +1206,12 @@
 				}
 				stateText = wpforms_admin.addon_inactive;
 				buttonText = wpforms_admin.addon_activate;
-				errorText  = wpforms_admin.addon_deactivate;
+				errorText = wpforms_admin.addon_deactivate;
 				if ( pluginType === 'addon' ) {
 					buttonText = s.iconActivate + buttonText;
-					errorText  = s.iconDeactivate + errorText;
+					errorText = s.iconDeactivate + errorText;
 				}
-
 			} else if ( $btn.hasClass( 'status-installed' ) ) {
-
 				// Activate.
 				state = 'activate';
 				cssClass = 'status-active';
@@ -991,14 +1222,12 @@
 				buttonText = wpforms_admin.addon_deactivate;
 				if ( pluginType === 'addon' ) {
 					buttonText = s.iconDeactivate + buttonText;
-					errorText  = s.iconActivate + wpforms_admin.addon_activate;
+					errorText = s.iconActivate + wpforms_admin.addon_activate;
 				} else if ( pluginType === 'plugin' ) {
 					buttonText = wpforms_admin.addon_activated;
-					errorText  = wpforms_admin.addon_activate;
+					errorText = wpforms_admin.addon_activate;
 				}
-
 			} else if ( $btn.hasClass( 'status-missing' ) ) {
-
 				// Install & Activate.
 				state = 'install';
 				cssClass = 'status-active';
@@ -1007,26 +1236,29 @@
 				}
 				stateText = wpforms_admin.addon_active;
 				buttonText = wpforms_admin.addon_activated;
-				errorText  = s.iconInstall;
+				errorText = s.iconInstall;
 				if ( pluginType === 'addon' ) {
 					buttonText = s.iconActivate + wpforms_admin.addon_deactivate;
 					errorText += wpforms_admin.addon_install;
 				}
-
 			} else {
 				return;
 			}
+
+			const plugin = $btn.attr( 'data-plugin' );
+
 			// eslint-disable-next-line complexity
 			WPFormsAdmin.setAddonState( plugin, state, pluginType, function( res ) {
+				const $addon = $btn.closest( '.addon-item' );
 
 				if ( res.success ) {
 					if ( 'install' === state ) {
 						$btn.attr( 'data-plugin', res.data.basename );
 						successText = res.data.msg;
 						if ( ! res.data.is_activated ) {
-							stateText  = wpforms_admin.addon_inactive;
+							stateText = wpforms_admin.addon_inactive;
 							buttonText = 'plugin' === pluginType ? wpforms_admin.addon_activate : s.iconActivate + wpforms_admin.addon_activate;
-							cssClass   = 'plugin' === pluginType ? 'status-installed button button-secondary' : 'status-installed';
+							cssClass = 'plugin' === pluginType ? 'status-installed button button-secondary' : 'status-installed';
 						}
 					} else {
 						successText = res.data;
@@ -1065,6 +1297,10 @@
 						$( '.addon-item .msg' ).remove();
 					}, 3000 );
 				}
+			},
+			function( error ) {
+				// eslint-disable-next-line no-console
+				console.log( error.responseText );
 			} );
 		},
 
@@ -1228,6 +1464,14 @@
 			$( document ).on( 'click', '.wpforms-setting-row-image button', function( event ) {
 
 				event.preventDefault();
+
+				// If the remove button was clicked, clear the value and remove the image.
+				if ( $( this ).hasClass( 'wpforms-setting-remove-image' ) ) {
+					const $wrapper = $( this ).closest( '.wpforms-setting-row-image' );
+					$wrapper.find( 'input' ).val( '' ).attr( 'value', '' ).trigger( 'change' ).end().find( 'img' ).remove();
+
+					return;
+				}
 
 				WPFormsAdmin.imageUploadModal( $( this ) );
 			} );
@@ -1417,42 +1661,40 @@
 		 * Image upload modal window.
 		 *
 		 * @since 1.3.0
+		 *
+		 * @param {jQuery} $el Image upload button element.
 		 */
-		imageUploadModal: function( el ) {
+		imageUploadModal( $el ) {
+			// To prevent caching of the media frame object and
+			// avoid confusion between multiple instances,
+			// this method no longer relies on the shared s.mediaFrame object.
+			// Instead, it creates a new mediaFrame object for each instance.
 
-			if ( s.media_frame ) {
-				s.media_frame.open();
-				return;
-			}
+			const $setting = $el.closest( '.wpforms-setting-field' );
 
-			var $setting = $( el ).closest( '.wpforms-setting-field' );
-
-			s.media_frame = wp.media.frames.wpforms_media_frame = wp.media( {
-				className: 'media-frame wpforms-media-frame',
-				frame: 'select',
-				multiple: false,
+			s.mediaFrame = wpf.initMediaLibrary( {
 				title: wpforms_admin.upload_image_title,
-				library: {
-					type: 'image',
-				},
-				button: {
-					text: wpforms_admin.upload_image_button,
-				},
+				extensions: wpforms_admin.upload_image_extensions,
+				extensionsError: wpforms_admin.upload_image_extensions_error,
+				buttonText: wpforms_admin.upload_image_button,
 			} );
 
-			s.media_frame.on( 'select', function() {
-
+			s.mediaFrame.on( 'select', function() {
 				// Grab our attachment selection and construct a JSON representation of the model.
-				var media_attachment = s.media_frame.state().get( 'selection' ).first().toJSON();
+				const mediaAttachment = s.mediaFrame.state().get( 'selection' ).first().toJSON();
+				const $input = $setting.find( 'input[type=text]' );
 
 				// Send the attachment URL to our custom input field via jQuery.
-				$setting.find( 'input[type=text]' ).val( media_attachment.url );
+				$input.val( mediaAttachment.url );
 				$setting.find( 'img' ).remove();
-				$setting.prepend( '<img src="' + media_attachment.url + '">' );
+				$setting.prepend( '<img src="' + mediaAttachment.url + '">' );
+				$input.trigger( 'change' );
+			} ).on( 'close', function() {
+				s.mediaFrame.off( 'library:selection:add' );
 			} );
 
 			// Now that everything has been set, let's open up the frame.
-			s.media_frame.open();
+			s.mediaFrame.open();
 		},
 
 		/**
@@ -2350,6 +2592,33 @@
 		isDebug: function() {
 
 			return ( window.location.hash && '#wpformsdebug' === window.location.hash );
+		},
+
+		/**
+		 * Get Delete / Trash all notice message.
+		 *
+		 * @since 1.8.5
+		 *
+		 * @param {string} type Type of screen.
+		 *
+		 * @return {Object} Notice Data object.
+		 */
+		getDeleteAllNoticeData: ( type = '' ) => {
+			// if is trash page show delete data.
+			if ( 'trash' === type ) {
+				return {
+					contentAll : wpforms_admin.entry_delete_all_confirm,
+					content : wpforms_admin.entry_delete_n_confirm,
+					action : 'delete',
+				};
+			}
+
+			// If not return trash data.
+			return {
+				contentAll : wpforms_admin.entry_trash_all_confirm,
+				content : wpforms_admin.entry_trash_n_confirm,
+				action : 'trash',
+			};
 		},
 	};
 

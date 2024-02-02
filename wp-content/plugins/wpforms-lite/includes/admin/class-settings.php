@@ -4,6 +4,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+
+use WPForms\Admin\Notice;
+use WPForms\Migrations\Migrations as LiteMigration;
+use WPForms\Pro\Migrations\Migrations;
+
 /**
  * Settings class.
  *
@@ -27,6 +32,16 @@ class WPForms_Settings {
 	 */
 	public function __construct() {
 
+		$this->hooks();
+	}
+
+	/**
+	 * Hooks.
+	 *
+	 * @since 1.8.5.4
+	 */
+	private function hooks() {
+
 		// Maybe load settings page.
 		add_action( 'admin_init', [ $this, 'init' ] );
 	}
@@ -36,7 +51,7 @@ class WPForms_Settings {
 	 *
 	 * @since 1.0.0
 	 */
-	public function init() {
+	public function init() { // phpcs:ignore WPForms.PHP.HooksMethod.InvalidPlaceForAddingHooks
 
 		// Only load if we are actually on the settings page.
 		if ( ! wpforms_is_admin_page( 'settings' ) ) {
@@ -46,11 +61,17 @@ class WPForms_Settings {
 		// Include API callbacks and functions.
 		require_once WPFORMS_PLUGIN_DIR . 'includes/admin/settings-api.php';
 
+		// Show downgraded notice.
+		$this->maybe_display_downgraded_notice();
+
 		// Watch for triggered save.
 		$this->save_settings();
 
 		// Determine the current active settings tab.
-		$this->view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'general'; // phpcs:ignore WordPress.CSRF.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$this->view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'general';
+
+		$this->modify_url();
 
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueues' ] );
 		add_action( 'wpforms_admin_page', [ $this, 'output' ] );
@@ -63,11 +84,83 @@ class WPForms_Settings {
 	}
 
 	/**
+	 * Remove `wpforms-integration` query arg from URL.
+	 * The `wpforms-integration` query arg is used to highlight a specific provider on the Integrations page.
+	 *
+	 * @since 1.8.5.4
+	 */
+	private function modify_url() {
+
+		if ( $this->view !== 'integrations' ) {
+			return;
+		}
+
+		$_SERVER['REQUEST_URI'] = remove_query_arg( 'wpforms-integration' );
+	}
+
+	/**
+	 * Display admin notice about using a downgraded version of WPForms.
+	 *
+	 * @since 1.8.5.4
+	 */
+	private function maybe_display_downgraded_notice() {
+
+		if ( ! $this->is_downgraded_version() ) {
+			return;
+		}
+
+		$notice = sprintf(
+			wp_kses( /* translators: %1$s - WPForms.com doc page URL; %2$s - button text. */
+				__(
+					'It looks like you\'ve downgraded to an older version of WPForms. We recommend always using the latest version as some features may not function as expected in older versions. <a href="%1$s" target="_blank" rel="noopener">%2$s</a>',
+					'wpforms-lite'
+				),
+				[
+					'a' => [
+						'href'   => [],
+						'target' => [],
+						'rel'    => [],
+					],
+				]
+			),
+			esc_url( wpforms_utm_link( 'https://wpforms.com/docs/why-you-should-always-use-the-latest-version-of-wpforms/', 'Settings', 'Downgrade notice' ) ),
+			esc_html__( 'Learn More', 'wpforms-lite' )
+		);
+
+		Notice::warning(
+			$notice,
+			[
+				'dismiss' => Notice::DISMISS_GLOBAL,
+				'slug'    => 'wpforms_is_downgraded',
+			]
+		);
+	}
+
+	/**
+	 * Check if plugin was downgraded.
+	 *
+	 * @since 1.8.5.4
+	 *
+	 * @return bool
+	 */
+	private function is_downgraded_version(): bool {
+
+		// Get all installed versions.
+		$installed_versions = wpforms()->is_pro() ? (array) get_option( Migrations::MIGRATED_OPTION_NAME, [] ) : (array) get_option( LiteMigration::MIGRATED_OPTION_NAME, [] );
+
+		// Get the most recent installed version.
+		$db_latest = array_keys( $installed_versions )[ count( $installed_versions ) - 1 ];
+
+		// Check if downgrade happened.
+		return version_compare( $db_latest, WPFORMS_VERSION, '>' );
+	}
+
+	/**
 	 * Sanitize and save settings.
 	 *
 	 * @since 1.3.9
 	 */
-	public function save_settings() {
+	public function save_settings() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity.MaxExceeded, Generic.Metrics.NestingLevel.MaxExceeded
 
 		// Check nonce and other various security checks.
 		if ( ! isset( $_POST['wpforms-settings-submit'] ) || empty( $_POST['nonce'] ) ) {
@@ -117,8 +210,13 @@ class WPForms_Settings {
 			}
 
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$value      = isset( $_POST[ $id ] ) ? trim( wp_unslash( $_POST[ $id ] ) ) : false;
+			$value      = isset( $_POST[ $id ] ) ? wp_unslash( $_POST[ $id ] ) : false;
 			$value_prev = isset( $settings[ $id ] ) ? $settings[ $id ] : false;
+
+			// Trim all string values.
+			if ( is_string( $value ) ) {
+				$value = trim( $value );
+			}
 
 			// Custom filter can be provided for sanitizing, otherwise use defaults.
 			if ( ! empty( $field['filter'] ) && is_callable( $field['filter'] ) ) {
@@ -139,6 +237,10 @@ class WPForms_Settings {
 
 					case 'color':
 						$value = wpforms_sanitize_hex_color( $value );
+						break;
+
+					case 'color_scheme':
+						$value = array_map( 'wpforms_sanitize_hex_color', $value );
 						break;
 
 					case 'number':
@@ -164,7 +266,7 @@ class WPForms_Settings {
 		// Save settings.
 		wpforms_update_settings( $settings );
 
-		\WPForms\Admin\Notice::success( esc_html__( 'Settings were successfully saved.', 'wpforms-lite' ) );
+		Notice::success( esc_html__( 'Settings were successfully saved.', 'wpforms-lite' ) );
 	}
 
 	/**
@@ -189,11 +291,6 @@ class WPForms_Settings {
 		$tabs = [
 			'general'      => [
 				'name'   => esc_html__( 'General', 'wpforms-lite' ),
-				'form'   => true,
-				'submit' => esc_html__( 'Save Settings', 'wpforms-lite' ),
-			],
-			'email'        => [
-				'name'   => esc_html__( 'Email', 'wpforms-lite' ),
 				'form'   => true,
 				'submit' => esc_html__( 'Save Settings', 'wpforms-lite' ),
 			],
@@ -336,79 +433,9 @@ class WPForms_Settings {
 					'status' => true,
 				],
 			],
-			// Email settings tab.
-			'email'        => [
-				'email-heading'          => [
-					'id'       => 'email-heading',
-					'content'  => '<h4>' . esc_html__( 'Email', 'wpforms-lite' ) . '</h4><p>' . esc_html__( 'Customize your email template and sending preferences.', 'wpforms-lite' ) . '</p>' . wpforms()->get( 'education_smtp_notice' )->get_template(),
-					'type'     => 'content',
-					'no_label' => true,
-					'class'    => [ 'section-heading', 'no-desc' ],
-				],
-				'email-template'         => [
-					'id'      => 'email-template',
-					'name'    => esc_html__( 'Template', 'wpforms-lite' ),
-					'type'    => 'radio',
-					'default' => 'default',
-					'options' => [
-						'default' => esc_html__( 'HTML Template', 'wpforms-lite' ),
-						'none'    => esc_html__( 'Plain text', 'wpforms-lite' ),
-					],
-				],
-				'email-header-image'     => [
-					'id'   => 'email-header-image',
-					'name' => esc_html__( 'Header Image', 'wpforms-lite' ),
-					'desc' => __( 'Upload or choose a logo to be displayed at the top of email notifications.', 'wpforms-lite' ),
-					'type' => 'image',
-				],
-				'email-background-color' => [
-					'id'      => 'email-background-color',
-					'name'    => esc_html__( 'Background Color', 'wpforms-lite' ),
-					'desc'    => esc_html__( 'Customize the background color of the HTML email template.', 'wpforms-lite' ),
-					'type'    => 'color',
-					'default' => '#e9eaec',
-					'data'    => [
-						'fallback-color' => wpforms_setting( 'email-background-color', '#e9eaec' ),
-					],
-				],
-				'sending-heading'        => [
-					'id'       => 'sending-heading',
-					'content'  => '<h4>' . esc_html__( 'Sending', 'wpforms-lite' ) . '</h4>',
-					'type'     => 'content',
-					'no_label' => true,
-					'class'    => [ 'section-heading', 'no-desc' ],
-				],
-				'email-async'            => [
-					'id'     => 'email-async',
-					'name'   => esc_html__( 'Optimize Email Sending', 'wpforms-lite' ),
-					'desc'   => sprintf(
-						wp_kses( /* translators: %s - WPForms.com Email settings documentation URL. */
-							__( 'Send emails asynchronously, which can make processing faster but may slightly delay email delivery. <a href="%s" target="_blank" rel="noopener noreferrer" class="wpforms-learn-more">Learn More</a>', 'wpforms-lite' ),
-							[
-								'a' => [
-									'href'   => [],
-									'target' => [],
-									'rel'    => [],
-									'class'  => [],
-								],
-							]
-						),
-						esc_url( wpforms_utm_link( 'https://wpforms.com/docs/a-complete-guide-to-wpforms-settings/#email', 'Settings - Email', 'Optimize Email Sending Documentation' ) )
-					),
-					'type'   => 'toggle',
-					'status' => true,
-				],
-				'email-carbon-copy'      => [
-					'id'     => 'email-carbon-copy',
-					'name'   => esc_html__( 'Carbon Copy', 'wpforms-lite' ),
-					'desc'   => esc_html__( 'Enable the ability to CC: email addresses in the form notification settings.', 'wpforms-lite' ),
-					'type'   => 'toggle',
-					'status' => true,
-				],
-			],
 			// Validation messages settings tab.
 			'validation'   => [
-				'validation-heading'               => [
+				'validation-heading'              => [
 					'id'       => 'validation-heading',
 					'content'  => sprintf( /* translators: %s - WPForms.com smart tags documentation URL. */
 						esc_html__( '%1$s These messages are displayed to the users as they fill out a form in real-time. Messages can include plain text and/or %2$sSmart Tags%3$s.', 'wpforms-lite' ),
@@ -421,19 +448,19 @@ class WPForms_Settings {
 					'no_label' => true,
 					'class'    => [ 'section-heading' ],
 				],
-				'validation-required'              => [
+				'validation-required'             => [
 					'id'      => 'validation-required',
 					'name'    => esc_html__( 'Required', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'This field is required.', 'wpforms-lite' ),
 				],
-				'validation-email'                 => [
+				'validation-email'                => [
 					'id'      => 'validation-email',
 					'name'    => esc_html__( 'Email', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Please enter a valid email address.', 'wpforms-lite' ),
 				],
-				'validation-email-suggestion'      => [
+				'validation-email-suggestion'     => [
 					'id'      => 'validation-email-suggestion',
 					'name'    => esc_html__( 'Email Suggestion', 'wpforms-lite' ),
 					'type'    => 'text',
@@ -442,43 +469,49 @@ class WPForms_Settings {
 						'{suggestion}'
 					),
 				],
-				'validation-email-restricted'      => [
+				'validation-email-restricted'     => [
 					'id'      => 'validation-email-restricted',
 					'name'    => esc_html__( 'Email Restricted', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'This email address is not allowed.', 'wpforms-lite' ),
 				],
-				'validation-number'                => [
+				'validation-number'               => [
 					'id'      => 'validation-number',
 					'name'    => esc_html__( 'Number', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Please enter a valid number.', 'wpforms-lite' ),
 				],
-				'validation-number-positive'       => [
+				'validation-number-positive'      => [
 					'id'      => 'validation-number-positive',
 					'name'    => esc_html__( 'Number Positive', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Please enter a valid positive number.', 'wpforms-lite' ),
 				],
-				'validation-confirm'               => [
+				'validation-minimum-price'        => [
+					'id'      => 'validation-minimum-price',
+					'name'    => esc_html__( 'Minimum Price', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Amount entered is less than the required minimum.', 'wpforms-lite' ),
+				],
+				'validation-confirm'              => [
 					'id'      => 'validation-confirm',
 					'name'    => esc_html__( 'Confirm Value', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Field values do not match.', 'wpforms-lite' ),
 				],
-				'validation-inputmask-incomplete'  => [
+				'validation-inputmask-incomplete' => [
 					'id'      => 'validation-inputmask-incomplete',
 					'name'    => esc_html__( 'Input Mask Incomplete', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Please fill out the field in required format.', 'wpforms-lite' ),
 				],
-				'validation-check-limit'           => [
+				'validation-check-limit'          => [
 					'id'      => 'validation-check-limit',
 					'name'    => esc_html__( 'Checkbox Selection Limit', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'You have exceeded the number of allowed selections: {#}.', 'wpforms-lite' ),
 				],
-				'validation-character-limit'       => [
+				'validation-character-limit'      => [
 					'id'      => 'validation-character-limit',
 					'name'    => esc_html__( 'Character Limit', 'wpforms-lite' ),
 					'type'    => 'text',
@@ -488,7 +521,7 @@ class WPForms_Settings {
 						'{remaining}'
 					),
 				],
-				'validation-word-limit'            => [
+				'validation-word-limit'           => [
 					'id'      => 'validation-word-limit',
 					'name'    => esc_html__( 'Word Limit', 'wpforms-lite' ),
 					'type'    => 'text',
@@ -497,6 +530,18 @@ class WPForms_Settings {
 						'{limit}',
 						'{remaining}'
 					),
+				],
+				'validation-requiredpayment'      => [
+					'id'      => 'validation-requiredpayment',
+					'name'    => esc_html__( 'Payment Required', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Payment is required.', 'wpforms-lite' ),
+				],
+				'validation-creditcard'           => [
+					'id'      => 'validation-creditcard',
+					'name'    => esc_html__( 'Credit Card', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Please enter a valid credit card number.', 'wpforms-lite' ),
 				],
 			],
 			// Provider integrations settings tab.

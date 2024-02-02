@@ -98,8 +98,15 @@ class ScheduledTaskEntity {
    */
   private $sendingQueue;
 
+  /**
+   * @ORM\OneToMany(targetEntity="MailPoet\Entities\ScheduledTaskSubscriberEntity", mappedBy="task", orphanRemoval=true)
+   * @var Collection<int, ScheduledTaskSubscriberEntity>
+   */
+  private $scheduledTaskSubscribers;
+
   public function __construct() {
     $this->subscribers = new ArrayCollection();
+    $this->scheduledTaskSubscribers = new ArrayCollection();
   }
 
   /**
@@ -222,7 +229,8 @@ class ScheduledTaskEntity {
   public function getSubscribersByProcessed(int $processed): array {
     $criteria = Criteria::create()
       ->where(Criteria::expr()->eq('processed', $processed));
-    $subscribers = $this->subscribers->matching($criteria)->map(function (ScheduledTaskSubscriberEntity $taskSubscriber): ?SubscriberEntity {
+    $subscribers = $this->subscribers->matching($criteria)->map(function (ScheduledTaskSubscriberEntity $taskSubscriber = null): ?SubscriberEntity {
+      if (!$taskSubscriber) return null;
       return $taskSubscriber->getSubscriber();
     });
     return array_filter($subscribers->toArray());

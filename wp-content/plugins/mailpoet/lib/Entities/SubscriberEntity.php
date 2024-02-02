@@ -218,10 +218,17 @@ class SubscriberEntity {
    */
   private $subscriberTags;
 
+  /**
+   * @ORM\OneToMany(targetEntity="MailPoet\Entities\ScheduledTaskSubscriberEntity", mappedBy="subscriber", orphanRemoval=true)
+   * @var Collection<int, ScheduledTaskSubscriberEntity>
+   */
+  private $scheduledTaskSubscribers;
+
   public function __construct() {
     $this->subscriberSegments = new ArrayCollection();
     $this->subscriberCustomFields = new ArrayCollection();
     $this->subscriberTags = new ArrayCollection();
+    $this->scheduledTaskSubscribers = new ArrayCollection();
   }
 
   /**
@@ -492,9 +499,10 @@ class SubscriberEntity {
 
   /** * @return Collection<int, SegmentEntity> */
   public function getSegments() {
-    return $this->subscriberSegments->map(function (SubscriberSegmentEntity $subscriberSegment) {
+    return $this->subscriberSegments->map(function (SubscriberSegmentEntity $subscriberSegment = null) {
+      if (!$subscriberSegment) return null;
       return $subscriberSegment->getSegment();
-    })->filter(function ($segment) {
+    })->filter(function (?SegmentEntity $segment = null) {
       return $segment !== null;
     });
   }
@@ -622,7 +630,8 @@ class SubscriberEntity {
   /** @ORM\PreFlush */
   public function cleanupSubscriberSegments(): void {
     // Delete old orphan SubscriberSegments to avoid errors on update
-    $this->subscriberSegments->map(function (SubscriberSegmentEntity $subscriberSegment) {
+    $this->subscriberSegments->map(function (SubscriberSegmentEntity $subscriberSegment = null) {
+      if (!$subscriberSegment) return null;
       if ($subscriberSegment->getSegment() === null) {
         $this->subscriberSegments->removeElement($subscriberSegment);
       }

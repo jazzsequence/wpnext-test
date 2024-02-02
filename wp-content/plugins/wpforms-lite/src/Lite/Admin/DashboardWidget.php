@@ -144,7 +144,7 @@ class DashboardWidget extends Widget {
 			'wpforms-chart',
 			WPFORMS_PLUGIN_URL . 'assets/lib/chart.min.js',
 			[ 'moment' ],
-			'2.7.2',
+			'2.9.4',
 			true
 		);
 
@@ -457,7 +457,7 @@ class DashboardWidget extends Widget {
 			return $cache;
 		}
 
-		$forms = wpforms()->form->get( '', [ 'fields' => 'ids' ] );
+		$forms = wpforms()->get( 'form' )->get( '', [ 'fields' => 'ids' ] );
 
 		if ( empty( $forms ) || ! is_array( $forms ) ) {
 			return [];

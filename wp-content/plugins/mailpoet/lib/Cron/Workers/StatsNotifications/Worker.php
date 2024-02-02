@@ -18,7 +18,6 @@ use MailPoet\Mailer\MetaInfo;
 use MailPoet\Newsletter\Statistics\NewsletterStatisticsRepository;
 use MailPoet\Settings\SettingsController;
 use MailPoet\Subscribers\SubscribersRepository;
-use MailPoet\Tasks\Sending;
 use MailPoet\Util\License\Features\Subscribers as SubscribersFeature;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
@@ -28,6 +27,7 @@ class Worker {
 
   const TASK_TYPE = 'stats_notification';
   const SETTINGS_KEY = 'stats_notifications';
+  const BATCH_SIZE = 5;
 
   /** @var Renderer */
   private $renderer;
@@ -99,7 +99,7 @@ class Worker {
     $settings = $this->settings->get(self::SETTINGS_KEY);
     // Cleanup potential orphaned task created due bug MAILPOET-3015
     $this->repository->deleteOrphanedScheduledTasks();
-    foreach ($this->repository->findScheduled(Sending::RESULT_BATCH_SIZE) as $statsNotificationEntity) {
+    foreach ($this->repository->findScheduled(self::BATCH_SIZE) as $statsNotificationEntity) {
       try {
         $extraParams = [
           'meta' => $this->mailerMetaInfo->getStatsNotificationMetaInfo(),
@@ -185,7 +185,7 @@ class Worker {
 
   private function markTaskAsFinished(ScheduledTaskEntity $task) {
     $task->setStatus(ScheduledTaskEntity::STATUS_COMPLETED);
-    $task->setProcessedAt(new Carbon);
+    $task->setProcessedAt(Carbon::createFromTimestamp(WPFunctions::get()->currentTime('timestamp')));
     $task->setScheduledAt(null);
     $this->entityManager->flush();
   }

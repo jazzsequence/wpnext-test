@@ -297,9 +297,9 @@ function wpforms_get_providers_all() {
 			'license'     => 'elite',
 		],
 		[
-			'name'        => 'Sendinblue',
+			'name'        => 'Brevo',
 			'slug'        => 'sendinblue',
-			'img'         => 'addon-icon-sendinblue.png',
+			'img'         => 'addon-icon-brevo.png',
 			'plugin'      => 'wpforms-sendinblue/wpforms-sendinblue.php',
 			'plugin_slug' => 'wpforms-sendinblue',
 			'license'     => 'pro',
@@ -318,6 +318,14 @@ function wpforms_get_providers_all() {
 			'img'         => 'addon-icon-hubspot.png',
 			'plugin'      => 'wpforms-hubspot/wpforms-hubspot.php',
 			'plugin_slug' => 'wpforms-hubspot',
+			'license'     => 'pro',
+		],
+		[
+			'name'        => 'ConvertKit',
+			'slug'        => 'convertkit',
+			'img'         => 'addon-icon-convertkit.png',
+			'plugin'      => 'wpforms-convertkit/wpforms-convertkit.php',
+			'plugin_slug' => 'wpforms-convertkit',
 			'license'     => 'pro',
 		],
 	];
