@@ -1,14 +1,26 @@
 #!/bin/bash
 
+dir=$(pwd)/scripts
+
 echo "Logging into Terminus. If this fails, make sure you're logged into terminus first."
 terminus auth:login
+
+read -p "Use Terminus or Lando? (t or l): " -r TERMINUS_OR_LANDO
+if [ $TERMINUS_OR_LANDO == "t" ]; then
+  echo "Updating WordPress with Terminus."
+elif [ $TERMINUS_OR_LANDO == "l" ]; then
+  echo "Updating WordPress with Lando."
+  bash ${dir}/lando-update.sh
+  exit 0
+else
+  echo "Invalid option. Please try again."
+  exit 1
+fi
 
 # Switch to SFTP mode
 terminus connection:set wp59-test.dev sftp
 
 read -p "Enter the type of update you would like to perform (c or core, p or plugin, t or theme): " -r UPDATE_TYPE
-
-dir=$(pwd)/scripts
 
 # Run the script based on the update type.
 if [ $UPDATE_TYPE == "c" ] || [ $UPDATE_TYPE == "core" ]; then
