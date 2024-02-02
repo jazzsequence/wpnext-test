@@ -2,6 +2,9 @@
 
 wp="lando wp"
 
+echo "Starting Lando..."
+lando start
+
 echo "Updating Plugins..."
 $wp plugin update --all
 git add wp-content/plugins
