@@ -18,6 +18,10 @@ if ( isset( $_ENV['PANTHEON_ENVIRONMENT'] ) ) {
 	if ( ! defined( 'DISABLE_PANTHEON_UPDATE_NOTICES' ) || ! DISABLE_PANTHEON_UPDATE_NOTICES ) {
 		require_once 'inc/pantheon-updates.php';
 	}
+	// If we're on WP 6.5+, we can use the WP_Font_Library.
+	if ( version_compare( _pantheon_get_current_wordpress_version(), '6.5' ) ) {
+		require_once 'inc/fonts.php';
+	}
 	if ( ! defined( 'RETURN_TO_PANTHEON_BUTTON' ) || RETURN_TO_PANTHEON_BUTTON ) {
 		require_once 'inc/pantheon-login-form-mods.php';
 	}
