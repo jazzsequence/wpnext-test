@@ -47653,11 +47653,15 @@ function useDragSelection() {
         setContentEditableWrapper(node, false);
         const selection = defaultView.getSelection();
         if (selection.rangeCount) {
+          const range = selection.getRangeAt(0);
           const {
             commonAncestorContainer
-          } = selection.getRangeAt(0);
+          } = range;
+          const clonedRange = range.cloneRange();
           if (anchorElement.contains(commonAncestorContainer)) {
             anchorElement.focus();
+            selection.removeAllRanges();
+            selection.addRange(clonedRange);
           }
         }
       });
@@ -54055,6 +54059,7 @@ function useOnBlockDrop(targetRootClientId, targetBlockIndex, options = {}) {
   } = (0,external_wp_data_namespaceObject.useDispatch)(store);
   const registry = (0,external_wp_data_namespaceObject.useRegistry)();
   const insertOrReplaceBlocks = (0,external_wp_element_namespaceObject.useCallback)((blocks, updateSelection = true, initialPosition = 0, clientIdsToReplace = []) => {
+    if (!Array.isArray(blocks)) blocks = [blocks];
     const clientIds = getBlockOrder(targetRootClientId);
     const clientId = clientIds[targetBlockIndex];
     const blocksClientIds = blocks.map(block => block.clientId);
