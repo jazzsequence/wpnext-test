@@ -22,3 +22,6 @@ git commit -m "Updating WordPress core"
 
 echo "Pushing changes to Pantheon..."
 git push origin master
+
+terminus env:deploy wp59-test.test --note="Updating WordPress core, plugins, and themes"
+terminus env:deploy wp59-test.live --note="Updating WordPress core, plugins, and themes"
