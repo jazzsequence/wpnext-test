@@ -27,7 +27,7 @@
     },
     "require": {
         "composer/installers": "^1.0 || ^2.2",
-        "pantheon-systems/pantheon-mu-plugin": "dev-cmsp-695-filter-wp-font-dir",
+        "pantheon-systems/pantheon-mu-plugin": "*",
         "humanmade/wordpress-importer": "dev-master",
         "pantheon-systems/pantheon-wordpress-upstream-tests": "dev-master",
         "pantheon-systems/customer-secrets-php-sdk": "^1.0",

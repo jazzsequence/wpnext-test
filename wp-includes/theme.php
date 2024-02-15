@@ -840,13 +840,6 @@ function switch_theme( $stylesheet ) {
 	$new_theme->delete_pattern_cache();
 	$old_theme->delete_pattern_cache();
 
-	// Set autoload=no for the old theme, autoload=yes for the switched theme.
-	$theme_mods_options = array(
-		'theme_mods_' . $stylesheet                  => 'yes',
-		'theme_mods_' . $old_theme->get_stylesheet() => 'no',
-	);
-	wp_set_option_autoload_values( $theme_mods_options );
-
 	/**
 	 * Fires after the theme is switched.
 	 *
@@ -1444,16 +1437,14 @@ function is_random_header_image( $type = 'any' ) {
 	if ( 'any' === $type ) {
 		if ( 'random-default-image' === $header_image_mod
 			|| 'random-uploaded-image' === $header_image_mod
-			|| ( empty( $header_image_mod ) && '' !== get_random_header_image() )
+			|| ( '' !== get_random_header_image() && empty( $header_image_mod ) )
 		) {
 			return true;
 		}
 	} else {
 		if ( "random-$type-image" === $header_image_mod ) {
 			return true;
-		} elseif ( 'default' === $type
-			&& empty( $header_image_mod ) && '' !== get_random_header_image()
-		) {
+		} elseif ( 'default' === $type && empty( $header_image_mod ) && '' !== get_random_header_image() ) {
 			return true;
 		}
 	}
@@ -2617,15 +2608,12 @@ function get_theme_starter_content() {
  * @since 5.6.0 The `post-formats` feature warns if no array is passed as the second parameter.
  * @since 5.8.0 The `widgets-block-editor` feature enables the Widgets block editor.
  * @since 6.0.0 The `html5` feature warns if no array is passed as the second parameter.
- * @since 6.5.0 The `appearance-tools` feature enables a few design tools for blocks,
- *              see `WP_Theme_JSON::APPEARANCE_TOOLS_OPT_INS` for a complete list.
  *
  * @global array $_wp_theme_features
  *
  * @param string $feature The feature being added. Likely core values include:
  *                          - 'admin-bar'
  *                          - 'align-wide'
- *                          - 'appearance-tools'
  *                          - 'automatic-feed-links'
  *                          - 'core-block-patterns'
  *                          - 'custom-background'
@@ -3594,6 +3582,7 @@ function _wp_customize_include() {
  * @since 4.7.0
  * @access private
  *
+ * @global wpdb                 $wpdb         WordPress database abstraction object.
  * @global WP_Customize_Manager $wp_customize Customizer instance.
  *
  * @param string  $new_status     New post status.
@@ -3601,7 +3590,7 @@ function _wp_customize_include() {
  * @param WP_Post $changeset_post Changeset post object.
  */
 function _wp_customize_publish_changeset( $new_status, $old_status, $changeset_post ) {
-	global $wp_customize;
+	global $wp_customize, $wpdb;
 
 	$is_publishing_changeset = (
 		'customize_changeset' === $changeset_post->post_type

@@ -98,7 +98,7 @@ function render_block_core_query_pagination_numbers( $attributes, $content, $blo
 				'class_name' => 'page-numbers',
 			)
 		) ) {
-			$p->set_attribute( 'data-wp-on--click', 'core/query::actions.navigate' );
+			$p->set_attribute( 'data-wp-on--click', 'actions.core.query.navigate' );
 		}
 		$content = $p->get_updated_html();
 	}

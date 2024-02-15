@@ -219,7 +219,6 @@ class WP_Image_Editor_Imagick extends WP_Image_Editor {
 						$this->image->setImageCompressionQuality( $quality );
 					}
 					break;
-				case 'image/avif':
 				default:
 					$this->image->setImageCompressionQuality( $quality );
 			}
@@ -255,16 +254,6 @@ class WP_Image_Editor_Imagick extends WP_Image_Editor {
 
 		if ( ! $height ) {
 			$height = $size['height'];
-		}
-
-		/*
-		 * If we still don't have the image size, fall back to `wp_getimagesize`. This ensures AVIF images
-		 * are properly sized without affecting previous `getImageGeometry` behavior.
-		 */
-		if ( ( ! $width || ! $height ) && 'image/avif' === $this->mime_type ) {
-			$size   = wp_getimagesize( $this->file );
-			$width  = $size[0];
-			$height = $size[1];
 		}
 
 		return parent::update_size( $width, $height );

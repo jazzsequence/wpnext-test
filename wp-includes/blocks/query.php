@@ -17,26 +17,23 @@
  * @return string Returns the modified output of the query block.
  */
 function render_block_core_query( $attributes, $content, $block ) {
-	$is_interactive = isset( $attributes['enhancedPagination'] ) && true === $attributes['enhancedPagination'] && isset( $attributes['queryId'] );
-
-	// Enqueue the script module and add the necessary directives if the block is
-	// interactive.
-	if ( $is_interactive ) {
-		wp_enqueue_script_module( '@wordpress/block-library/query' );
-
+	if ( $attributes['enhancedPagination'] && isset( $attributes['queryId'] ) ) {
 		$p = new WP_HTML_Tag_Processor( $content );
 		if ( $p->next_tag() ) {
 			// Add the necessary directives.
-			$p->set_attribute( 'data-wp-interactive', '{"namespace":"core/query"}' );
-			$p->set_attribute( 'data-wp-router-region', 'query-' . $attributes['queryId'] );
-			$p->set_attribute( 'data-wp-init', 'callbacks.setQueryRef' );
+			$p->set_attribute( 'data-wp-interactive', true );
+			$p->set_attribute( 'data-wp-navigation-id', 'query-' . $attributes['queryId'] );
 			// Use context to send translated strings.
 			$p->set_attribute(
 				'data-wp-context',
 				wp_json_encode(
 					array(
-						'loadingText' => __( 'Loading page, please wait.' ),
-						'loadedText'  => __( 'Page Loaded.' ),
+						'core' => array(
+							'query' => array(
+								'loadingText' => __( 'Loading page, please wait.' ),
+								'loadedText'  => __( 'Page Loaded.' ),
+							),
+						),
 					),
 					JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP
 				)
@@ -57,12 +54,12 @@ function render_block_core_query( $attributes, $content, $block ) {
 				'<div
 					class="screen-reader-text"
 					aria-live="polite"
-					data-wp-text="context.message"
+					data-wp-text="context.core.query.message"
 				></div>
 				<div
 					class="wp-block-query__enhanced-pagination-animation"
-					data-wp-class--start-animation="state.startAnimation"
-					data-wp-class--finish-animation="state.finishAnimation"
+					data-wp-class--start-animation="selectors.core.query.startAnimation"
+					data-wp-class--finish-animation="selectors.core.query.finishAnimation"
 				></div>',
 				$last_tag_position,
 				0
@@ -70,23 +67,59 @@ function render_block_core_query( $attributes, $content, $block ) {
 		}
 	}
 
-	// Add the styles to the block type if the block is interactive and remove
-	// them if it's not.
+	$view_asset = 'wp-block-query-view';
+	if ( ! wp_script_is( $view_asset ) ) {
+		$script_handles = $block->block_type->view_script_handles;
+		// If the script is not needed, and it is still in the `view_script_handles`, remove it.
+		if (
+			( ! $attributes['enhancedPagination'] || ! isset( $attributes['queryId'] ) )
+			&& in_array( $view_asset, $script_handles, true )
+		) {
+			$block->block_type->view_script_handles = array_diff( $script_handles, array( $view_asset ) );
+		}
+		// If the script is needed, but it was previously removed, add it again.
+		if ( $attributes['enhancedPagination'] && isset( $attributes['queryId'] ) && ! in_array( $view_asset, $script_handles, true ) ) {
+			$block->block_type->view_script_handles = array_merge( $script_handles, array( $view_asset ) );
+		}
+	}
+
 	$style_asset = 'wp-block-query';
 	if ( ! wp_style_is( $style_asset ) ) {
 		$style_handles = $block->block_type->style_handles;
 		// If the styles are not needed, and they are still in the `style_handles`, remove them.
-		if ( ! $is_interactive && in_array( $style_asset, $style_handles, true ) ) {
+		if (
+			( ! $attributes['enhancedPagination'] || ! isset( $attributes['queryId'] ) )
+			&& in_array( $style_asset, $style_handles, true )
+		) {
 			$block->block_type->style_handles = array_diff( $style_handles, array( $style_asset ) );
 		}
 		// If the styles are needed, but they were previously removed, add them again.
-		if ( $is_interactive && ! in_array( $style_asset, $style_handles, true ) ) {
+		if ( $attributes['enhancedPagination'] && isset( $attributes['queryId'] ) && ! in_array( $style_asset, $style_handles, true ) ) {
 			$block->block_type->style_handles = array_merge( $style_handles, array( $style_asset ) );
 		}
 	}
 
 	return $content;
 }
+
+/**
+ * Ensure that the view script has the `wp-interactivity` dependency.
+ *
+ * @since 6.4.0
+ *
+ * @global WP_Scripts $wp_scripts
+ */
+function block_core_query_ensure_interactivity_dependency() {
+	global $wp_scripts;
+	if (
+		isset( $wp_scripts->registered['wp-block-query-view'] ) &&
+		! in_array( 'wp-interactivity', $wp_scripts->registered['wp-block-query-view']->deps, true )
+	) {
+		$wp_scripts->registered['wp-block-query-view']->deps[] = 'wp-interactivity';
+	}
+}
+
+add_action( 'wp_print_scripts', 'block_core_query_ensure_interactivity_dependency' );
 
 /**
  * Registers the `core/query` block on the server.
@@ -97,22 +130,6 @@ function register_block_core_query() {
 		array(
 			'render_callback' => 'render_block_core_query',
 		)
-	);
-
-	wp_register_script_module(
-		'@wordpress/block-library/query',
-		defined( 'IS_GUTENBERG_PLUGIN' ) && IS_GUTENBERG_PLUGIN ? gutenberg_url( '/build/interactivity/query.min.js' ) : includes_url( 'blocks/query/view.min.js' ),
-		array(
-			array(
-				'id'     => '@wordpress/interactivity',
-				'import' => 'static',
-			),
-			array(
-				'id'     => '@wordpress/interactivity-router',
-				'import' => 'dynamic',
-			),
-		),
-		defined( 'GUTENBERG_VERSION' ) ? GUTENBERG_VERSION : get_bloginfo( 'version' )
 	);
 }
 add_action( 'init', 'register_block_core_query' );
@@ -133,10 +150,14 @@ function block_core_query_disable_enhanced_pagination( $parsed_block ) {
 	static $dirty_enhanced_queries = array();
 	static $render_query_callback  = null;
 
-	$is_interactive = isset( $parsed_block['attrs']['enhancedPagination'] ) && true === $parsed_block['attrs']['enhancedPagination'] && isset( $parsed_block['attrs']['queryId'] );
-	$block_name     = $parsed_block['blockName'];
+	$block_name = $parsed_block['blockName'];
 
-	if ( 'core/query' === $block_name && $is_interactive ) {
+	if (
+		'core/query' === $block_name &&
+		isset( $parsed_block['attrs']['enhancedPagination'] ) &&
+		true === $parsed_block['attrs']['enhancedPagination'] &&
+		isset( $parsed_block['attrs']['queryId'] )
+	) {
 		$enhanced_query_stack[] = $parsed_block['attrs']['queryId'];
 
 		if ( ! isset( $render_query_callback ) ) {
@@ -151,9 +172,12 @@ function block_core_query_disable_enhanced_pagination( $parsed_block ) {
 			 * @return string Returns the modified output of the query block.
 			 */
 			$render_query_callback = static function ( $content, $block ) use ( &$enhanced_query_stack, &$dirty_enhanced_queries, &$render_query_callback ) {
-				$is_interactive = isset( $block['attrs']['enhancedPagination'] ) && true === $block['attrs']['enhancedPagination'] && isset( $block['attrs']['queryId'] );
+				$has_enhanced_pagination =
+					isset( $block['attrs']['enhancedPagination'] ) &&
+					true === $block['attrs']['enhancedPagination'] &&
+					isset( $block['attrs']['queryId'] );
 
-				if ( ! $is_interactive ) {
+				if ( ! $has_enhanced_pagination ) {
 					return $content;
 				}
 

@@ -1,8 +1,8 @@
-/******/ (() => { // webpackBootstrap
+/******/ (function() { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
 /***/ 1517:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Selection = wp.media.model.Selection,
 	Library = wp.media.controller.Library,
@@ -112,7 +112,7 @@ module.exports = CollectionAdd;
 /***/ }),
 
 /***/ 1817:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Library = wp.media.controller.Library,
 	l10n = wp.media.view.l10n,
@@ -281,7 +281,7 @@ module.exports = CollectionEdit;
 /***/ }),
 
 /***/ 2288:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	Cropper;
@@ -458,7 +458,7 @@ module.exports = Cropper;
 /***/ }),
 
 /***/ 6934:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Controller = wp.media.controller,
 	CustomizeImageCropper;
@@ -518,7 +518,7 @@ module.exports = CustomizeImageCropper;
 /***/ }),
 
 /***/ 7658:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	EditImage;
@@ -617,7 +617,7 @@ module.exports = EditImage;
 /***/ }),
 
 /***/ 9067:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	$ = Backbone.$,
@@ -762,7 +762,7 @@ module.exports = Embed;
 /***/ }),
 
 /***/ 5095:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Attachment = wp.media.model.Attachment,
 	Library = wp.media.controller.Library,
@@ -890,7 +890,7 @@ module.exports = FeaturedImage;
 /***/ }),
 
 /***/ 7323:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Selection = wp.media.model.Selection,
 	Library = wp.media.controller.Library,
@@ -1004,7 +1004,7 @@ module.exports = GalleryAdd;
 /***/ }),
 
 /***/ 6328:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Library = wp.media.controller.Library,
 	l10n = wp.media.view.l10n,
@@ -1180,7 +1180,7 @@ module.exports = GalleryEdit;
 /***/ }),
 
 /***/ 3849:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var State = wp.media.controller.State,
 	Library = wp.media.controller.Library,
@@ -1249,7 +1249,7 @@ module.exports = ImageDetails;
 /***/ }),
 
 /***/ 9024:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	getUserSetting = window.getUserSetting,
@@ -1449,7 +1449,7 @@ Library = wp.media.controller.State.extend(/** @lends wp.media.controller.Librar
 	isImageAttachment: function( attachment ) {
 		// If uploading, we know the filename but not the mime type.
 		if ( attachment.get('uploading') ) {
-			return /\.(jpe?g|png|gif|webp|avif)$/i.test( attachment.get('filename') );
+			return /\.(jpe?g|png|gif|webp)$/i.test( attachment.get('filename') );
 		}
 
 		return attachment.get('type') === 'image';
@@ -1551,7 +1551,7 @@ module.exports = Library;
 /***/ }),
 
 /***/ 3742:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.controller.MediaLibrary
@@ -1608,7 +1608,7 @@ module.exports = MediaLibrary;
 /***/ }),
 
 /***/ 4903:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.controller.Region
@@ -1789,7 +1789,7 @@ module.exports = Region;
 /***/ }),
 
 /***/ 8493:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Library = wp.media.controller.Library,
 	l10n = wp.media.view.l10n,
@@ -1914,7 +1914,7 @@ module.exports = ReplaceImage;
 /***/ }),
 
 /***/ 5274:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Controller = wp.media.controller,
 	SiteIconCropper;
@@ -1970,7 +1970,7 @@ module.exports = SiteIconCropper;
 /***/ }),
 
 /***/ 5466:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.controller.StateMachine
@@ -2113,7 +2113,7 @@ module.exports = StateMachine;
 /***/ }),
 
 /***/ 5826:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.controller.State
@@ -2361,7 +2361,7 @@ module.exports = State;
 /***/ }),
 
 /***/ 3526:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.selectionSync
@@ -2436,7 +2436,7 @@ module.exports = selectionSync;
 /***/ }),
 
 /***/ 8093:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	AttachmentCompat;
@@ -2530,7 +2530,7 @@ module.exports = AttachmentCompat;
 /***/ }),
 
 /***/ 4906:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var $ = jQuery,
 	AttachmentFilters;
@@ -2614,7 +2614,7 @@ module.exports = AttachmentFilters;
 /***/ }),
 
 /***/ 2868:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	All;
@@ -2732,7 +2732,7 @@ module.exports = All;
 /***/ }),
 
 /***/ 9663:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	DateFilter;
@@ -2780,7 +2780,7 @@ module.exports = DateFilter;
 /***/ }),
 
 /***/ 7040:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var l10n = wp.media.view.l10n,
 	Uploaded;
@@ -2862,7 +2862,7 @@ module.exports = Uploaded;
 /***/ }),
 
 /***/ 5019:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	$ = jQuery,
@@ -2986,7 +2986,7 @@ Attachment = View.extend(/** @lends wp.media.view.Attachment.prototype */{
 			options.can.save = !! options.nonces.update;
 		}
 
-		if ( this.controller.state().get('allowLocalEdits') && ! options.uploading ) {
+		if ( this.controller.state().get('allowLocalEdits') ) {
 			options.allowLocalEdits = true;
 		}
 
@@ -3459,7 +3459,7 @@ module.exports = Attachment;
 /***/ }),
 
 /***/ 7274:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /* global ClipboardJS */
 var Attachment = wp.media.view.Attachment,
@@ -3510,6 +3510,8 @@ Details = Attachment.extend(/** @lends wp.media.view.Attachment.Details.prototyp
 
 			// Clear the selection and move focus back to the trigger.
 			event.clearSelection();
+			// Handle ClipboardJS focus bug, see https://github.com/zenorocha/clipboard.js/issues/680
+			triggerElement.trigger( 'focus' );
 
 			// Show success visual feedback.
 			clearTimeout( successTimeout );
@@ -3744,7 +3746,7 @@ module.exports = Details;
 /***/ }),
 
 /***/ 4640:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Attachment.EditLibrary
@@ -3769,7 +3771,7 @@ module.exports = EditLibrary;
 /***/ }),
 
 /***/ 1009:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Attachment.EditSelection
@@ -3795,7 +3797,7 @@ module.exports = EditSelection;
 /***/ }),
 
 /***/ 9254:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Attachment.Library
@@ -3820,7 +3822,7 @@ module.exports = Library;
 /***/ }),
 
 /***/ 9003:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Attachment.Selection
@@ -3849,7 +3851,7 @@ module.exports = Selection;
 /***/ }),
 
 /***/ 8408:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	$ = jQuery,
@@ -4319,7 +4321,7 @@ module.exports = Attachments;
 /***/ }),
 
 /***/ 9239:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	mediaTrash = wp.media.view.settings.mediaTrash,
@@ -5061,7 +5063,7 @@ module.exports = AttachmentsBrowser;
 /***/ }),
 
 /***/ 1223:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Attachments = wp.media.view.Attachments,
 	Selection;
@@ -5098,7 +5100,7 @@ module.exports = Selection;
 /***/ }),
 
 /***/ 4094:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var $ = Backbone.$,
 	ButtonGroup;
@@ -5151,7 +5153,7 @@ module.exports = ButtonGroup;
 /***/ }),
 
 /***/ 3157:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Button
@@ -5244,7 +5246,7 @@ module.exports = Button;
 /***/ }),
 
 /***/ 7137:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	UploaderStatus = wp.media.view.UploaderStatus,
@@ -5346,7 +5348,7 @@ module.exports = Cropper;
 /***/ }),
 
 /***/ 5970:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	EditImage;
@@ -5404,7 +5406,7 @@ module.exports = EditImage;
 /***/ }),
 
 /***/ 5138:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Embed
@@ -5475,7 +5477,7 @@ module.exports = Embed;
 /***/ }),
 
 /***/ 1338:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var AttachmentDisplay = wp.media.view.Settings.AttachmentDisplay,
 	EmbedImage;
@@ -5515,7 +5517,7 @@ module.exports = EmbedImage;
 /***/ }),
 
 /***/ 6959:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var $ = jQuery,
 	EmbedLink;
@@ -5619,7 +5621,7 @@ module.exports = EmbedLink;
 /***/ }),
 
 /***/ 4848:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	$ = jQuery,
@@ -5696,7 +5698,7 @@ module.exports = EmbedUrl;
 /***/ }),
 
 /***/ 6557:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var $ = jQuery;
 
@@ -6064,7 +6066,7 @@ module.exports = FocusManager;
 /***/ }),
 
 /***/ 3647:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Frame
@@ -6237,7 +6239,7 @@ module.exports = Frame;
 /***/ }),
 
 /***/ 9142:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Select = wp.media.view.MediaFrame.Select,
 	l10n = wp.media.view.l10n,
@@ -6422,7 +6424,7 @@ module.exports = ImageDetails;
 /***/ }),
 
 /***/ 9075:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Select = wp.media.view.MediaFrame.Select,
 	Library = wp.media.controller.Library,
@@ -7178,7 +7180,7 @@ module.exports = Post;
 /***/ }),
 
 /***/ 8719:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var MediaFrame = wp.media.view.MediaFrame,
 	l10n = wp.media.view.l10n,
@@ -7367,7 +7369,7 @@ module.exports = Select;
 /***/ }),
 
 /***/ 7990:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Heading
@@ -7408,7 +7410,7 @@ module.exports = Heading;
 /***/ }),
 
 /***/ 6217:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Iframe
@@ -7439,7 +7441,7 @@ module.exports = Iframe;
 /***/ }),
 
 /***/ 7598:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var AttachmentDisplay = wp.media.view.Settings.AttachmentDisplay,
 	$ = jQuery,
@@ -7613,7 +7615,7 @@ module.exports = ImageDetails;
 /***/ }),
 
 /***/ 6644:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Label
@@ -7646,7 +7648,7 @@ module.exports = Label;
 /***/ }),
 
 /***/ 4861:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Frame = wp.media.view.Frame,
 	l10n = wp.media.view.l10n,
@@ -8010,7 +8012,7 @@ module.exports = MediaFrame;
 /***/ }),
 
 /***/ 917:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var MenuItem;
 
@@ -8086,7 +8088,7 @@ module.exports = MenuItem;
 /***/ }),
 
 /***/ 2596:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var MenuItem = wp.media.view.MenuItem,
 	PriorityList = wp.media.view.PriorityList,
@@ -8234,7 +8236,7 @@ module.exports = Menu;
 /***/ }),
 
 /***/ 3939:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var $ = jQuery,
 	Modal;
@@ -8461,7 +8463,7 @@ module.exports = Modal;
 /***/ }),
 
 /***/ 1993:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.PriorityList
@@ -8565,7 +8567,7 @@ module.exports = PriorityList;
 /***/ }),
 
 /***/ 9484:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.RouterItem
@@ -8596,7 +8598,7 @@ module.exports = RouterItem;
 /***/ }),
 
 /***/ 1562:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Menu = wp.media.view.Menu,
 	Router;
@@ -8645,7 +8647,7 @@ module.exports = Router;
 /***/ }),
 
 /***/ 4556:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Search;
 
@@ -8698,7 +8700,7 @@ module.exports = Search;
 /***/ }),
 
 /***/ 6191:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var _n = wp.i18n._n,
 	sprintf = wp.i18n.sprintf,
@@ -8791,7 +8793,7 @@ module.exports = Selection;
 /***/ }),
 
 /***/ 859:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	$ = Backbone.$,
@@ -8924,7 +8926,7 @@ module.exports = Settings;
 /***/ }),
 
 /***/ 2176:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Settings = wp.media.view.Settings,
 	AttachmentDisplay;
@@ -9023,7 +9025,7 @@ module.exports = AttachmentDisplay;
 /***/ }),
 
 /***/ 6872:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Settings.Gallery
@@ -9047,7 +9049,7 @@ module.exports = Gallery;
 /***/ }),
 
 /***/ 8488:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Settings.Playlist
@@ -9071,7 +9073,7 @@ module.exports = Playlist;
 /***/ }),
 
 /***/ 9799:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Sidebar
@@ -9094,7 +9096,7 @@ module.exports = Sidebar;
 /***/ }),
 
 /***/ 5187:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.view,
 	SiteIconCropper;
@@ -9144,7 +9146,7 @@ module.exports = SiteIconCropper;
 /***/ }),
 
 /***/ 8260:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	$ = jQuery,
@@ -9207,7 +9209,7 @@ module.exports = SiteIconPreview;
 /***/ }),
 
 /***/ 2234:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.Spinner
@@ -9267,7 +9269,7 @@ module.exports = Spinner;
 /***/ }),
 
 /***/ 9510:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	Toolbar;
@@ -9436,7 +9438,7 @@ module.exports = Toolbar;
 /***/ }),
 
 /***/ 7128:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Select = wp.media.view.Toolbar.Select,
 	l10n = wp.media.view.l10n,
@@ -9480,7 +9482,7 @@ module.exports = Embed;
 /***/ }),
 
 /***/ 6850:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var Toolbar = wp.media.view.Toolbar,
 	l10n = wp.media.view.l10n,
@@ -9557,7 +9559,7 @@ module.exports = Select;
 /***/ }),
 
 /***/ 841:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	l10n = wp.media.view.l10n,
@@ -9789,7 +9791,7 @@ module.exports = EditorUploader;
 /***/ }),
 
 /***/ 6353:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	UploaderInline;
@@ -9939,7 +9941,7 @@ module.exports = UploaderInline;
 /***/ }),
 
 /***/ 9411:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.view.UploaderStatusError
@@ -9962,7 +9964,7 @@ module.exports = UploaderStatusError;
 /***/ }),
 
 /***/ 2894:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var View = wp.media.View,
 	UploaderStatus;
@@ -10114,7 +10116,7 @@ module.exports = UploaderStatus;
 /***/ }),
 
 /***/ 5823:
-/***/ ((module) => {
+/***/ (function(module) {
 
 var $ = jQuery,
 	UploaderWindow;
@@ -10232,7 +10234,7 @@ module.exports = UploaderWindow;
 /***/ }),
 
 /***/ 487:
-/***/ ((module) => {
+/***/ (function(module) {
 
 /**
  * wp.media.View
@@ -10335,7 +10337,7 @@ module.exports = View;
 /************************************************************************/
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
+!function() {
 /**
  * @output wp-includes/js/media-views.js
  */
@@ -10491,7 +10493,6 @@ media.view.EditImage = __webpack_require__( 5970 );
 media.view.Spinner = __webpack_require__( 2234 );
 media.view.Heading = __webpack_require__( 7990 );
 
-})();
-
+}();
 /******/ })()
 ;

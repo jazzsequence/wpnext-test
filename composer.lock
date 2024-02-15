@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "89753899aa0996f13818123928cff48b",
+    "content-hash": "fe8661276ba2eeab34312503f285e943",
     "packages": [
         {
             "name": "behat/behat",
@@ -1155,16 +1155,16 @@
         },
         {
             "name": "pantheon-systems/pantheon-mu-plugin",
-            "version": "dev-cmsp-695-filter-wp-font-dir",
+            "version": "1.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pantheon-systems/pantheon-mu-plugin.git",
-                "reference": "3cc950161ef4041657118975c911a5832ba3a4bd"
+                "reference": "dbe012bee9b1e3d2efdf7d20adb900953c88c4a8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pantheon-systems/pantheon-mu-plugin/zipball/3cc950161ef4041657118975c911a5832ba3a4bd",
-                "reference": "3cc950161ef4041657118975c911a5832ba3a4bd",
+                "url": "https://api.github.com/repos/pantheon-systems/pantheon-mu-plugin/zipball/dbe012bee9b1e3d2efdf7d20adb900953c88c4a8",
+                "reference": "dbe012bee9b1e3d2efdf7d20adb900953c88c4a8",
                 "shasum": ""
             },
             "require": {
@@ -1172,6 +1172,7 @@
             },
             "require-dev": {
                 "pantheon-systems/pantheon-wp-coding-standards": "^2.0",
+                "pantheon-systems/wpunit-helpers": "^2.0",
                 "phpunit/phpunit": "^9",
                 "yoast/phpunit-polyfills": "^2.0"
             },
@@ -1183,9 +1184,9 @@
             "description": "Pantheon mu-plugin for WordPress sites.",
             "support": {
                 "issues": "https://github.com/pantheon-systems/pantheon-mu-plugin/issues",
-                "source": "https://github.com/pantheon-systems/pantheon-mu-plugin/tree/cmsp-695-filter-wp-font-dir"
+                "source": "https://github.com/pantheon-systems/pantheon-mu-plugin/tree/1.3.1"
             },
-            "time": "2024-02-06T18:01:16+00:00"
+            "time": "2024-02-14T18:29:09+00:00"
         },
         {
             "name": "pantheon-systems/pantheon-wordpress-upstream-tests",
@@ -3460,15 +3461,15 @@
         },
         {
             "name": "wpackagist-plugin/test-reports",
-            "version": "1.0.1",
+            "version": "1.1.0",
             "source": {
                 "type": "svn",
                 "url": "https://plugins.svn.wordpress.org/test-reports/",
-                "reference": "tags/1.0.1"
+                "reference": "tags/1.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://downloads.wordpress.org/plugin/test-reports.1.0.1.zip"
+                "url": "https://downloads.wordpress.org/plugin/test-reports.1.1.0.zip"
             },
             "require": {
                 "composer/installers": "^1.0 || ^2.0"
@@ -3481,7 +3482,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "pantheon-systems/pantheon-mu-plugin": 20,
         "humanmade/wordpress-importer": 20,
         "pantheon-systems/pantheon-wordpress-upstream-tests": 20
     },
