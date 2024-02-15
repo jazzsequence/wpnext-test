@@ -15,6 +15,15 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 	 * @since 6.5.0
 	 */
 	class WP_REST_Font_Families_Controller extends WP_REST_Posts_Controller {
+
+		/**
+		 * The latest version of theme.json schema supported by the controller.
+		 *
+		 * @since 6.5.0
+		 * @var int
+		 */
+		const LATEST_THEME_JSON_VERSION_SUPPORTED = 2;
+
 		/**
 		 * Whether the controller supports batching.
 		 *
@@ -86,7 +95,8 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 			if ( null === $settings ) {
 				return new WP_Error(
 					'rest_invalid_param',
-					__( 'font_family_settings parameter must be a valid JSON string.', 'gutenberg' ),
+					/* translators: %s: Parameter name: "font_family_settings". */
+					sprintf( __( '%s parameter must be a valid JSON string.', 'gutenberg' ), 'font_family_settings' ),
 					array( 'status' => 400 )
 				);
 			}
@@ -102,7 +112,8 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 				if ( isset( $settings['slug'] ) ) {
 					return new WP_Error(
 						'rest_invalid_param',
-						__( 'font_family_settings[slug] cannot be updated.', 'gutenberg' ),
+						/* translators: %s: Name of parameter being updated: font_family_settings[slug]". */
+						sprintf( __( '%s cannot be updated.', 'gutenberg' ), 'font_family_settings[slug]' ),
 						array( 'status' => 400 )
 					);
 				}
@@ -121,8 +132,8 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 				if ( isset( $settings[ $key ] ) && ! $settings[ $key ] ) {
 					return new WP_Error(
 						'rest_invalid_param',
-						/* translators: %s: Font family setting key. */
-						sprintf( __( 'font_family_settings[%s] cannot be empty.', 'gutenberg' ), $key ),
+						/* translators: %s: Name of the empty font family setting parameter, e.g. "font_family_settings[slug]". */
+						sprintf( __( '%s cannot be empty.', 'gutenberg' ), "font_family_settings[ $key ]" ),
 						array( 'status' => 400 )
 					);
 				}
@@ -136,9 +147,8 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 		 *
 		 * @since 6.5.0
 		 *
-		 * @param string          $value   Encoded JSON string of font family settings.
-		 * @param WP_REST_Request $request Request object.
-		 * @return array                   Decoded array font family settings.
+		 * @param string $value Encoded JSON string of font family settings.
+		 * @return array Decoded array of font family settings.
 		 */
 		public function sanitize_font_family_settings( $value ) {
 			// Settings arrive as stringified JSON, since this is a multipart/form-data request.
@@ -175,7 +185,7 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 					'update_post_term_cache' => false,
 				)
 			);
-			if ( ! empty( $query->get_posts() ) ) {
+			if ( ! empty( $query->posts ) ) {
 				return new WP_Error(
 					'rest_duplicate_font_family',
 					/* translators: %s: Font family slug. */
@@ -203,7 +213,7 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 				return new WP_Error(
 					'rest_trash_not_supported',
 					/* translators: %s: force=true */
-					sprintf( __( "Font faces do not support trashing. Set '%s' to delete.", 'gutenberg' ), 'force=true' ),
+					sprintf( __( 'Font faces do not support trashing. Set "%s" to delete.', 'gutenberg' ), 'force=true' ),
 					array( 'status' => 501 )
 				);
 			}
@@ -229,7 +239,7 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 			}
 
 			if ( rest_is_field_included( 'theme_json_version', $fields ) ) {
-				$data['theme_json_version'] = 2;
+				$data['theme_json_version'] = static::LATEST_THEME_JSON_VERSION_SUPPORTED;
 			}
 
 			if ( rest_is_field_included( 'font_faces', $fields ) ) {
@@ -290,9 +300,9 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 					'theme_json_version'   => array(
 						'description' => __( 'Version of the theme.json schema used for the typography settings.', 'gutenberg' ),
 						'type'        => 'integer',
-						'default'     => 2,
+						'default'     => static::LATEST_THEME_JSON_VERSION_SUPPORTED,
 						'minimum'     => 2,
-						'maximum'     => 2,
+						'maximum'     => static::LATEST_THEME_JSON_VERSION_SUPPORTED,
 						'context'     => array( 'view', 'edit', 'embed' ),
 					),
 					'font_faces'           => array(
@@ -383,13 +393,15 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 			$query_params = parent::get_collection_params();
 
 			// Remove unneeded params.
-			unset( $query_params['after'] );
-			unset( $query_params['modified_after'] );
-			unset( $query_params['before'] );
-			unset( $query_params['modified_before'] );
-			unset( $query_params['search'] );
-			unset( $query_params['search_columns'] );
-			unset( $query_params['status'] );
+			unset(
+				$query_params['after'],
+				$query_params['modified_after'],
+				$query_params['before'],
+				$query_params['modified_before'],
+				$query_params['search'],
+				$query_params['search_columns'],
+				$query_params['status']
+			);
 
 			$query_params['orderby']['default'] = 'id';
 			$query_params['orderby']['enum']    = array( 'id', 'include' );
@@ -453,7 +465,7 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 				)
 			);
 
-			return $query->get_posts();
+			return $query->posts;
 		}
 
 		/**
@@ -487,7 +499,7 @@ if ( ! class_exists( 'WP_REST_Font_Families_Controller' ) ) {
 			foreach ( $font_face_ids as $font_face_id ) {
 				$links[] = array(
 					'embeddable' => true,
-					'href'       => rest_url( $this->namespace . '/' . $this->rest_base . '/' . $font_family_id . '/font-faces/' . $font_face_id ),
+					'href'       => rest_url( sprintf( '%s/%s/%s/font-faces/%s', $this->namespace, $this->rest_base, $font_family_id, $font_face_id ) ),
 				);
 			}
 			return $links;
