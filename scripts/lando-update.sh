@@ -16,7 +16,7 @@ git add wp-content/themes
 git commit -m "Updating WordPress themes"
 
 echo "Updating WordPress Core..."
-$wp core update --version=latest --force
+$wp core update --version=nightly --force
 git add .
 git commit -m "Updating WordPress core"
 
