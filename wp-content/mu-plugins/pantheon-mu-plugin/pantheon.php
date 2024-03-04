@@ -18,7 +18,6 @@ if ( isset( $_ENV['PANTHEON_ENVIRONMENT'] ) ) {
 	if ( ! defined( 'DISABLE_PANTHEON_UPDATE_NOTICES' ) || ! DISABLE_PANTHEON_UPDATE_NOTICES ) {
 		require_once 'inc/pantheon-updates.php';
 	}
-	var_dump(function_exists('wp_get_font_dir'));
 	// If the WP Font Library exists, we can add our font directory modifications. Use version_compare because the Font Library isn't actually loaded yet.
 	if ( version_compare( Pantheon\_pantheon_get_current_wordpress_version(), '6.5' ) ) {
 		require_once 'inc/fonts.php';
