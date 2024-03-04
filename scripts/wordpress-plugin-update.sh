@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 terminus wp -- wp59-test.dev plugin update --all
+terminus build:workflow:wait wp59-test.dev --max=15
 
 # Commit the changes
 terminus env:commit wp59-test.dev --message="Updating WordPress plugins"
