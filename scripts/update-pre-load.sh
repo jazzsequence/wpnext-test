@@ -19,6 +19,11 @@ fi
 
 # Switch to SFTP mode
 terminus connection:set wp59-test.dev sftp
+# If the previous line failed due to not being logged in, bail.
+if [ $? -ne 0 ]; then
+  echo "You are not logged in."
+  exit 1
+fi
 
 read -p "Enter the type of update you would like to perform (c or core, p or plugin, t or theme): " -r UPDATE_TYPE
 
