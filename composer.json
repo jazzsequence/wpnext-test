@@ -34,6 +34,7 @@
         "wpackagist-plugin/test-reports": "^1.0"
     },
     "config": {
+        "process-timeout": 6000,
         "allow-plugins": {
             "composer/installers": true
         }
