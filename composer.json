@@ -46,6 +46,9 @@
         "test": [
             "Composer\\Config::disableProcessTimeout",
             "bash ./scripts/test.sh"
+        ],
+        "deploy": [
+            "bash ./scripts/deploy.sh"
         ]
     }
 }
