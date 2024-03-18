@@ -22,7 +22,7 @@ class EmailApiController {
    */
   public function getEmailData(): array {
     return [
-      'layout_styles' => $this->settingsController->getEmailLayoutStyles(),
+      'layout_styles' => $this->settingsController->getEmailStyles(),
     ];
   }
 

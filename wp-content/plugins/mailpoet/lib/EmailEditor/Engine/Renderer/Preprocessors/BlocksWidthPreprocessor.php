@@ -32,6 +32,9 @@ class BlocksWidthPreprocessor implements Preprocessor {
         $columnsWidth = $layoutWidth;
         $columnsWidth -= $this->parseNumberFromStringWithPixels($block['attrs']['style']['spacing']['padding']['left'] ?? '0px');
         $columnsWidth -= $this->parseNumberFromStringWithPixels($block['attrs']['style']['spacing']['padding']['right'] ?? '0px');
+        $borderWidth = $block['attrs']['style']['border']['width'] ?? '0px';
+        $columnsWidth -= $this->parseNumberFromStringWithPixels($block['attrs']['style']['border']['left']['width'] ?? $borderWidth);
+        $columnsWidth -= $this->parseNumberFromStringWithPixels($block['attrs']['style']['border']['right']['width'] ?? $borderWidth);
         $block['innerBlocks'] = $this->addMissingColumnWidths($block['innerBlocks'], $columnsWidth);
       }
 
@@ -77,6 +80,9 @@ class BlocksWidthPreprocessor implements Preprocessor {
         // When width is not set we need to add padding to the defined column width for better ratio accuracy
         $definedColumnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['spacing']['padding']['left'] ?? '0px');
         $definedColumnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['spacing']['padding']['right'] ?? '0px');
+        $borderWidth = $column['attrs']['style']['border']['width'] ?? '0px';
+        $definedColumnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['border']['left']['width'] ?? $borderWidth);
+        $definedColumnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['border']['right']['width'] ?? $borderWidth);
       }
     }
 
@@ -88,6 +94,9 @@ class BlocksWidthPreprocessor implements Preprocessor {
           $columnWidth = $defaultColumnsWidth;
           $columnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['spacing']['padding']['left'] ?? '0px');
           $columnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['spacing']['padding']['right'] ?? '0px');
+          $borderWidth = $column['attrs']['style']['border']['width'] ?? '0px';
+          $columnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['border']['left']['width'] ?? $borderWidth);
+          $columnWidth += $this->parseNumberFromStringWithPixels($column['attrs']['style']['border']['right']['width'] ?? $borderWidth);
           $columns[$key]['attrs']['width'] = "{$columnWidth}px";
         }
       }

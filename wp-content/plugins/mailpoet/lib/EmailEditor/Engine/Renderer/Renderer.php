@@ -6,22 +6,20 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\EmailEditor\Engine\SettingsController;
+use MailPoet\EmailEditor\Engine\ThemeController;
 use MailPoet\Util\pQuery\DomNode;
 use MailPoetVendor\Html2Text\Html2Text;
 
 class Renderer {
+  private \MailPoetVendor\CSS $cssInliner;
 
-  /** @var \MailPoetVendor\CSS */
-  private $cssInliner;
+  private BlocksRegistry $blocksRegistry;
 
-  /** @var BlocksRegistry */
-  private $blocksRegistry;
+  private ProcessManager $processManager;
 
-  /** @var ProcessManager */
-  private $processManager;
+  private SettingsController $settingsController;
 
-  /** @var SettingsController */
-  private $settingsController;
+  private ThemeController $themeController;
 
   const TEMPLATE_FILE = 'template.html';
   const TEMPLATE_STYLES_FILE = 'styles.css';
@@ -33,19 +31,21 @@ class Renderer {
     \MailPoetVendor\CSS $cssInliner,
     ProcessManager $preprocessManager,
     BlocksRegistry $blocksRegistry,
-    SettingsController $settingsController
+    SettingsController $settingsController,
+    ThemeController $themeController
   ) {
     $this->cssInliner = $cssInliner;
     $this->processManager = $preprocessManager;
     $this->blocksRegistry = $blocksRegistry;
     $this->settingsController = $settingsController;
+    $this->themeController = $themeController;
   }
 
   public function render(\WP_Post $post, string $subject, string $preHeader, string $language, $metaRobots = ''): array {
     $parser = new \WP_Block_Parser();
     $parsedBlocks = $parser->parse($post->post_content); // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
 
-    $layoutStyles = $this->settingsController->getEmailLayoutStyles();
+    $layoutStyles = $this->settingsController->getEmailStyles()['layout'];
     $themeData = $this->settingsController->getTheme()->get_data();
     $contentBackground = $themeData['styles']['color']['background'] ?? $layoutStyles['background'];
     $contentFontFamily = $themeData['styles']['typography']['fontFamily'];
@@ -53,7 +53,7 @@ class Renderer {
     $renderedBody = $this->renderBlocks($parsedBlocks);
 
     $styles = (string)file_get_contents(dirname(__FILE__) . '/' . self::TEMPLATE_STYLES_FILE);
-    $styles .= $this->settingsController->getStylesheetForRendering();
+    $styles .= $this->themeController->getStylesheetForRendering();
     $styles = apply_filters('mailpoet_email_renderer_styles', $styles, $post);
 
     $template = (string)file_get_contents(dirname(__FILE__) . '/' . self::TEMPLATE_FILE);

@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) exit;
 
 use MailPoet\EmailEditor\Engine\Renderer\Postprocessors\HighlightingPostprocessor;
 use MailPoet\EmailEditor\Engine\Renderer\Postprocessors\Postprocessor;
+use MailPoet\EmailEditor\Engine\Renderer\Postprocessors\VariablesPostprocessor;
 use MailPoet\EmailEditor\Engine\Renderer\Preprocessors\BlocksWidthPreprocessor;
 use MailPoet\EmailEditor\Engine\Renderer\Preprocessors\CleanupPreprocessor;
 use MailPoet\EmailEditor\Engine\Renderer\Preprocessors\Preprocessor;
@@ -27,7 +28,8 @@ class ProcessManager {
     BlocksWidthPreprocessor $blocksWidthPreprocessor,
     TypographyPreprocessor $typographyPreprocessor,
     SpacingPreprocessor $spacingPreprocessor,
-    HighlightingPostprocessor $highlightingPostprocessor
+    HighlightingPostprocessor $highlightingPostprocessor,
+    VariablesPostprocessor $variablesPostprocessor
   ) {
     $this->registerPreprocessor($cleanupPreprocessor);
     $this->registerPreprocessor($topLevelPreprocessor);
@@ -35,6 +37,7 @@ class ProcessManager {
     $this->registerPreprocessor($typographyPreprocessor);
     $this->registerPreprocessor($spacingPreprocessor);
     $this->registerPostprocessor($highlightingPostprocessor);
+    $this->registerPostprocessor($variablesPostprocessor);
   }
 
   /**

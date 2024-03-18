@@ -44,6 +44,14 @@ class Functions {
     return did_action($hookName);
   }
 
+  /**
+   * @param string $hookName
+   * @return int
+   */
+  public function didFilter($hookName) {
+    return did_filter($hookName);
+  }
+
   public function trailingslashit(string $url) {
     return trailingslashit($url);
   }
@@ -951,5 +959,13 @@ class Functions {
    */
   public function wpStripAllTags($string, $removeBreaks = false): string {
     return wp_strip_all_tags($string, $removeBreaks);
+  }
+
+  public function getTheContent($more_link_text = null, $strip_teaser = false, $post = null) {
+    return get_the_content($more_link_text, $strip_teaser, $post);
+  }
+
+  public function getTaxonomy($taxonomy) {
+    return get_taxonomy($taxonomy);
   }
 }
