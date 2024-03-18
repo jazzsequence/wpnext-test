@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1de35040a485b80d53c5c9a3004a78a7",
+    "content-hash": "fe8661276ba2eeab34312503f285e943",
     "packages": [
         {
             "name": "behat/behat",
@@ -1155,16 +1155,16 @@
         },
         {
             "name": "pantheon-systems/pantheon-mu-plugin",
-            "version": "dev-gutenberg-58839-remove-global",
+            "version": "1.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pantheon-systems/pantheon-mu-plugin.git",
-                "reference": "fe36d5f3ed8a9906e67bddb4e0cfea967a54640b"
+                "reference": "8898aabf77d0bd544390d4bb55907678bc0e0c72"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pantheon-systems/pantheon-mu-plugin/zipball/fe36d5f3ed8a9906e67bddb4e0cfea967a54640b",
-                "reference": "fe36d5f3ed8a9906e67bddb4e0cfea967a54640b",
+                "url": "https://api.github.com/repos/pantheon-systems/pantheon-mu-plugin/zipball/8898aabf77d0bd544390d4bb55907678bc0e0c72",
+                "reference": "8898aabf77d0bd544390d4bb55907678bc0e0c72",
                 "shasum": ""
             },
             "require": {
@@ -1184,16 +1184,16 @@
             "description": "Pantheon mu-plugin for WordPress sites.",
             "support": {
                 "issues": "https://github.com/pantheon-systems/pantheon-mu-plugin/issues",
-                "source": "https://github.com/pantheon-systems/pantheon-mu-plugin/tree/gutenberg-58839-remove-global"
+                "source": "https://github.com/pantheon-systems/pantheon-mu-plugin/tree/1.3.3"
             },
-            "time": "2024-02-28T22:07:58+00:00"
+            "time": "2024-03-04T22:16:44+00:00"
         },
         {
             "name": "pantheon-systems/pantheon-wordpress-upstream-tests",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "git@github.com:pantheon-systems/pantheon-wordpress-upstream-tests.git",
+                "url": "https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests.git",
                 "reference": "004fc97a604950aef4f62773417691d23b3d75b0"
             },
             "dist": {
@@ -1221,6 +1221,10 @@
                     "email": "noreply@pantheon.io"
                 }
             ],
+            "support": {
+                "issues": "https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests/issues",
+                "source": "https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests/tree/master"
+            },
             "time": "2023-08-11T17:05:44+00:00"
         },
         {
@@ -3482,7 +3486,6 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "pantheon-systems/pantheon-mu-plugin": 20,
         "humanmade/wordpress-importer": 20,
         "pantheon-systems/pantheon-wordpress-upstream-tests": 20
     },
