@@ -34,7 +34,7 @@ get_lando() {
 	# Check if the Lando app is running.
 	app_status=$(lando list --format=json | jq -r ".[] | select(.name == \"$APP_NAME\") | .status")
 
-	if [ "$app_status" != "Running" ]; then
+	if [ "$app_status" != "running" ]; then
 		echo "Starting $APP_NAME..."
 		lando start
 	else
