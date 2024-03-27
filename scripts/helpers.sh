@@ -29,12 +29,12 @@ get_lando() {
 	fi
 
 	local APP_NAME=$(sed -n 's/^name: //p' .lando.yml)
+	local CONTAINER_NAME=${APP_NAME//-/}
+	# Check if there are any running containers for the container
+	running_containers=$(docker ps --filter "name=$CONTAINER_NAME" --format "{{.Names}}" | grep -c "$CONTAINER_NAME")
 	echo "Checking if $APP_NAME is running..."
 
-	# Check if the Lando app is running.
-	app_status=$(lando list --format=json | jq -r ".[] | select(.name == \"$APP_NAME\") | .status")
-
-	if [ "$app_status" != "running" ]; then
+	if [ "$running_containers" -gt 0 ]; then
 		echo "Starting $APP_NAME..."
 		lando start
 	else
