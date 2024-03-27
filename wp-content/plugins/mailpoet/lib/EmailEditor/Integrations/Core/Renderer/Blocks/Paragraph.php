@@ -5,7 +5,7 @@ namespace MailPoet\EmailEditor\Integrations\Core\Renderer\Blocks;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\EmailEditor\Engine\Renderer\BlockRenderer;
+use MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\BlockRenderer;
 use MailPoet\EmailEditor\Engine\SettingsController;
 use MailPoet\EmailEditor\Integrations\Utils\DomDocumentHelper;
 use MailPoet\Util\Helpers;
@@ -30,7 +30,7 @@ class Paragraph implements BlockRenderer {
       'text-align' => $align,
     ];
 
-    $paddingStyles = wp_style_engine_get_styles(['spacing' => ['padding' => $parsedBlock['attrs']['style']['spacing']['padding'] ?? null ]]);
+    $paddingStyles = wp_style_engine_get_styles(['spacing' => ['padding' => $parsedBlock['attrs']['style']['spacing']['padding'] ?? null]]);
     $styles = array_merge($styles, $paddingStyles['declarations'] ?? []);
 
     if (isset($parsedBlock['attrs']['style']['color']['text'])) {

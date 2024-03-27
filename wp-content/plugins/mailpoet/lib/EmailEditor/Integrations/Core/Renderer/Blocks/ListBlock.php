@@ -5,7 +5,7 @@ namespace MailPoet\EmailEditor\Integrations\Core\Renderer\Blocks;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\EmailEditor\Engine\Renderer\BlockRenderer;
+use MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\BlockRenderer;
 use MailPoet\EmailEditor\Engine\SettingsController;
 
 // We have to avoid using keyword `List`

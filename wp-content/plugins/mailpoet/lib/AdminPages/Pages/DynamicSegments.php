@@ -164,6 +164,7 @@ class DynamicSegments {
     }
 
     $data['product_categories'] = $this->wpPostListLoader->getWooCommerceCategories();
+    $data['product_tags'] = $this->wpPostListLoader->getWooCommerceTags();
 
     $data['products'] = $this->wpPostListLoader->getProducts();
     $data['membership_plans'] = $this->wpPostListLoader->getMembershipPlans();

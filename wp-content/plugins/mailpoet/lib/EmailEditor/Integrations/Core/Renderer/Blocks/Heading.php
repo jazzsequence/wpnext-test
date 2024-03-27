@@ -5,7 +5,7 @@ namespace MailPoet\EmailEditor\Integrations\Core\Renderer\Blocks;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\EmailEditor\Engine\Renderer\BlockRenderer;
+use MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\BlockRenderer;
 use MailPoet\EmailEditor\Engine\SettingsController;
 use MailPoet\EmailEditor\Integrations\Utils\DomDocumentHelper;
 use MailPoet\Util\Helpers;
@@ -31,7 +31,7 @@ class Heading implements BlockRenderer {
       'min-width' => '100%', // prevent Gmail App from shrinking the table on mobile devices
     ];
 
-    $paddingStyles = wp_style_engine_get_styles(['spacing' => ['padding' => $parsedBlock['attrs']['style']['spacing']['padding'] ?? null ]]);
+    $paddingStyles = wp_style_engine_get_styles(['spacing' => ['padding' => $parsedBlock['attrs']['style']['spacing']['padding'] ?? null]]);
     $styles = array_merge($styles, $paddingStyles['declarations'] ?? []);
 
     if (isset($parsedBlock['attrs']['textAlign'])) {

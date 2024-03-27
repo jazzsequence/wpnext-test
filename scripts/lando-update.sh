@@ -1,6 +1,9 @@
 #!/bin/bash
 
+source scripts/helpers.sh
+
 wp="lando wp"
+wp_version=$(get_latest_wp_release)
 
 echo "Starting Lando..."
 lando start
@@ -15,10 +18,12 @@ $wp theme update --all
 git add wp-content/themes
 git commit -m "Updating WordPress themes"
 
-echo "Updating WordPress Core..."
-$wp core update --version=nightly --force
+set -e
+echo "Updating WordPress Core to $wp_version..."
+$wp core update --version=$wp_version --force
 git add .
-git commit -m "Updating WordPress core"
+git commit -m "Updating WordPress core $wp_version"
+set +e
 
 echo "Pushing changes to Pantheon..."
 git push origin master

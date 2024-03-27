@@ -12,6 +12,9 @@ use MailPoet\Automation\Engine\WordPress;
 use MailPoet\Automation\Integrations\WooCommerce\Payloads\CustomerPayload;
 use MailPoet\Automation\Integrations\WooCommerce\WooCommerce;
 use WC_Customer;
+use WC_Order;
+use WC_Order_Item_Product;
+use WC_Product;
 
 class CustomerOrderFieldsFactory {
   /** @var WooCommerce */
@@ -47,13 +50,13 @@ class CustomerOrderFieldsFactory {
         __('Total spent', 'mailpoet'),
         function (CustomerPayload $payload, array $params = []) {
           $customer = $payload->getCustomer();
-          if (!$customer) {
-            return 0.0;
-          }
-
           $inTheLastSeconds = isset($params['in_the_last']) ? (int)$params['in_the_last'] : null;
+          if (!$customer) {
+            $order = $payload->getOrder();
+            return $order && $this->isInTheLastSeconds($order, $inTheLastSeconds) ? $payload->getTotalSpent() : 0.0;
+          }
           return $inTheLastSeconds === null
-            ? (float)$customer->get_total_spent()
+            ? $payload->getTotalSpent()
             : $this->getRecentSpentTotal($customer, $inTheLastSeconds);
         },
         [
@@ -66,19 +69,20 @@ class CustomerOrderFieldsFactory {
         __('Average spent', 'mailpoet'),
         function (CustomerPayload $payload, array $params = []) {
           $customer = $payload->getCustomer();
+          $inTheLastSeconds = isset($params['in_the_last']) ? (int)$params['in_the_last'] : null;
+
           if (!$customer) {
-            return 0.0;
+            $order = $payload->getOrder();
+            return $order && $this->isInTheLastSeconds($order, $inTheLastSeconds) ? $payload->getAverageSpent() : 0.0;
           }
 
-          $inTheLastSeconds = isset($params['in_the_last']) ? (int)$params['in_the_last'] : null;
           if ($inTheLastSeconds === null) {
-            $totalSpent = (float)$customer->get_total_spent();
-            $orderCount = (int)$customer->get_order_count();
+            return $payload->getAverageSpent();
           } else {
             $totalSpent = $this->getRecentSpentTotal($customer, $inTheLastSeconds);
             $orderCount = $this->getRecentOrderCount($customer, $inTheLastSeconds);
+            return $orderCount > 0 ? ($totalSpent / $orderCount) : 0.0;
           }
-          return $orderCount > 0 ? ($totalSpent / $orderCount) : 0.0;
         },
         [
           'params' => ['in_the_last'],
@@ -90,13 +94,13 @@ class CustomerOrderFieldsFactory {
         __('Order count', 'mailpoet'),
         function (CustomerPayload $payload, array $params = []) {
           $customer = $payload->getCustomer();
-          if (!$customer) {
-            return 0;
-          }
-
           $inTheLastSeconds = isset($params['in_the_last']) ? (int)$params['in_the_last'] : null;
+          if (!$customer) {
+            $order = $payload->getOrder();
+            return $order && $this->isInTheLastSeconds($order, $inTheLastSeconds) ? $payload->getOrderCount() : 0;
+          }
           return $inTheLastSeconds === null
-            ? $customer->get_order_count()
+            ? $payload->getOrderCount()
             : $this->getRecentOrderCount($customer, $inTheLastSeconds);
         },
         [
@@ -110,7 +114,8 @@ class CustomerOrderFieldsFactory {
         function (CustomerPayload $payload) {
           $customer = $payload->getCustomer();
           if (!$customer) {
-            return null;
+            $order = $payload->getOrder();
+            return $order && $order->is_paid() ? $order->get_date_created() : null;
           }
           return $this->getPaidOrderDate($customer, true);
         }
@@ -122,7 +127,8 @@ class CustomerOrderFieldsFactory {
         function (CustomerPayload $payload) {
           $customer = $payload->getCustomer();
           if (!$customer) {
-            return null;
+            $order = $payload->getOrder();
+            return $order && $order->is_paid() ? $order->get_date_created() : null;
           }
           return $this->getPaidOrderDate($customer, false);
         }
@@ -133,11 +139,19 @@ class CustomerOrderFieldsFactory {
         __('Purchased categories', 'mailpoet'),
         function (CustomerPayload $payload, array $params = []) {
           $customer = $payload->getCustomer();
-          if (!$customer) {
-            return [];
-          }
           $inTheLastSeconds = isset($params['in_the_last']) ? (int)$params['in_the_last'] : null;
-          $ids = $this->getOrderProductTermIds($customer, 'product_cat', $inTheLastSeconds);
+          if (!$customer) {
+            $order = $payload->getOrder();
+            $items = $order && $order->is_paid() && $this->isInTheLastSeconds($order, $inTheLastSeconds) ? $order->get_items() : [];
+            $ids = [];
+            foreach ($items as $item) {
+              $product = $item instanceof WC_Order_Item_Product ? $item->get_product() : null;
+              $ids = array_merge($ids, $product instanceof WC_Product ? $product->get_category_ids() : []);
+            }
+            $ids = array_unique($ids);
+          } else {
+            $ids = $this->getOrderProductTermIds($customer, 'product_cat', $inTheLastSeconds);
+          }
           $ids = array_merge($ids, $this->termParentsLoader->getParentIds($ids));
           sort($ids);
           return $ids;
@@ -153,11 +167,19 @@ class CustomerOrderFieldsFactory {
         __('Purchased tags', 'mailpoet'),
         function (CustomerPayload $payload, array $params = []) {
           $customer = $payload->getCustomer();
-          if (!$customer) {
-            return [];
-          }
           $inTheLastSeconds = isset($params['in_the_last']) ? (int)$params['in_the_last'] : null;
-          $ids = $this->getOrderProductTermIds($customer, 'product_tag', $inTheLastSeconds);
+          if (!$customer) {
+            $order = $payload->getOrder();
+            $items = $order && $order->is_paid() && $this->isInTheLastSeconds($order, $inTheLastSeconds) ? $order->get_items() : [];
+            $ids = [];
+            foreach ($items as $item) {
+              $product = $item instanceof WC_Order_Item_Product ? $item->get_product() : null;
+              $ids = array_merge($ids, $product instanceof WC_Product ? $product->get_tag_ids() : []);
+            }
+            $ids = array_unique($ids);
+          } else {
+            $ids = $this->getOrderProductTermIds($customer, 'product_tag', $inTheLastSeconds);
+          }
           sort($ids);
           return $ids;
         },
@@ -328,5 +350,12 @@ class CustomerOrderFieldsFactory {
     );
 
     return array_map('intval', $wpdb->get_col($statement));
+  }
+
+  private function isInTheLastSeconds(WC_Order $order, ?int $inTheLastSeconds): bool {
+    if ($inTheLastSeconds === null) {
+      return true;
+    }
+    return $order->get_date_created() >= new DateTimeImmutable("-$inTheLastSeconds seconds");
   }
 }

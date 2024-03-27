@@ -29,18 +29,6 @@ class SettingsController {
    */
   const EMAIL_WIDTH = '660px';
 
-  /**
-   * Color of email layout background.
-   * @var string
-   */
-  const EMAIL_LAYOUT_BACKGROUND = '#cccccc';
-
-  /**
-   * Gap between blocks in flex layouts
-   * @var string
-   */
-  const FLEX_GAP = '16px';
-
   private ThemeController $themeController;
 
   /**
@@ -54,7 +42,6 @@ class SettingsController {
 
   public function getSettings(): array {
     $coreDefaultSettings = get_default_block_editor_settings();
-    $editorTheme = $this->getTheme();
     $themeSettings = $this->themeController->getSettings();
 
     // body selector is later transformed to .editor-styles-wrapper
@@ -62,7 +49,6 @@ class SettingsController {
     $contentVariables = 'body {';
     $contentVariables .= 'padding-bottom: var(--wp--style--root--padding-bottom);';
     $contentVariables .= 'padding-top: var(--wp--style--root--padding-top);';
-    $contentVariables .= '--wp--style--block-gap:' . self::FLEX_GAP . ';';
     $contentVariables .= '}';
 
     $settings = array_merge($coreDefaultSettings, self::DEFAULT_SETTINGS);
@@ -70,13 +56,9 @@ class SettingsController {
     $flexEmailLayoutStyles = file_get_contents(__DIR__ . '/flex-email-layout.css');
 
     $settings['styles'] = [
-      ['css' => wp_get_global_stylesheet(['base-layout-styles'])],
-      ['css' => $editorTheme->get_stylesheet()],
       ['css' => $contentVariables],
       ['css' => $flexEmailLayoutStyles],
     ];
-
-    $settings['styles'] = apply_filters('mailpoet_email_editor_editor_styles', $settings['styles']);
 
     $settings['__experimentalFeatures'] = $themeSettings;
 
@@ -98,44 +80,29 @@ class SettingsController {
 
   /**
    * @return array{
-   *   layout: array{width: string,background: string,padding: array{bottom: string, left: string, right: string, top: string}},
-   *   colors: array{background: string},
-   *   typography: array[]
+   *   spacing: array{
+   *     blockGap: string,
+   *     padding: array{bottom: string, left: string, right: string, top: string}
+   *   },
+   *   color: array{
+   *     background: array{layout: string, content: string}
+   *   },
+   *   typography: array{
+   *     fontFamily: string
+   *   }
    * }
    */
   public function getEmailStyles(): array {
-    return [
-      'layout' => [
-        'background' => self::EMAIL_LAYOUT_BACKGROUND,
-        'width' => self::EMAIL_WIDTH,
-        'padding' => [
-          'bottom' => self::FLEX_GAP,
-          'left' => self::FLEX_GAP,
-          'right' => self::FLEX_GAP,
-          'top' => self::FLEX_GAP,
-        ],
-      ],
-      'colors' => [
-        'background' => '#ffffff',
-      ],
-      'typography' => [
-      ],
-      // Value are only for purpose of displaying in the preview component in style sidebar
-      'elements' => [
-        'h1' => [
-          'color' => '#000000',
-          'fontWeight' => 'bold',
-          'fontFamily' => "Arial, 'Helvetica Neue', Helvetica, sans-serif",
-        ],
-      ],
-    ];
+    $theme = $this->getTheme();
+    return $theme->get_data()['styles'];
   }
 
   public function getLayoutWidthWithoutPadding(): string {
-    $layoutStyles = $this->getEmailStyles();
-    $width = $this->parseNumberFromStringWithPixels($layoutStyles['layout']['width']);
-    $width -= $this->parseNumberFromStringWithPixels($layoutStyles['layout']['padding']['left']);
-    $width -= $this->parseNumberFromStringWithPixels($layoutStyles['layout']['padding']['right']);
+    $styles = $this->getEmailStyles();
+    $layout = $this->getLayout();
+    $width = $this->parseNumberFromStringWithPixels($layout['contentSize']);
+    $width -= $this->parseNumberFromStringWithPixels($styles['spacing']['padding']['left']);
+    $width -= $this->parseNumberFromStringWithPixels($styles['spacing']['padding']['right']);
     return "{$width}px";
   }
 

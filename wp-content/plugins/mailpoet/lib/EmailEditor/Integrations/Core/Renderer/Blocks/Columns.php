@@ -5,9 +5,10 @@ namespace MailPoet\EmailEditor\Integrations\Core\Renderer\Blocks;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\EmailEditor\Engine\Renderer\BlockRenderer;
+use MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\BlockRenderer;
 use MailPoet\EmailEditor\Engine\SettingsController;
 use MailPoet\EmailEditor\Integrations\Utils\DomDocumentHelper;
+use WP_Style_Engine;
 
 class Columns implements BlockRenderer {
   public function render(string $blockContent, array $parsedBlock, SettingsController $settingsController): string {
@@ -23,72 +24,67 @@ class Columns implements BlockRenderer {
     );
   }
 
+  private function getStylesFromBlock(array $block_styles) {
+    $styles = wp_style_engine_get_styles($block_styles);
+    return (object)wp_parse_args($styles, [
+      'css' => '',
+      'declarations' => [],
+      'classnames' => '',
+    ]);
+  }
+
   /**
    * Based on MJML <mj-section>
    */
   private function getBlockWrapper(string $blockContent, array $parsedBlock, SettingsController $settingsController): string {
-    // Getting individual border properties
-    $borderStyles = wp_style_engine_get_styles(['border' => $parsedBlock['attrs']['style']['border'] ?? []]);
-    $borderStyles = $borderStyles['declarations'] ?? [];
+    $originalWrapperClassname = (new DomDocumentHelper($blockContent))->getAttributeValueByTagName('div', 'class') ?? '';
+    $block_attributes = wp_parse_args($parsedBlock['attrs'] ?? [], [
+      'align' => null,
+      'width' => $settingsController->getLayoutWidthWithoutPadding(),
+      'style' => [],
+    ]);
+
+    $cellStyles = $this->getStylesFromBlock([
+      'spacing' => [ 'padding' => $block_attributes['style']['spacing']['padding'] ?? [] ],
+      'color' => $block_attributes['style']['color'] ?? [],
+      'background' => $block_attributes['style']['background'] ?? [],
+    ])->declarations;
+
+    $borderStyles = $this->getStylesFromBlock(['border' => $block_attributes['style']['border'] ?? []])->declarations;
+
     if (!empty($borderStyles)) {
-      $borderStyles['border-style'] = 'solid';
-      $borderStyles['box-sizing'] = 'border-box';
+      $cellStyles = array_merge($cellStyles, ['border-style' => 'solid'], $borderStyles);
     }
 
-    $width = $parsedBlock['email_attrs']['width'] ?? $settingsController->getLayoutWidthWithoutPadding();
-    $marginTop = $parsedBlock['email_attrs']['margin-top'] ?? '0px';
-
-    $paddingStyles = wp_style_engine_get_styles(['spacing' => ['padding' => $parsedBlock['attrs']['style']['spacing']['padding'] ?? null ]]);
-    $paddingStyles = $paddingStyles['css'] ?? '';
-
-    $classes = (new DomDocumentHelper($blockContent))->getAttributeValueByTagName('div', 'class') ?? '';
-    $colorStyles = [];
-    if (isset($parsedBlock['attrs']['style']['color']['background'])) {
-      $colorStyles['background-color'] = $parsedBlock['attrs']['style']['color']['background'];
-      $colorStyles['background'] = $parsedBlock['attrs']['style']['color']['background'];
-    }
-    if (isset($parsedBlock['attrs']['style']['color']['text'])) {
-      $colorStyles['color'] = $parsedBlock['attrs']['style']['color']['text'];
+    if (empty($cellStyles['background-size'])) {
+      $cellStyles['background-size'] = 'cover';
     }
 
-    $align = $parsedBlock['attrs']['align'] ?? null;
-    if ($align !== 'full') {
-      $layoutPaddingLeft = $settingsController->getEmailStyles()['layout']['padding']['left'];
-      $layoutPaddingRight = $settingsController->getEmailStyles()['layout']['padding']['right'];
-    } else {
-      $layoutPaddingLeft = '0px';
-      $layoutPaddingRight = '0px';
-    }
+    $contentClassname = 'email_columns ' . $originalWrapperClassname;
+    $contentCSS = WP_Style_Engine::compile_css($cellStyles, '');
+    $layoutCSS = WP_Style_Engine::compile_css([
+      'margin-top' => $parsedBlock['email_attrs']['margin-top'] ?? '0px',
+      'padding-left' => $block_attributes['align'] !== 'full' ? $settingsController->getEmailStyles()['spacing']['padding']['left'] : '0px',
+      'padding-right' => $block_attributes['align'] !== 'full' ? $settingsController->getEmailStyles()['spacing']['padding']['right'] : '0px',
+    ], '');
+    $tableWidth = $block_attributes['align'] !== 'full' ? $block_attributes['width'] : '100%';
 
     return '
-      <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" style="width:' . $width . ';" width="' . $width . '"><tr><td style="font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
-      <div style="margin-top:' . $marginTop . ';max-width:' . $width . ';padding-left:' . $layoutPaddingLeft . ';padding-right:' . $layoutPaddingRight . ';">
-        <table
-          class="' . $classes . '"
-          align="center"
-          border="0"
-          cellpadding="0"
-          cellspacing="0"
-          role="presentation"
-          style="' . esc_attr($settingsController->convertStylesToString($colorStyles)) . ';max-width:' . $width . ';width:100%;border-collapse:separate;"
-        >
-          <tbody>
-            <tr>
-              <td style="
-              ' . esc_attr($settingsController->convertStylesToString($borderStyles)) . '
-              ' . esc_attr($paddingStyles) . '
-                font-size:0px;
-                text-align:left;
-              ">
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;">
-                  <tr>
-                    {columns_content}
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!--[if mso | IE]><table align="center" border="0" cellpadding="0" cellspacing="0" style="width:' . esc_attr($tableWidth) . ';" width="' . esc_attr($tableWidth) . '"><tr><td style="font-size:0px;mso-line-height-rule:exactly;"><![endif]-->
+      <div style="' . esc_attr($layoutCSS) . '">
+      <table style="width:100%;border-collapse:separate;" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation">
+        <tbody>
+          <tr>
+            <td class="' . esc_attr($contentClassname) . '" style="text-align:left;width:100%;' . esc_attr($contentCSS) . '">
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:separate;">
+                <tr>
+                  {columns_content}
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
       </div>
       <!--[if mso | IE]></td></tr></table><![endif]-->
     ';

@@ -342,16 +342,17 @@ class ContainerConfigurator implements IContainerConfigurator {
     $container->autowire(\MailPoet\EmailEditor\Engine\EmailApiController::class)->setPublic(true);
     $container->autowire(\MailPoet\EmailEditor\Engine\SettingsController::class)->setPublic(true);
     $container->autowire(\MailPoet\EmailEditor\Engine\ThemeController::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Postprocessors\HighlightingPostprocessor::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Postprocessors\VariablesPostprocessor::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Preprocessors\BlocksWidthPreprocessor::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Preprocessors\CleanupPreprocessor::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Preprocessors\SpacingPreprocessor::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Preprocessors\TopLevelPreprocessor::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Preprocessors\TypographyPreprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Postprocessors\HighlightingPostprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Postprocessors\VariablesPostprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors\BlocksWidthPreprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors\CleanupPreprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors\SpacingPreprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors\TopLevelPreprocessor::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors\TypographyPreprocessor::class)->setPublic(true);
     $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\Renderer::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\BlocksRegistry::class)->setPublic(true);
-    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ProcessManager::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\ContentRenderer::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\BlocksRegistry::class)->setPublic(true);
+    $container->autowire(\MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\ProcessManager::class)->setPublic(true);
     $container->autowire(\MailPoet\EmailEditor\Integrations\Core\Initializer::class)->setPublic(true);
     $container->autowire(\MailPoet\EmailEditor\Integrations\MailPoet\EmailEditor::class)->setPublic(true);
     $container->autowire(\MailPoet\EmailEditor\Integrations\MailPoet\EmailApiController::class)->setPublic(true);
@@ -512,6 +513,7 @@ class ContainerConfigurator implements IContainerConfigurator {
     $container->autowire(\MailPoet\Segments\DynamicSegments\Filters\WooCommerceUsedCouponCode::class)->setPublic(true);
     $container->autowire(\MailPoet\Segments\DynamicSegments\Filters\WooCommerceUsedPaymentMethod::class)->setPublic(true);
     $container->autowire(\MailPoet\Segments\DynamicSegments\Filters\WooCommerceUsedShippingMethod::class)->setPublic(true);
+    $container->autowire(\MailPoet\Segments\DynamicSegments\Filters\WooCommerceTag::class)->setPublic(true);
     $container->autowire(\MailPoet\Segments\DynamicSegments\Filters\WooFilterHelper::class)->setPublic(true);
     $container->autowire(\MailPoet\Segments\DynamicSegments\SegmentSaveController::class)->setPublic(true);
     $container->autowire(\MailPoet\Segments\DynamicSegments\FilterDataMapper::class)->setPublic(true);
@@ -613,6 +615,7 @@ class ContainerConfigurator implements IContainerConfigurator {
     $container->autowire(\MailPoet\Util\Url::class)->setPublic(true);
     $container->autowire(\MailPoet\Util\Installation::class);
     $container->autowire(\MailPoet\Util\Security::class);
+    $container->autowire(\MailPoet\Util\License\Features\CapabilitiesManager::class)->setPublic(true);
     $container->autowire(\MailPoet\Util\License\Features\Subscribers::class)->setPublic(true);
     $container->autowire(\MailPoet\Util\License\License::class)->setPublic(true);
     $container->register(\MailPoet\Util\CdnAssetUrl::class)
