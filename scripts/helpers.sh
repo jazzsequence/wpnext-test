@@ -35,9 +35,9 @@ get_lando() {
 	echo "Checking if $APP_NAME is running..."
 
 	if [ "$running_containers" -gt 0 ]; then
+		echo "$APP_NAME is running."
+	else
 		echo "Starting $APP_NAME..."
 		lando start
-	else
-		echo "$APP_NAME is running."
 	fi
 }
