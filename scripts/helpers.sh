@@ -20,3 +20,24 @@ get_latest_wp_release() {
 		exit 1
 	fi
 }
+
+get_lando() {
+	# Make sure .lando.yml exists in the root directory.
+	if [ ! -f .lando.yml ]; then
+		echo "No .lando.yml file found in the root directory."
+		exit 1
+	fi
+
+	local APP_NAME=$(sed -n 's/^name: //p' .lando.yml)
+	echo "Checking if $APP_NAME is running..."
+
+	# Check if the Lando app is running.
+	app_status=$(lando list --format=json | jq -r ".[] | select(.name == \"$APP_NAME\") | .status")
+
+	if [ "$app_status" != "Running" ]; then
+		echo "Starting $APP_NAME..."
+		lando start
+	else
+		echo "$APP_NAME is running."
+	fi
+}

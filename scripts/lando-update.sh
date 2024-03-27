@@ -5,8 +5,7 @@ source scripts/helpers.sh
 wp="lando wp"
 wp_version=$(get_latest_wp_release)
 
-echo "Starting Lando..."
-lando start
+get_lando
 
 echo "Updating Plugins..."
 $wp plugin update --all
