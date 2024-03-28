@@ -4,11 +4,9 @@ source scripts/helpers.sh
 
 wp_version=$(get_latest_wp_release)
 
-set -e
 echo "Updating WordPress core to $wp_version..."
 terminus wp -- wp59-test.dev core update --version=$wp_version --force
 terminus build:workflow:wait wp59-test.dev --max=15
-set +e
 
 # Commit the changes
 terminus env:commit wp59-test.dev --message="WordPress core update $wp_version"

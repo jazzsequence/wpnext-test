@@ -17,12 +17,10 @@ $wp theme update --all
 git add wp-content/themes
 git commit -m "Updating WordPress themes"
 
-set -e
 echo "Updating WordPress Core to $wp_version..."
 $wp core update --version=$wp_version --force
 git add .
 git commit -m "Updating WordPress core $wp_version"
-set +e
 
 echo "Pushing changes to Pantheon..."
 git push origin master
