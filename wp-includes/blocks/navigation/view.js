@@ -74,20 +74,10 @@ const {
       } = (0,interactivity_namespaceObject.getContext)();
       if (type === 'submenu' &&
       // Only open on hover if the overlay is closed.
-      Object.values(overlayOpenedBy || {}).filter(Boolean).length === 0) {
-        actions.openMenu('hover');
-      }
+      Object.values(overlayOpenedBy || {}).filter(Boolean).length === 0) actions.openMenu('hover');
     },
     closeMenuOnHover() {
-      const {
-        type,
-        overlayOpenedBy
-      } = (0,interactivity_namespaceObject.getContext)();
-      if (type === 'submenu' &&
-      // Only close on hover if the overlay is closed.
-      Object.values(overlayOpenedBy || {}).filter(Boolean).length === 0) {
-        actions.closeMenu('hover');
-      }
+      actions.closeMenu('hover');
     },
     openMenuOnClick() {
       const ctx = (0,interactivity_namespaceObject.getContext)();
