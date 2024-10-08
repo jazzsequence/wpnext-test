@@ -1,24 +1,39 @@
 #!/bin/bash
 
 get_latest_wp_release() {
-	# URL of the WordPress News RSS feed
-	feed_url="https://wordpress.org/news/category/releases/feed/"
+    # URL of the WordPress News RSS feed
+    feed_url="https://wordpress.org/news/category/releases/feed/"
 
-	# Fetch the RSS feed
-	rss_content=$(curl -s "$feed_url")
+    # Fetch the RSS feed
+    rss_content=$(curl -s "$feed_url")
 
-	# Look for patterns that match version numbers followed by either Beta or RC, considering the required format
-	latest_version=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+( RC[0-9]+| Beta[0-9]+)' | head -1)
+    # Extract all Beta and RC versions
+    all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|RC)[0-9]+' | sed 's/WordPress //' | sort -V -r)
 
-	if [ -n "$latest_version" ]; then
-		# Format the version string to match the expected format for RCs and Betas
-		version_formatted=$(echo $latest_version | sed -E 's/WordPress ([0-9]+\.[0-9]+) (RC|Beta)([0-9]+)/\1-\2\3/')
+    # Loop through the versions and pick the highest one,
+    # prioritizing RC over Beta for the same version number
+    latest_version=""
+    latest_major_minor=""
 
-		echo $version_formatted
-	else
-		echo "No Beta/RC versions found."
-		exit 1
-	fi
+    while IFS= read -r version; do
+        major_minor=$(echo "$version" | grep -Eo '^[0-9]+\.[0-9]+')
+        if [ -z "$latest_version" ] || [ "$major_minor" != "$latest_major_minor" ]; then
+            latest_version="$version"
+            latest_major_minor="$major_minor"
+        elif [[ "$version" == *"RC"* && "$latest_version" == *"Beta"* && "$major_minor" == "$latest_major_minor" ]]; then
+            latest_version="$version"
+        fi
+    done <<< "$all_versions"
+
+    if [ -n "$latest_version" ]; then
+        # Format the version string to match the expected format for RCs and Betas
+        version_formatted=$(echo "$latest_version" | sed -E 's/(RC|Beta)([0-9]+)/-\1\2/')
+
+        echo "$version_formatted"
+    else
+        echo "No Beta/RC versions found."
+        exit 1
+    fi
 }
 
 get_lando() {
