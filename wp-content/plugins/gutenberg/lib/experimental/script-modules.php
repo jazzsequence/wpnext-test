@@ -165,11 +165,12 @@ add_action( 'rest_api_init', 'gutenberg_register_view_module_ids_rest_field' );
  * Registers the module if no module with that module identifier has already
  * been registered.
  *
+ * @deprecated 17.6.0 gutenberg_register_module is deprecated. Please use wp_register_script_module instead.
+ *
  * @param string            $module_identifier The identifier of the module. Should be unique. It will be used in the final import map.
  * @param string            $src               Full URL of the module, or path of the script relative to the WordPress root directory.
  * @param array             $dependencies      Optional. An array of module identifiers of the dependencies of this module. The dependencies can be strings or arrays. If they are arrays, they need an `id` key with the module identifier, and can contain an `import` key with either `static` or `dynamic`. By default, dependencies that don't contain an import are considered static.
  * @param string|false|null $version           Optional. String specifying module version number. Defaults to false. It is added to the URL as a query string for cache busting purposes. If $version is set to false, the version number is the currently installed WordPress version. If $version is set to null, no version is added.
- * @deprecated 17.6.0 gutenberg_register_module is deprecated. Please use wp_register_script_module instead.
  */
 function gutenberg_register_module( $module_identifier, $src = '', $dependencies = array(), $version = false ) {
 	_deprecated_function( __FUNCTION__, 'Gutenberg 17.6.0', 'wp_register_script_module' );
@@ -179,8 +180,9 @@ function gutenberg_register_module( $module_identifier, $src = '', $dependencies
 /**
  * Marks the module to be enqueued in the page.
  *
- * @param string $module_identifier The identifier of the module.
  * @deprecated 17.6.0 gutenberg_enqueue_module is deprecated. Please use wp_enqueue_script_module instead.
+ *
+ * @param string $module_identifier The identifier of the module.
  */
 function gutenberg_enqueue_module( $module_identifier ) {
 	_deprecated_function( __FUNCTION__, 'Gutenberg 17.6.0', 'wp_enqueue_script_module' );
@@ -190,10 +192,73 @@ function gutenberg_enqueue_module( $module_identifier ) {
 /**
  * Unmarks the module so it is not longer enqueued in the page.
  *
- * @param string $module_identifier The identifier of the module.
  * @deprecated 17.6.0 gutenberg_dequeue_module is deprecated. Please use wp_dequeue_script_module instead.
+ *
+ * @param string $module_identifier The identifier of the module.
  */
 function gutenberg_dequeue_module( $module_identifier ) {
 	_deprecated_function( __FUNCTION__, 'Gutenberg 17.6.0', 'wp_dequeue_script_module' );
 	wp_script_modules()->dequeue( $module_identifier );
 }
+
+/**
+ * Prints HTML for the a11y Script Module.
+ *
+ * a11y relies on some DOM elements to use as ARIA live regions.
+ * Ideally, these elements are part of the initial HTML of the page
+ * so that accessibility tools can find them and observe updates.
+ */
+function gutenberg_a11y_script_module_html() {
+	$a11y_module_available = false;
+
+	$get_marked_for_enqueue = new ReflectionMethod( 'WP_Script_Modules', 'get_marked_for_enqueue' );
+	$get_marked_for_enqueue->setAccessible( true );
+	$get_import_map = new ReflectionMethod( 'WP_Script_Modules', 'get_import_map' );
+	$get_import_map->setAccessible( true );
+
+	foreach ( array_keys( $get_marked_for_enqueue->invoke( wp_script_modules() ) ) as $id ) {
+		if ( '@wordpress/a11y' === $id ) {
+			$a11y_module_available = true;
+			break;
+		}
+	}
+	if ( ! $a11y_module_available ) {
+		foreach ( array_keys( $get_import_map->invoke( wp_script_modules() )['imports'] ) as $id ) {
+			if ( '@wordpress/a11y' === $id ) {
+				$a11y_module_available = true;
+				break;
+			}
+		}
+	}
+	if ( ! $a11y_module_available ) {
+		return;
+	}
+	echo '<div style="position:absolute;margin:-1px;padding:0;height:1px;width:1px;overflow:hidden;clip-path:inset(50%);border:0;word-wrap:normal !important;">'
+		. '<p id="a11y-speak-intro-text" class="a11y-speak-intro-text" hidden>' . esc_html__( 'Notifications', 'default' ) . '</p>'
+		. '<div id="a11y-speak-assertive" class="a11y-speak-region" aria-live="assertive" aria-relevant="additions text" aria-atomic="true"></div>'
+		. '<div id="a11y-speak-polite" class="a11y-speak-region" aria-live="polite" aria-relevant="additions text" aria-atomic="true"></div>'
+		. '</div>';
+}
+
+/**
+ * Registers Gutenberg Script Modules.
+ *
+ * @since 19.3
+ */
+function gutenberg_register_script_modules() {
+	// When in production, use the plugin's version as the default asset version;
+	// else (for development or test) default to use the current time.
+	$default_version = defined( 'GUTENBERG_VERSION' ) && ! SCRIPT_DEBUG ? GUTENBERG_VERSION : time();
+
+	wp_deregister_script_module( '@wordpress/a11y' );
+	wp_register_script_module(
+		'@wordpress/a11y',
+		gutenberg_url( 'build-module/a11y/index.min.js' ),
+		array(),
+		$default_version
+	);
+
+	add_action( 'wp_footer', 'gutenberg_a11y_script_module_html' );
+	add_action( 'admin_footer', 'gutenberg_a11y_script_module_html' );
+}
+add_action( 'init', 'gutenberg_register_script_modules' );

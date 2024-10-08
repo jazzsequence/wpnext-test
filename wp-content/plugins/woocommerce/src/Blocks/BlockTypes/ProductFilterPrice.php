@@ -44,7 +44,7 @@ final class ProductFilterPrice extends AbstractBlock {
 	public function get_filter_query_param_keys( $filter_param_keys, $url_param_keys ) {
 		$price_param_keys = array_filter(
 			$url_param_keys,
-			function( $param ) {
+			function ( $param ) {
 				return self::MIN_PRICE_QUERY_VAR === $param || self::MAX_PRICE_QUERY_VAR === $param;
 			}
 		);
@@ -141,9 +141,13 @@ final class ProductFilterPrice extends AbstractBlock {
 		) = $attributes;
 
 		$wrapper_attributes = array(
-			'class'               => $show_input_fields && $inline_input ? 'inline-input' : '',
-			'data-wc-interactive' => wp_json_encode( array( 'namespace' => $this->get_full_block_name() ) ),
-			'data-wc-context'     => wp_json_encode( $data ),
+			'data-wc-interactive' => wp_json_encode(
+				array(
+					'namespace' => $this->get_full_block_name(),
+				),
+				JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP,
+			),
+			'data-wc-context'     => wp_json_encode( $data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ),
 			'data-has-filter'     => 'no',
 		);
 
@@ -163,12 +167,15 @@ final class ProductFilterPrice extends AbstractBlock {
 			sprintf(
 				'<input
 					class="min"
+					name="min"
 					type="text"
-					value="%d"
-					data-wc-bind--value="context.minPrice"
-					data-wc-on--change="actions.updateProducts"
+					value="%s"
+					data-wc-bind--value="state.formattedMinPrice"
+					data-wc-on--input="actions.updateProducts"
+					data-wc-on--focus="actions.selectInputContent"
+					pattern=""
 				/>',
-				esc_attr( $min_price )
+				wp_strip_all_tags( $formatted_min_price )
 			) : sprintf(
 				'<span data-wc-text="state.formattedMinPrice">%s</span>',
 				// Not escaped, as this is HTML.
@@ -179,12 +186,14 @@ final class ProductFilterPrice extends AbstractBlock {
 			sprintf(
 				'<input
 					class="max"
+					name="max"
 					type="text"
-					value="%d"
-					data-wc-bind--value="context.maxPrice"
-					data-wc-on--change="actions.updateProducts"
+					value="%s"
+					data-wc-bind--value="state.formattedMaxPrice"
+					data-wc-on--input="actions.updateProducts"
+					data-wc-on--focus="actions.selectInputContent"
 				/>',
-				esc_attr( $max_price )
+				wp_strip_all_tags( $formatted_max_price )
 			) : sprintf(
 				'<span data-wc-text="state.formattedMaxPrice">%s</span>',
 				// Not escaped, as this is HTML.
@@ -193,13 +202,23 @@ final class ProductFilterPrice extends AbstractBlock {
 
 		$wrapper_attributes['data-has-filter'] = 'yes';
 
+		$filter_price_content_classes = array(
+			'wp-block-woocommerce-product-filter-price-content',
+			$show_input_fields && $inline_input ? 'wp-block-woocommerce-product-filter-price-content--inline' : '',
+		);
+
 		ob_start();
 		?>
 			<div <?php echo get_block_wrapper_attributes( $wrapper_attributes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
 				<?php echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-				<div class="filter-controls">
+				<div
+					class="<?php echo esc_attr( implode( ' ', $filter_price_content_classes ) ); ?>"
+				>
+					<div class="wp-block-woocommerce-product-filter-price-content-left-input text">
+						<?php echo $price_min; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+					</div>
 					<div
-						class="range"
+						class="wp-block-woocommerce-product-filter-price-content-price-range-slider range"
 						style="<?php echo esc_attr( $range_style ); ?>"
 						data-wc-bind--style="state.rangeStyle"
 					>
@@ -229,9 +248,8 @@ final class ProductFilterPrice extends AbstractBlock {
 							data-wc-on--change="actions.updateProducts"
 						>
 					</div>
-					<div class="text">
+					<div class="wp-block-woocommerce-product-filter-price-content-right-input text">
 						<?php // $price_min and $price_max are escaped in the sprintf() calls above. ?>
-						<?php echo $price_min; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						<?php echo $price_max; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 					</div>
 				</div>

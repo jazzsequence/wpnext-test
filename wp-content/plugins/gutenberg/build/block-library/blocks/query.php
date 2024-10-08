@@ -26,7 +26,7 @@ function gutenberg_render_block_core_query( $attributes, $content, $block ) {
 	if ( $is_interactive ) {
 		$suffix = wp_scripts_get_suffix();
 		if ( defined( 'IS_GUTENBERG_PLUGIN' ) && IS_GUTENBERG_PLUGIN ) {
-			$module_url = gutenberg_url( '/build/interactivity/query.min.js' );
+			$module_url = gutenberg_url( '/build-module/block-library/query/view.min.js' );
 		}
 
 		wp_register_script_module(
@@ -51,8 +51,8 @@ function gutenberg_render_block_core_query( $attributes, $content, $block ) {
 			// Add the necessary directives.
 			$p->set_attribute( 'data-wp-interactive', 'core/query' );
 			$p->set_attribute( 'data-wp-router-region', 'query-' . $attributes['queryId'] );
-			$p->set_attribute( 'data-wp-init', 'callbacks.setQueryRef' );
 			$p->set_attribute( 'data-wp-context', '{}' );
+			$p->set_attribute( 'data-wp-key', $attributes['queryId'] );
 			$content = $p->get_updated_html();
 		}
 	}

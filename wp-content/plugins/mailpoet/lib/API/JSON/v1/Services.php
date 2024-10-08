@@ -60,6 +60,7 @@ class Services extends APIEndpoint {
 
   public $permissions = [
     'global' => AccessControl::PERMISSION_MANAGE_SETTINGS,
+    'methods' => ['pingBridge' => AccessControl::PERMISSION_ACCESS_PLUGIN_ADMIN],
   ];
 
   public function __construct(
@@ -291,6 +292,23 @@ class Services extends APIEndpoint {
     return $this->successResponse([
       'email_address' => $fromEmail,
     ]);
+  }
+
+  public function pingBridge() {
+    try {
+      $bridgePingResponse = $this->bridge->pingBridge();
+    } catch (\Exception $e) {
+      return $this->errorResponse([
+        APIError::UNKNOWN => $e->getMessage(),
+      ]);
+    }
+    if (!$this->bridge->validateBridgePingResponse($bridgePingResponse)) {
+      $code = $bridgePingResponse ?: Bridge::CHECK_ERROR_UNKNOWN;
+      return $this->errorResponse([
+        APIError::UNKNOWN => $this->getErrorDescriptionByCode($code),
+      ]);
+    }
+    return $this->successResponse();
   }
 
   public function refreshMSSKeyStatus() {

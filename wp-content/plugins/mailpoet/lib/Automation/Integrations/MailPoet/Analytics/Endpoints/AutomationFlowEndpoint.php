@@ -9,7 +9,7 @@ use MailPoet\API\REST\Request;
 use MailPoet\API\REST\Response;
 use MailPoet\Automation\Engine\API\Endpoint;
 use MailPoet\Automation\Engine\Data\Automation;
-use MailPoet\Automation\Engine\Exceptions\NotFoundException;
+use MailPoet\Automation\Engine\Exceptions;
 use MailPoet\Automation\Engine\Mappers\AutomationMapper;
 use MailPoet\Automation\Engine\Storage\AutomationStatisticsStorage;
 use MailPoet\Automation\Engine\Storage\AutomationStorage;
@@ -50,14 +50,15 @@ class AutomationFlowEndpoint extends Endpoint {
   }
 
   public function handle(Request $request): Response {
-    $automation = $this->automationStorage->getAutomation(absint($request->getParam('id')));
+    $id = absint($request->getParam('id'));
+    $automation = $this->automationStorage->getAutomation($id);
     if (!$automation) {
-      throw new NotFoundException(__('Automation not found', 'mailpoet'));
+      throw Exceptions::automationNotFound($id);
     }
     $query = Query::fromRequest($request);
     $automations = $this->automationTimeSpanController->getAutomationsInTimespan($automation, $query->getAfter(), $query->getBefore());
     if (!count($automations)) {
-      throw new NotFoundException(__('The automation did not exist in the selected time span', 'mailpoet'));
+      throw Exceptions::automationNotFoundInTimeSpan($id);
     }
     $automation = current($automations);
     $shortStatistics = $this->automationStatisticsStorage->getAutomationStats(
@@ -70,7 +71,7 @@ class AutomationFlowEndpoint extends Endpoint {
     $waitingData = $this->stepStatisticController->getWaitingStatistics($automation, $query);
     $failedData = $this->stepStatisticController->getFailedStatistics($automation, $query);
     try {
-      $flowData = $this->stepStatisticController->getFlowStatistics($automation, $query);
+      $completedData = $this->stepStatisticController->getCompletedStatistics($automation, $query);
     } catch (\Throwable $e) {
       return new Response([$e->getMessage()], 500);
     }
@@ -83,8 +84,8 @@ class AutomationFlowEndpoint extends Endpoint {
     if ($failedData) {
       $stepData['failed'] = $failedData;
     }
-    if ($flowData) {
-      $stepData['flow'] = $flowData;
+    if ($completedData) {
+      $stepData['completed'] = $completedData;
     }
 
     $data = [

@@ -81,9 +81,6 @@ class NewsletterSaveController {
   /*** @var NewsletterCoupon */
   private $newsletterCoupon;
 
-  /** @var EmailEditor */
-  private $emailEditor;
-
   public function __construct(
     AuthorizedEmailsController $authorizedEmailsController,
     Emoji $emoji,
@@ -100,8 +97,7 @@ class NewsletterSaveController {
     WPFunctions $wp,
     ApiDataSanitizer $dataSanitizer,
     Scheduler $scheduler,
-    NewsletterCoupon $newsletterCoupon,
-    EmailEditor $emailEditor
+    NewsletterCoupon $newsletterCoupon
   ) {
     $this->authorizedEmailsController = $authorizedEmailsController;
     $this->emoji = $emoji;
@@ -119,7 +115,6 @@ class NewsletterSaveController {
     $this->dataSanitizer = $dataSanitizer;
     $this->scheduler = $scheduler;
     $this->newsletterCoupon = $newsletterCoupon;
-    $this->emailEditor = $emailEditor;
   }
 
   public function save(array $data = []): NewsletterEntity {
@@ -131,7 +126,8 @@ class NewsletterSaveController {
     }
 
     if (!empty($data['body'])) {
-      $body = $this->emoji->encodeForUTF8Column(MP_NEWSLETTERS_TABLE, 'body', $data['body']);
+      $newslettersTableName = $this->newslettersRepository->getTableName();
+      $body = $this->emoji->encodeForUTF8Column($newslettersTableName, 'body', $data['body']);
       $body = $this->dataSanitizer->sanitizeBody(json_decode($body, true));
       $data['body'] = json_encode($body);
     }
@@ -178,7 +174,7 @@ class NewsletterSaveController {
     $duplicate = clone $newsletter;
 
     // reset timestamps
-    $createdAt = Carbon::createFromTimestamp($this->wp->currentTime('timestamp'));
+    $createdAt = Carbon::now()->millisecond(0);
     $duplicate->setCreatedAt($createdAt);
     $duplicate->setUpdatedAt($createdAt);
     $duplicate->setDeletedAt(null);
@@ -466,7 +462,7 @@ class NewsletterSaveController {
     }
 
     $newPostId = $this->wp->wpInsertPost([
-      'post_content' => $this->emailEditor->getEmailDefaultContent(),
+      'post_content' => '',
       'post_type' => EmailEditor::MAILPOET_EMAIL_POST_TYPE,
       'post_status' => 'draft',
       'post_author' => $this->wp->getCurrentUserId(),

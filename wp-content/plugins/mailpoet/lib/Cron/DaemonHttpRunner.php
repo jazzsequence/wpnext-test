@@ -53,7 +53,6 @@ class DaemonHttpRunner {
     if (class_exists(Debugger::class) && $userAgent === 'MailPoet Cron') {
       Debugger::$showBar = false;
     }
-    $this->addCacheHeaders();
     $this->terminateRequest(self::PING_SUCCESS_RESPONSE);
   }
 
@@ -62,7 +61,6 @@ class DaemonHttpRunner {
     if (strpos((string)@ini_get('disable_functions'), 'set_time_limit') === false) {
       set_time_limit(0);
     }
-    $this->addCacheHeaders();
     if (!$requestData) {
       $error = __('Invalid or missing request data.', 'mailpoet');
     } else {
@@ -98,7 +96,7 @@ class DaemonHttpRunner {
       // pause daemon execution to ensure that daemon runs only once every X seconds
       $elapsedTime = microtime(true) - $this->timer;
       if ($elapsedTime < $this->cronHelper->getDaemonExecutionLimit()) {
-        $this->pauseExecution($this->cronHelper->getDaemonExecutionLimit() - $elapsedTime);
+        $this->pauseExecution((int)ceil($this->cronHelper->getDaemonExecutionLimit() - $elapsedTime));
       }
     }
     // after each execution, re-read daemon data in case it changed
@@ -109,7 +107,7 @@ class DaemonHttpRunner {
     return $this->callSelf();
   }
 
-  public function pauseExecution($pauseTime) {
+  public function pauseExecution(int $pauseTime) {
     return sleep($pauseTime);
   }
 
@@ -149,17 +147,5 @@ class DaemonHttpRunner {
     return !$settingsDaemonData ||
        $settingsDaemonData['token'] !== $this->token ||
        (isset($settingsDaemonData['status']) && $settingsDaemonData['status'] !== CronHelper::DAEMON_STATUS_ACTIVE);
-  }
-
-  private function addCacheHeaders() {
-    if (headers_sent()) {
-      return;
-    }
-    // Common Cache Control header. Should be respected by cache proxies and CDNs.
-    header('Cache-Control: no-cache');
-    // Mark as blacklisted for SG Optimizer for sites hosted on SiteGround.
-    header('X-Cache-Enabled: False');
-    // Set caching header for LiteSpeed server.
-    header('X-LiteSpeed-Cache-Control: no-cache');
   }
 }

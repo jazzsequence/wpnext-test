@@ -9,6 +9,7 @@ namespace Automattic\Jetpack\My_Jetpack\Products;
 
 use Automattic\Jetpack\My_Jetpack\Product;
 use Automattic\Jetpack\My_Jetpack\Wpcom_Products;
+use WP_Error;
 
 /**
  * Class responsible for handling the Boost product
@@ -44,11 +45,25 @@ class Boost extends Product {
 	public static $plugin_slug = 'jetpack-boost';
 
 	/**
+	 * Boost has a standalone plugin
+	 *
+	 * @var bool
+	 */
+	public static $has_standalone_plugin = true;
+
+	/**
 	 * Whether this product requires a user connection
 	 *
 	 * @var string
 	 */
 	public static $requires_user_connection = false;
+
+	/**
+	 * Whether this product has a free offering
+	 *
+	 * @var bool
+	 */
+	public static $has_free_offering = true;
 
 	/**
 	 * Get the product name
@@ -74,7 +89,7 @@ class Boost extends Product {
 	 * @return string
 	 */
 	public static function get_description() {
-		return __( 'Speed up your site in seconds', 'jetpack-my-jetpack' );
+		return __( 'Speed up your site and improve SEO in seconds', 'jetpack-my-jetpack' );
 	}
 
 	/**
@@ -83,7 +98,7 @@ class Boost extends Product {
 	 * @return string
 	 */
 	public static function get_long_description() {
-		return __( 'Jetpack Boost gives your site the same performance advantages as the world’s leading websites, no developer required.', 'jetpack-my-jetpack' );
+		return __( 'Fast sites get more page visits, more conversions, and better SEO rankings. Boost speeds up your site in seconds.', 'jetpack-my-jetpack' );
 	}
 
 	/**
@@ -303,7 +318,7 @@ class Boost extends Product {
 	 * Activates the product by installing and activating its plugin
 	 *
 	 * @param bool|WP_Error $current_result Is the result of the top level activation actions. You probably won't do anything if it is an WP_Error.
-	 * @return boolean|\WP_Error
+	 * @return boolean|WP_Error
 	 */
 	public static function do_product_specific_activation( $current_result ) {
 

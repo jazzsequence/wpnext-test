@@ -2,7 +2,7 @@
 /**
  * Blog Stats Block.
  *
- * @since $$next_version$$
+ * @since 13.0
  *
  * @package automattic/jetpack
  */
@@ -13,7 +13,6 @@ use Automattic\Jetpack\Blocks;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Stats\WPCOM_Stats;
 use Automattic\Jetpack\Status;
-use Automattic\Jetpack\Status\Host;
 use Jetpack_Gutenberg;
 
 /**
@@ -22,13 +21,7 @@ use Jetpack_Gutenberg;
  * registration if we need to.
  */
 function register_block() {
-	if (
-		( new Host() )->is_wpcom_simple()
-		|| (
-			( new Connection_Manager( 'jetpack' ) )->has_connected_owner()
-			&& ! ( new Status() )->is_offline_mode()
-		)
-	) {
+	if ( ( new Connection_Manager( 'jetpack' ) )->has_connected_owner() && ! ( new Status() )->is_offline_mode() ) {
 		Blocks::jetpack_register_block(
 			__DIR__,
 			array( 'render_callback' => __NAMESPACE__ . '\load_assets' )
@@ -46,6 +39,11 @@ add_action( 'init', __NAMESPACE__ . '\register_block' );
  */
 function load_assets( $attributes ) {
 	Jetpack_Gutenberg::load_assets_as_required( __DIR__ );
+
+	// For outside the front-end, such as within emails or the API.
+	if ( ! jetpack_is_frontend() ) {
+		return;
+	}
 
 	// For when Stats has been disabled subsequent to inserting the block.
 	if ( ! \Jetpack::is_module_active( 'stats' ) ) {

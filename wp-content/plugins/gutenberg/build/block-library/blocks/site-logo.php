@@ -65,7 +65,7 @@ function gutenberg_render_block_core_site_logo( $attributes ) {
  *
  * @since 5.8.0
  */
-function gutenberg_gutenberg_register_block_core_site_logo_setting() {
+function gutenberg_register_block_core_site_logo_setting() {
 	register_setting(
 		'general',
 		'site_logo',
@@ -74,12 +74,13 @@ function gutenberg_gutenberg_register_block_core_site_logo_setting() {
 				'name' => 'site_logo',
 			),
 			'type'         => 'integer',
+			'label'        => __( 'Logo' ),
 			'description'  => __( 'Site logo.' ),
 		)
 	);
 }
 
-add_action( 'rest_api_init', 'gutenberg_gutenberg_register_block_core_site_logo_setting', 10 );
+add_action( 'rest_api_init', 'gutenberg_register_block_core_site_logo_setting', 10 );
 
 /**
  * Register a core site setting for a site icon
@@ -93,6 +94,7 @@ function gutenberg_register_block_core_site_icon_setting() {
 		array(
 			'show_in_rest' => true,
 			'type'         => 'integer',
+			'label'        => __( 'Icon' ),
 			'description'  => __( 'Site icon.' ),
 		)
 	);
@@ -157,6 +159,8 @@ add_filter( 'pre_set_theme_mod_custom_logo', 'gutenberg__sync_custom_logo_to_sit
  *
  * @since 5.8.0
  *
+ * @global array $_ignore_site_logo_changes
+ *
  * @param array $old_value Previous theme mod settings.
  * @param array $value     Updated theme mod settings.
  */
@@ -177,6 +181,8 @@ function gutenberg__delete_site_logo_on_remove_custom_logo( $old_value, $value )
  * Deletes the site logo when all theme mods are being removed.
  *
  * @since 5.8.0
+ *
+ * @global array $_ignore_site_logo_changes
  */
 function gutenberg__delete_site_logo_on_remove_theme_mods() {
 	global $_ignore_site_logo_changes;
@@ -198,17 +204,19 @@ function gutenberg__delete_site_logo_on_remove_theme_mods() {
  *
  * @since 5.8.0
  */
-function gutenberg_gutenberg__delete_site_logo_on_remove_custom_logo_on_setup_theme() {
+function gutenberg__delete_site_logo_on_remove_custom_logo_on_setup_theme() {
 	$theme = get_option( 'stylesheet' );
 	add_action( "update_option_theme_mods_$theme", 'gutenberg__delete_site_logo_on_remove_custom_logo', 10, 2 );
 	add_action( "delete_option_theme_mods_$theme", 'gutenberg__delete_site_logo_on_remove_theme_mods' );
 }
-add_action( 'setup_theme', 'gutenberg_gutenberg__delete_site_logo_on_remove_custom_logo_on_setup_theme', 11 );
+add_action( 'setup_theme', 'gutenberg__delete_site_logo_on_remove_custom_logo_on_setup_theme', 11 );
 
 /**
  * Removes the custom_logo theme-mod when the site_logo option gets deleted.
  *
  * @since 5.9.0
+ *
+ * @global array $_ignore_site_logo_changes
  */
 function gutenberg__delete_custom_logo_on_remove_site_logo() {
 	global $_ignore_site_logo_changes;

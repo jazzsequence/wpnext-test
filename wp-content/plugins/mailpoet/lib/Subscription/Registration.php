@@ -62,7 +62,7 @@ class Registration {
     $form = (string)$this->wp->applyFilters('mailpoet_register_form_extend', $form);
 
     // We control the template and $form can be considered safe.
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPressDotOrg.sniffs.OutputEscaping.UnescapedOutputParameter
+    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     print $form;
   }
 
@@ -71,6 +71,7 @@ class Registration {
       if (
         isset($_POST['mailpoet']['subscribe_on_register'])
         && (bool)$_POST['mailpoet']['subscribe_on_register'] === true
+        && !empty($result['user_email'])
       ) {
         $this->subscribeNewUser(
           $result['user_name'],
@@ -90,6 +91,7 @@ class Registration {
       empty($errors->errors)
       && isset($_POST['mailpoet']['subscribe_on_register'])
       && (bool)$_POST['mailpoet']['subscribe_on_register'] === true
+      && !empty($userEmail)
     ) {
       $this->subscribeNewUser(
         $userLogin,

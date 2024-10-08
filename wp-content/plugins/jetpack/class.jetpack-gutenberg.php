@@ -12,30 +12,13 @@ use Automattic\Jetpack\Connection\Initial_State as Connection_Initial_State;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Constants;
 use Automattic\Jetpack\Current_Plan as Jetpack_Plan;
+use Automattic\Jetpack\Modules;
+use Automattic\Jetpack\My_Jetpack\Initializer as My_Jetpack_Initializer;
 use Automattic\Jetpack\Publicize\Jetpack_Social_Settings\Dismissed_Notices;
 use Automattic\Jetpack\Status;
 use Automattic\Jetpack\Status\Host;
 
 // phpcs:disable Universal.Files.SeparateFunctionsFromOO.Mixed -- TODO: Move the functions and such to some other file.
-
-/**
- * Wrapper function to safely register a gutenberg block type
- *
- * @deprecated 9.1.0 Use Automattic\\Jetpack\\Blocks::jetpack_register_block instead
- *
- * @see register_block_type
- *
- * @since 6.7.0
- *
- * @param string $slug Slug of the block.
- * @param array  $args Arguments that are passed into register_block_type.
- *
- * @return WP_Block_Type|false The registered block type on success, or false on failure.
- */
-function jetpack_register_block( $slug, $args = array() ) {
-	_deprecated_function( __METHOD__, '9.1.0', 'Automattic\\Jetpack\\Blocks::jetpack_register_block' );
-	return Blocks::jetpack_register_block( $slug, $args );
-}
 
 /**
  * General Gutenberg editor specific functionality
@@ -450,18 +433,23 @@ class Jetpack_Gutenberg {
 			return false;
 		}
 
-		if ( get_option( 'jetpack_blocks_disabled', false ) ) {
-			return false;
+		$return = true;
+
+		if ( ! ( new Modules() )->is_active( 'blocks' ) ) {
+			$return = false;
 		}
 
 		/**
-		 * Filter to disable Gutenberg blocks
+		 * Filter to enable Gutenberg blocks.
+		 *
+		 * Defaults to true if (connected or in offline mode) and the Blocks module is active.
 		 *
 		 * @since 6.5.0
+		 * @since 13.9 Filter is able to activate or deactivate Gutenberg blocks.
 		 *
 		 * @param bool true Whether to load Gutenberg blocks
 		 */
-		return (bool) apply_filters( 'jetpack_gutenberg', true );
+		return (bool) apply_filters( 'jetpack_gutenberg', $return );
 	}
 
 	/**
@@ -476,9 +464,13 @@ class Jetpack_Gutenberg {
 		if ( ! wp_script_is( 'jetpack-blocks-assets-base-url', 'registered' ) ) {
 			// phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- No actual script, so no version needed.
 			wp_register_script( 'jetpack-blocks-assets-base-url', false, array(), null, array( 'in_footer' => false ) );
+			$json_encode_flags = JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP;
+			if ( get_option( 'blog_charset' ) === 'UTF-8' ) {
+				$json_encode_flags |= JSON_UNESCAPED_UNICODE;
+			}
 			wp_add_inline_script(
 				'jetpack-blocks-assets-base-url',
-				'var Jetpack_Block_Assets_Base_Url=' . wp_json_encode( plugins_url( self::get_blocks_directory(), JETPACK__PLUGIN_FILE ), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP ) . ';',
+				'var Jetpack_Block_Assets_Base_Url=' . wp_json_encode( plugins_url( self::get_blocks_directory(), JETPACK__PLUGIN_FILE ), $json_encode_flags ) . ';',
 				'before'
 			);
 		}
@@ -706,8 +698,7 @@ class Jetpack_Gutenberg {
 		}
 		// AI Assistant
 		$ai_assistant_state = array(
-			'is-enabled'            => apply_filters( 'jetpack_ai_enabled', true ),
-			'is-playground-visible' => Constants::is_true( 'JETPACK_AI_ASSISTANT_PLAYGROUND' ),
+			'is-enabled' => apply_filters( 'jetpack_ai_enabled', true ),
 		);
 
 		$screen_base = null;
@@ -734,22 +725,20 @@ class Jetpack_Gutenberg {
 				'is_coming_soon'                => $status->is_coming_soon(),
 				'is_offline_mode'               => $status->is_offline_mode(),
 				'is_newsletter_feature_enabled' => class_exists( '\Jetpack_Memberships' ),
+				// this is the equivalent of JP initial state siteData.showMyJetpack (class-jetpack-redux-state-helper)
+				// used to determine if we can link to My Jetpack from the block editor
+				'is_my_jetpack_available'       => My_Jetpack_Initializer::should_initialize(),
 				/**
 				 * Enable the RePublicize UI in the block editor context.
 				 *
 				 * @module publicize
 				 *
 				 * @since 10.3.0
-				 * @deprecated $$next_version$$ This is a feature flag that is no longer used.
+				 * @deprecated 11.5 This is a feature flag that is no longer used.
 				 *
 				 * @param bool true Enable the RePublicize UI in the block editor context. Defaults to true.
 				 */
 				'republicize_enabled'           => apply_filters( 'jetpack_block_editor_republicize_feature', true ),
-				/**
-				 * Prevent the registration of the blocks from extensions/blocks/contact-form
-				 * if the Forms package is enabled.
-				 */
-				'is_form_package_enabled'       => apply_filters( 'jetpack_contact_form_use_package', true ),
 			),
 			'siteFragment'     => $status->get_site_suffix(),
 			'adminUrl'         => esc_url( admin_url() ),
@@ -765,19 +754,30 @@ class Jetpack_Gutenberg {
 		if ( Jetpack::is_module_active( 'publicize' ) && function_exists( 'publicize_init' ) ) {
 			$publicize               = publicize_init();
 			$jetpack_social_settings = new Automattic\Jetpack\Publicize\Jetpack_Social_Settings\Settings();
-			$settings                = $jetpack_social_settings->get_settings( true );
+			$social_initial_state    = $jetpack_social_settings->get_initial_state();
 
 			$initial_state['social'] = array(
 				'sharesData'                      => $publicize->get_publicize_shares_info( $blog_id ),
 				'hasPaidPlan'                     => $publicize->has_paid_plan(),
+				'hasPaidFeatures'                 => $publicize->has_paid_features(),
 				'isEnhancedPublishingEnabled'     => $publicize->has_enhanced_publishing_feature(),
-				'isSocialImageGeneratorAvailable' => $settings['socialImageGeneratorSettings']['available'],
-				'isSocialImageGeneratorEnabled'   => $settings['socialImageGeneratorSettings']['enabled'],
+				'isSocialImageGeneratorAvailable' => $social_initial_state['socialImageGeneratorSettings']['available'],
+				'isSocialImageGeneratorEnabled'   => $social_initial_state['socialImageGeneratorSettings']['enabled'],
 				'dismissedNotices'                => Dismissed_Notices::get_dismissed_notices(),
 				'supportedAdditionalConnections'  => $publicize->get_supported_additional_connections(),
-				'autoConversionSettings'          => $settings['autoConversionSettings'],
 				'jetpackSharingSettingsUrl'       => esc_url_raw( admin_url( 'admin.php?page=jetpack#/sharing' ) ),
+				'userConnectionUrl'               => esc_url_raw( admin_url( 'admin.php?page=my-jetpack#/connection' ) ),
+				'useAdminUiV1'                    => $social_initial_state['useAdminUiV1'],
 			);
+
+			// Add connectionData if we are using the new Connection UI.
+			if ( $social_initial_state['useAdminUiV1'] ) {
+				$initial_state['social']['connectionData'] = $social_initial_state['connectionData'];
+
+				$initial_state['social']['connectionRefreshPath'] = $social_initial_state['connectionRefreshPath'];
+			}
+
+			$initial_state['social']['featureFlags'] = $social_initial_state['featureFlags'];
 		}
 
 		wp_localize_script(
@@ -847,22 +847,6 @@ class Jetpack_Gutenberg {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Get CSS classes for a block.
-	 *
-	 * @since 7.7.0
-	 *
-	 * @param string $slug  Block slug.
-	 * @param array  $attr  Block attributes.
-	 * @param array  $extra Potential extra classes you may want to provide.
-	 *
-	 * @return string $classes List of CSS classes for a block.
-	 */
-	public static function block_classes( $slug, $attr, $extra = array() ) {
-		_deprecated_function( __METHOD__, '9.0.0', 'Automattic\\Jetpack\\Blocks::classes' );
-		return Blocks::classes( $slug, $attr, $extra );
 	}
 
 	/**
@@ -963,7 +947,7 @@ class Jetpack_Gutenberg {
 	 *
 	 * @since 8.1.0
 	 *
-	 * @param obj    $preset_extensions_manifest List of extensions available in Jetpack.
+	 * @param object $preset_extensions_manifest List of extensions available in Jetpack.
 	 * @param string $blocks_variation           Subset of blocks. production|beta|experimental.
 	 *
 	 * @return array $preset_extensions Array of extensions for that variation

@@ -119,7 +119,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
     /**
      * Forces initialization of the proxy
      */
-    public function __load()
+    public function __load(): void
     {
         $this->__initializer__ && $this->__initializer__->__invoke($this, '__load', []);
     }
@@ -128,7 +128,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * {@inheritDoc}
      * @internal generated method: use only when explicitly handling proxy specific loading logic
      */
-    public function __isInitialized()
+    public function __isInitialized(): bool
     {
         return $this->__isInitialized__;
     }
@@ -137,7 +137,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * {@inheritDoc}
      * @internal generated method: use only when explicitly handling proxy specific loading logic
      */
-    public function __setInitialized($initialized)
+    public function __setInitialized($initialized): void
     {
         $this->__isInitialized__ = $initialized;
     }
@@ -146,7 +146,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * {@inheritDoc}
      * @internal generated method: use only when explicitly handling proxy specific loading logic
      */
-    public function __setInitializer(\Closure $initializer = null)
+    public function __setInitializer(?\Closure $initializer = null): void
     {
         $this->__initializer__ = $initializer;
     }
@@ -155,7 +155,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * {@inheritDoc}
      * @internal generated method: use only when explicitly handling proxy specific loading logic
      */
-    public function __getInitializer()
+    public function __getInitializer(): ?\Closure
     {
         return $this->__initializer__;
     }
@@ -164,7 +164,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * {@inheritDoc}
      * @internal generated method: use only when explicitly handling proxy specific loading logic
      */
-    public function __setCloner(\Closure $cloner = null)
+    public function __setCloner(?\Closure $cloner = null): void
     {
         $this->__cloner__ = $cloner;
     }
@@ -173,7 +173,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * {@inheritDoc}
      * @internal generated method: use only when explicitly handling proxy specific cloning logic
      */
-    public function __getCloner()
+    public function __getCloner(): ?\Closure
     {
         return $this->__cloner__;
     }
@@ -184,7 +184,7 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
      * @deprecated no longer in use - generated code now relies on internal components rather than generated public API
      * @static
      */
-    public function __getLazyProperties()
+    public function __getLazyProperties(): array
     {
         return self::$lazyPropertiesDefaults;
     }
@@ -633,6 +633,17 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
     /**
      * {@inheritDoc}
      */
+    public function setGlobalStyle(string $category, string $style, $value): void
+    {
+
+        $this->__initializer__ && $this->__initializer__->__invoke($this, 'setGlobalStyle', [$category, $style, $value]);
+
+        parent::setGlobalStyle($category, $style, $value);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getProcessedAt(): ?\DateTimeInterface
     {
 
@@ -716,6 +727,17 @@ class NewsletterEntity extends \MailPoet\Entities\NewsletterEntity implements \M
         $this->__initializer__ && $this->__initializer__->__invoke($this, 'getCampaignNameOrSubject', []);
 
         return parent::getCampaignNameOrSubject();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isTransactional(): bool
+    {
+
+        $this->__initializer__ && $this->__initializer__->__invoke($this, 'isTransactional', []);
+
+        return parent::isTransactional();
     }
 
     /**

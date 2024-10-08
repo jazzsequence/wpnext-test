@@ -85,7 +85,9 @@ const {
         ref
       } = (0,external_wp_interactivity_namespaceObject.getElement)();
       // Safari won't send focus to the clicked element, so we need to manually place it: https://bugs.webkit.org/show_bug.cgi?id=22261
-      if (window.document.activeElement !== ref) ref.focus();
+      if (window.document.activeElement !== ref) {
+        ref.focus();
+      }
       const {
         menuOpenedBy
       } = state;
@@ -126,16 +128,17 @@ const {
     },
     handleMenuFocusout(event) {
       const {
-        modal
+        modal,
+        type
       } = (0,external_wp_interactivity_namespaceObject.getContext)();
       // If focus is outside modal, and in the document, close menu
       // event.target === The element losing focus
       // event.relatedTarget === The element receiving focus (if any)
-      // When focusout is outsite the document,
+      // When focusout is outside the document,
       // `window.document.activeElement` doesn't change.
 
       // The event.relatedTarget is null when something outside the navigation menu is clicked. This is only necessary for Safari.
-      if (event.relatedTarget === null || !modal?.contains(event.relatedTarget) && event.target !== window.document.activeElement) {
+      if (event.relatedTarget === null || !modal?.contains(event.relatedTarget) && event.target !== window.document.activeElement && type === 'submenu') {
         actions.closeMenu('click');
         actions.closeMenu('focus');
       }

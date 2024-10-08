@@ -9,6 +9,7 @@ namespace Automattic\Jetpack\Waf;
 
 use Automattic\Jetpack\Waf\Brute_Force_Protection\Brute_Force_Protection;
 use WP_Error;
+use WP_Upgrader;
 
 /**
  * Initializes the module
@@ -179,11 +180,6 @@ class Waf_Initializer {
 				}
 
 				Waf_Compatibility::run_compatibility_migrations();
-
-				Waf_Constants::define_mode();
-				if ( ! Waf_Runner::is_allowed_mode( JETPACK_WAF_MODE ) ) {
-					return new WP_Error( 'waf_mode_invalid', 'Invalid firewall mode.' );
-				}
 
 				try {
 					Waf_Rules_Manager::generate_ip_rules();

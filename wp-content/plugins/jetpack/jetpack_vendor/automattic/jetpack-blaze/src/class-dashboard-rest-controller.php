@@ -11,13 +11,15 @@ namespace Automattic\Jetpack\Blaze;
 use Automattic\Jetpack\Connection\Client;
 use Automattic\Jetpack\Connection\Manager as Connection_Manager;
 use Automattic\Jetpack\Status\Host;
+use Automattic\Jetpack\Sync\Health;
 use WC_Product;
 use WP_Error;
+use WP_REST_Request;
 use WP_REST_Server;
 
 /**
  * Registers the REST routes for Blaze Dashboard.
- * It bascially forwards the requests to the WordPress.com REST API.
+ * It basically forwards the requests to the WordPress.com REST API.
  */
 class Dashboard_REST_Controller {
 	/**
@@ -133,7 +135,7 @@ class Dashboard_REST_Controller {
 		// WordAds DSP API Campaigns routes
 		register_rest_route(
 			static::$namespace,
-			sprintf( '/sites/%d/wordads/dsp/api/v1/campaigns(?P<sub_path>[a-zA-Z0-9-_\/]*)(\?.*)?', $site_id ),
+			sprintf( '/sites/%d/wordads/dsp/api/(?P<api_version>v[0-9]+\.?[0-9]*)/campaigns(?P<sub_path>[a-zA-Z0-9-_\/]*)(\?.*)?', $site_id ),
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_dsp_campaigns' ),
@@ -327,6 +329,10 @@ class Dashboard_REST_Controller {
 			return array();
 		}
 
+		if ( ! $this->are_posts_ready() ) {
+			return new WP_Error( 'posts_not_ready', 'Posts are not synced yet.' );
+		}
+
 		// We don't use sub_path in the blaze posts, only query strings
 		if ( isset( $req['sub_path'] ) ) {
 			unset( $req['sub_path'] );
@@ -338,7 +344,8 @@ class Dashboard_REST_Controller {
 			array( 'method' => 'GET' )
 		);
 
-		if ( is_wp_error( $response ) ) {
+		// Bail if we get an error (WP_ERROR or an already formatted WP_REST_Response error).
+		if ( is_wp_error( $response ) || $response instanceof \WP_REST_Response ) {
 			return $response;
 		}
 
@@ -385,6 +392,10 @@ class Dashboard_REST_Controller {
 			return array();
 		}
 
+		if ( ! $this->are_posts_ready() ) {
+			return new WP_Error( 'posts_not_ready', 'Posts are not synced yet.' );
+		}
+
 		// We don't use sub_path in the blaze posts, only query strings
 		if ( isset( $req['sub_path'] ) ) {
 			unset( $req['sub_path'] );
@@ -392,7 +403,8 @@ class Dashboard_REST_Controller {
 
 		$response = $this->get_dsp_generic( sprintf( 'v1/wpcom/sites/%d/blaze/posts', $site_id ), $req );
 
-		if ( is_wp_error( $response ) ) {
+		// Bail if we get an error (WP_ERROR or an already formatted WP_REST_Response error).
+		if ( is_wp_error( $response ) || $response instanceof \WP_REST_Response ) {
 			return $response;
 		}
 
@@ -513,7 +525,8 @@ class Dashboard_REST_Controller {
 	 * @return array|WP_Error
 	 */
 	public function get_dsp_campaigns( $req ) {
-		return $this->get_dsp_generic( 'v1/campaigns', $req );
+		$version = $req->get_param( 'api_version' ) ?? 'v1';
+		return $this->get_dsp_generic( "{$version}/campaigns", $req );
 	}
 
 	/**
@@ -652,7 +665,7 @@ class Dashboard_REST_Controller {
 	 * @return array|WP_Error
 	 */
 	public function edit_wpcom_checkout( $req ) {
-		return $this->edit_dsp_generic( 'v1/wpcom/checkout', $req, array( 'timeout' => 20 ) );
+		return $this->edit_dsp_generic( 'v1/wpcom/checkout', $req, array( 'timeout' => 60 ) );
 	}
 
 	/**
@@ -663,7 +676,7 @@ class Dashboard_REST_Controller {
 	 */
 	public function edit_dsp_campaigns( $req ) {
 		$version = $req->get_param( 'api_version' ) ?? 'v1';
-		return $this->edit_dsp_generic( "{$version}/campaigns", $req, array( 'timeout' => 20 ) );
+		return $this->edit_dsp_generic( "{$version}/campaigns", $req, array( 'timeout' => 60 ) );
 	}
 
 	/**
@@ -734,8 +747,8 @@ class Dashboard_REST_Controller {
 	/**
 	 * Will check the posts for prices and add them to the posts array
 	 *
-	 * @param WP_REST_Request $posts The posts object.
-	 * @return array|WP_Error
+	 * @param array $posts The posts object.
+	 * @return array The list posts with the price on them (if they are woo products).
 	 */
 	protected function add_prices_in_posts( $posts ) {
 
@@ -787,7 +800,7 @@ class Dashboard_REST_Controller {
 	 * @param String $body Request body.
 	 * @param String $base_api_path (optional) the API base path override, defaults to 'rest'.
 	 * @param bool   $use_cache (optional) default to true.
-	 * @return array|WP_Error $response Data.
+	 * @return array|WP_Error|\WP_REST_Response $response Data.
 	 */
 	protected function request_as_user( $path, $version = '2', $args = array(), $body = null, $base_api_path = 'wpcom', $use_cache = false ) {
 		// Arrays are serialized without considering the order of objects, but it's okay atm.
@@ -817,7 +830,7 @@ class Dashboard_REST_Controller {
 		$response_body         = json_decode( $response_body_content, true );
 
 		if ( 200 !== $response_code ) {
-			return $this->get_wp_error( $response_body, $response_code );
+			return $this->get_blaze_error( $response_body, $response_code );
 		}
 
 		// Cache the successful JSON response for 5 minutes.
@@ -842,9 +855,15 @@ class Dashboard_REST_Controller {
 	 *
 	 * @param array $response_body Remote response body.
 	 * @param int   $response_code Http response code.
-	 * @return WP_Error
+	 * @return \WP_REST_Response
 	 */
-	protected function get_wp_error( $response_body, $response_code = 500 ) {
+	protected function get_blaze_error( $response_body, $response_code = 500 ) {
+		if ( ! is_array( $response_body ) ) {
+			$response_body = array(
+				'errorMessage' => $response_body,
+			);
+		}
+
 		$error_code = 'remote-error';
 		foreach ( array( 'code', 'error' ) as $error_code_key ) {
 			if ( isset( $response_body[ $error_code_key ] ) ) {
@@ -853,13 +872,11 @@ class Dashboard_REST_Controller {
 			}
 		}
 
-		$error_message = isset( $response_body['message'] ) ? $response_body['message'] : 'unknown remote error';
+		$response_body['code']         = $error_code;
+		$response_body['status']       = $response_code;
+		$response_body['errorMessage'] = $response_body['errorMessage'] ?? 'Unknown remote error';
 
-		return new WP_Error(
-			$error_code,
-			$error_message,
-			array( 'status' => $response_code )
-		);
+		return new \WP_REST_Response( $response_body, $response_code );
 	}
 
 	/**
@@ -884,5 +901,19 @@ class Dashboard_REST_Controller {
 	 */
 	private function get_site_id() {
 		return Connection_Manager::get_site_id();
+	}
+
+	/**
+	 * Check if the Health status code is sync.
+	 *
+	 * @return bool True if is sync, false otherwise.
+	 */
+	private function are_posts_ready(): bool {
+		// On WordPress.com Simple, Sync is not present, so we consider always ready.
+		if ( ( new Host() )->is_wpcom_simple() ) {
+			return true;
+		}
+
+		return Health::STATUS_IN_SYNC === Health::get_status();
 	}
 }

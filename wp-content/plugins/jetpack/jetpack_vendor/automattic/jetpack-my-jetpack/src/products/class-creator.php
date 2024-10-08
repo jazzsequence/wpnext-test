@@ -50,6 +50,13 @@ class Creator extends Product {
 	public static $requires_user_connection = false;
 
 	/**
+	 * Whether this product has a free offering
+	 *
+	 * @var bool
+	 */
+	public static $has_free_offering = true;
+
+	/**
 	 * Get the product name
 	 *
 	 * @return string
@@ -73,7 +80,7 @@ class Creator extends Product {
 	 * @return string
 	 */
 	public static function get_description() {
-		return __( 'Create, grow, and monetize your audience', 'jetpack-my-jetpack' );
+		return __( 'Get more subscribers and keep them engaged with our creator tools', 'jetpack-my-jetpack' );
 	}
 
 	/**
@@ -82,7 +89,7 @@ class Creator extends Product {
 	 * @return string
 	 */
 	public static function get_long_description() {
-		return __( 'Create, grow, and monetize your audience with powerful tools for creators.', 'jetpack-my-jetpack' );
+		return __( 'Craft stunning content, boost your subscriber base, and monetize your audience with subscriptions.', 'jetpack-my-jetpack' );
 	}
 
 	/**
@@ -154,20 +161,6 @@ class Creator extends Product {
 						'included'    => true,
 						'description' => __( '2%', 'jetpack-my-jetpack' ),
 					),
-				),
-			),
-			array(
-				'name'  => __( 'Creator network', 'jetpack-my-jetpack' ),
-				'info'  => array(
-					'content' => __(
-						'<p>The creator network is the network of websites either hosted with WordPress.com or self-hosted and connected with Jetpack.</p>
-                        <p>Sites that are part of the creator network can gain exposure to new readers. Sites on the Creator plan have enhanced distribution to more areas of the Reader.</p>',
-						'jetpack-my-jetpack'
-					),
-				),
-				'tiers' => array(
-					self::FREE_TIER_SLUG     => array( 'included' => true ),
-					self::UPGRADED_TIER_SLUG => array( 'included' => true ),
 				),
 			),
 			array(
@@ -330,7 +323,7 @@ class Creator extends Product {
 	 *
 	 * @return boolean
 	 */
-	public static function has_required_plan() {
+	public static function has_paid_plan_for_product() {
 		$purchases_data = Wpcom_Products::get_site_current_purchases();
 		if ( is_wp_error( $purchases_data ) ) {
 			return false;
@@ -352,7 +345,6 @@ class Creator extends Product {
 	 * @return boolean
 	 */
 	public static function is_upgradable() {
-		$has_required_plan = self::has_required_plan();
-		return ! $has_required_plan;
+		return ! self::has_paid_plan_for_product();
 	}
 }

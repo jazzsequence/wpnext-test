@@ -57,7 +57,7 @@ class AbandonedCartTrigger implements Trigger {
 
   public function getName(): string {
     // translators: automation trigger title
-    return __('Abandoned cart', 'mailpoet');
+    return __('User abandons cart', 'mailpoet');
   }
 
   public function getSubjectKeys(): array {
@@ -112,7 +112,7 @@ class AbandonedCartTrigger implements Trigger {
     $abandonedCartPayload = $args->getSinglePayloadByClass(AbandonedCartPayload::class);
     $lastActivityAt = $abandonedCartPayload->getLastActivityAt();
 
-    $compareDate = Carbon::createFromTimestamp($this->wp->currentTime('timestamp'))->subMinutes($args->getStep()->getArgs()['wait']);
+    $compareDate = Carbon::now()->millisecond(0)->subMinutes($args->getStep()->getArgs()['wait']);
     if ($lastActivityAt > $compareDate) {
       return false;
     }

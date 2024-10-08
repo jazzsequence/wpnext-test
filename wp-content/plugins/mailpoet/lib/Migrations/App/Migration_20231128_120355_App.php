@@ -5,11 +5,13 @@ namespace MailPoet\Migrations\App;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Doctrine\WPDB\Connection as WPDBConnection;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\ScheduledTaskEntity;
 use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Migrator\AppMigration;
 use MailPoet\WooCommerce\Helper;
+use MailPoetVendor\Doctrine\DBAL\ArrayParameterType;
 use MailPoetVendor\Doctrine\DBAL\Connection;
 
 /**
@@ -23,6 +25,12 @@ class Migration_20231128_120355_App extends AppMigration {
 
     // If Woo is not active and the table doesn't exist, we can skip this migration
     if (!$wooCommerceHelper->isWooCommerceActive()) {
+      return;
+    }
+
+    // Temporarily skip the queries in WP Playground.
+    // UPDATE with JOIN is not yet supported by the SQLite integration.
+    if (WPDBConnection::isSQLite()) {
       return;
     }
 
@@ -47,7 +55,7 @@ class Migration_20231128_120355_App extends AppMigration {
       'newsletterTypes' => $newsletterTypes,
       'taskStatus' => $statusCompleted,
     ], [
-      'newsletterTypes' => Connection::PARAM_STR_ARRAY,
+      'newsletterTypes' => ArrayParameterType::STRING,
     ]);
 
     // Fix data for scheduled tasks
@@ -65,7 +73,7 @@ class Migration_20231128_120355_App extends AppMigration {
       'newsletterTypes' => $newsletterTypes,
       'taskStatus' => $statusScheduled,
     ], [
-      'newsletterTypes' => Connection::PARAM_STR_ARRAY,
+      'newsletterTypes' => ArrayParameterType::STRING,
     ]);
   }
 

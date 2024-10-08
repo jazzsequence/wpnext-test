@@ -5,7 +5,6 @@ namespace MailPoet\Newsletter\Sending;
 if (!defined('ABSPATH')) exit;
 
 
-use MailPoet\Cron\Workers\Scheduler;
 use MailPoet\Cron\Workers\SendingQueue\SendingQueue;
 use MailPoet\Doctrine\Repository;
 use MailPoet\Entities\NewsletterEntity;
@@ -13,10 +12,8 @@ use MailPoet\Entities\ScheduledTaskEntity;
 use MailPoet\Entities\ScheduledTaskSubscriberEntity;
 use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Entities\SubscriberEntity;
-use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
-use MailPoetVendor\Carbon\CarbonImmutable;
-use MailPoetVendor\Doctrine\DBAL\Connection;
+use MailPoetVendor\Doctrine\DBAL\ArrayParameterType;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
 use MailPoetVendor\Doctrine\ORM\Query\Expr\Join;
 
@@ -24,14 +21,20 @@ use MailPoetVendor\Doctrine\ORM\Query\Expr\Join;
  * @extends Repository<ScheduledTaskEntity>
  */
 class ScheduledTasksRepository extends Repository {
-  /** @var WPFunctions */
-  private $wp;
+  const TASK_BATCH_SIZE = 20;
+  const CANCELLABLE_STATUSES = [
+    ScheduledTaskEntity::STATUS_SCHEDULED,
+    ScheduledTaskEntity::VIRTUAL_STATUS_RUNNING,
+    null,
+  ];
+
+  private SendingQueuesRepository $sendingQueuesRepository;
 
   public function __construct(
     EntityManager $entityManager,
-    WPFunctions $wp
+    SendingQueuesRepository $sendingQueuesRepository
   ) {
-    $this->wp = $wp;
+    $this->sendingQueuesRepository = $sendingQueuesRepository;
     parent::__construct($entityManager);
   }
 
@@ -195,6 +198,7 @@ class ScheduledTasksRepository extends Repository {
       ScheduledTaskEntity::STATUS_COMPLETED => 0,
       ScheduledTaskEntity::STATUS_PAUSED => 0,
       ScheduledTaskEntity::STATUS_SCHEDULED => 0,
+      ScheduledTaskEntity::STATUS_CANCELLED => 0,
       ScheduledTaskEntity::VIRTUAL_STATUS_RUNNING => 0,
     ];
 
@@ -228,20 +232,23 @@ class ScheduledTasksRepository extends Repository {
     $type = null,
     $statuses = [
       ScheduledTaskEntity::STATUS_COMPLETED,
+      ScheduledTaskEntity::STATUS_CANCELLED,
       ScheduledTaskEntity::STATUS_SCHEDULED,
+      ScheduledTaskEntity::STATUS_PAUSED,
       ScheduledTaskEntity::VIRTUAL_STATUS_RUNNING,
     ],
-    $limit = Scheduler::TASK_BATCH_SIZE
+    $limit = self::TASK_BATCH_SIZE
   ) {
     $result = [];
     foreach ($statuses as $status) {
       $tasksQuery = $this->doctrineRepository->createQueryBuilder('st')
         ->select('st')
-        ->where('st.deletedAt IS NULL')
-        ->where('st.status = :status');
+        ->where('st.deletedAt IS NULL');
 
       if ($status === ScheduledTaskEntity::VIRTUAL_STATUS_RUNNING) {
-        $tasksQuery = $tasksQuery->orWhere('st.status IS NULL');
+        $tasksQuery = $tasksQuery->andWhere('st.status = :status OR st.status IS NULL');
+      } else {
+        $tasksQuery = $tasksQuery->andWhere('st.status = :status');
       }
 
       if ($type) {
@@ -302,13 +309,13 @@ class ScheduledTasksRepository extends Repository {
   }
 
   public function touchAllByIds(array $ids): void {
-    $now = CarbonImmutable::createFromTimestamp((int)$this->wp->currentTime('timestamp'));
+    $now = Carbon::now()->millisecond(0);
     $this->entityManager->createQueryBuilder()
       ->update(ScheduledTaskEntity::class, 'st')
       ->set('st.updatedAt', ':updatedAt')
       ->setParameter('updatedAt', $now)
       ->where('st.id IN (:ids)')
-      ->setParameter('ids', $ids, Connection::PARAM_INT_ARRAY)
+      ->setParameter('ids', $ids, ArrayParameterType::INTEGER)
       ->getQuery()
       ->execute();
 
@@ -322,7 +329,7 @@ class ScheduledTasksRepository extends Repository {
    * @return ScheduledTaskEntity[]
    */
   public function findScheduledSendingTasks(?int $limit = null): array {
-    $now = Carbon::createFromTimestamp($this->wp->currentTime('timestamp'));
+    $now = Carbon::now()->millisecond(0);
     return $this->doctrineRepository->createQueryBuilder('st')
       ->select('st')
       ->join('st.sendingQueue', 'sq')
@@ -341,6 +348,34 @@ class ScheduledTasksRepository extends Repository {
 
   public function invalidateTask(ScheduledTaskEntity $task): void {
     $task->setStatus(ScheduledTaskEntity::STATUS_INVALID);
+    $this->persist($task);
+    $this->flush();
+  }
+
+  public function cancelTask(ScheduledTaskEntity $task): void {
+    if (!in_array($task->getStatus(), self::CANCELLABLE_STATUSES)) {
+      throw new \Exception(__('Only scheduled and running tasks can be cancelled', 'mailpoet'), 400);
+    }
+    $task->setStatus(ScheduledTaskEntity::STATUS_CANCELLED);
+    $task->setCancelledAt(Carbon::now()->millisecond(0));
+    $this->persist($task);
+    $this->flush();
+  }
+
+  public function rescheduleTask(ScheduledTaskEntity $task): void {
+    if ($task->getStatus() !== ScheduledTaskEntity::STATUS_CANCELLED) {
+      throw new \Exception(__('Only cancelled tasks can be rescheduled', 'mailpoet'), 400);
+    }
+    if ($task->getScheduledAt() <= Carbon::now()->millisecond(0)) {
+      $task->setStatus(ScheduledTaskEntity::VIRTUAL_STATUS_RUNNING);
+      $queue = $task->getSendingQueue();
+      if ($queue) {
+        $this->sendingQueuesRepository->resume($queue);
+      }
+    } else {
+      $task->setStatus(ScheduledTaskEntity::STATUS_SCHEDULED);
+    }
+    $task->setCancelledAt(null);
     $this->persist($task);
     $this->flush();
   }
@@ -381,7 +416,7 @@ class ScheduledTasksRepository extends Repository {
       $queryBuilder->andWhere('st.scheduledAt <= :now');
     }
 
-    $now = Carbon::createFromTimestamp($this->wp->currentTime('timestamp'));
+    $now = Carbon::now()->millisecond(0);
     $queryBuilder->setParameter('now', $now);
 
     if ($limit) {

@@ -15,9 +15,9 @@ use MailPoet\Entities\SubscriberSegmentEntity;
 use MailPoet\Segments\DynamicSegments\FilterHandler;
 use MailPoet\Subscribers\SubscriberCustomFieldRepository;
 use MailPoet\Subscribers\SubscribersRepository;
-use MailPoetVendor\Doctrine\DBAL\Connection;
-use MailPoetVendor\Doctrine\DBAL\Driver\Statement;
+use MailPoetVendor\Doctrine\DBAL\ArrayParameterType;
 use MailPoetVendor\Doctrine\DBAL\Query\QueryBuilder;
+use MailPoetVendor\Doctrine\DBAL\Result;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
 use MailPoetVendor\Doctrine\ORM\Mapping\ClassMetadata;
 
@@ -121,7 +121,8 @@ class ImportExportRepository {
       }, $columns);
 
       foreach ($item as $columnKey => $column) {
-        $parameters[$paramNames[$columnKey]] = $column;
+        // We need to remove the colon character from the query parameter name that is passed to the query builder
+        $parameters[substr($paramNames[$columnKey], 1)] = $column;
       }
       $rows[] = "(" . implode(', ', $paramNames) . ")";
     }
@@ -163,7 +164,7 @@ class ImportExportRepository {
       $parameters[$keyColumn] = array_map(function(array $row) use ($columnIndex) {
         return $row[$columnIndex];
       }, $data);
-      $parameterTypes[$keyColumn] = Connection::PARAM_STR_ARRAY;
+      $parameterTypes[$keyColumn] = ArrayParameterType::STRING;
       $keyColumnsConditions[] = "{$keyColumn} IN (:{$keyColumn})";
     }
 
@@ -246,7 +247,7 @@ class ImportExportRepository {
     }
 
     $statement = $qb->execute();
-    return $statement instanceof Statement ? $statement->fetchAll() : [];
+    return $statement instanceof Result ? $statement->fetchAll() : [];
   }
 
   private function createSubscribersQueryBuilder(int $limit, int $offset): QueryBuilder {
@@ -329,6 +330,6 @@ class ImportExportRepository {
       SELECT id
       FROM {$tableName}
       WHERE email IN (:emails)
-    ", ['emails' => $emails], ['emails' => Connection::PARAM_STR_ARRAY])->fetchFirstColumn();
+    ", ['emails' => $emails], ['emails' => ArrayParameterType::STRING])->fetchFirstColumn();
   }
 }

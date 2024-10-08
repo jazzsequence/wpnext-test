@@ -7,26 +7,35 @@
 
 /**
  * Helper functions used to render the navigation block.
+ *
+ * @since 6.5.0
  */
 class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Used to determine whether or not a navigation has submenus.
+	 *
+	 * @since 6.5.0
 	 */
 	private static $has_submenus = false;
 
 	/**
 	 * Used to determine which blocks need an <li> wrapper.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @var array
 	 */
 	private static $needs_list_item_wrapper = array(
 		'core/site-title',
 		'core/site-logo',
+		'core/social-links',
 	);
 
 	/**
 	 * Keeps track of all the navigation names that have been seen.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @var array
 	 */
@@ -34,6 +43,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Returns whether or not this is responsive navigation.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array $attributes The block attributes.
 	 * @return bool Returns whether or not this is responsive navigation.
@@ -49,6 +60,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Returns whether or not a navigation has a submenu.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param WP_Block_List $inner_blocks The list of inner blocks.
 	 * @return bool Returns whether or not a navigation has a submenu and also sets the member variable.
@@ -87,6 +100,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Determine whether the navigation blocks is interactive.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array         $attributes   The block attributes.
 	 * @param WP_Block_List $inner_blocks The list of inner blocks.
 	 * @return bool Returns whether or not to load the view script.
@@ -99,6 +114,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Returns whether or not a block needs a list item wrapper.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param WP_Block $block The block.
 	 * @return bool Returns whether or not a block needs a list item wrapper.
@@ -126,6 +143,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Returns the markup for a single inner block.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param WP_Block $inner_block The inner block.
 	 * @return string Returns the markup for a single inner block.
 	 */
@@ -142,6 +161,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Returns the html for the inner blocks of the navigation block.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array         $attributes   The block attributes.
 	 * @param WP_Block_List $inner_blocks The list of inner blocks.
@@ -200,6 +221,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Gets the inner blocks for the navigation block from the navigation post.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array $attributes The block attributes.
 	 * @return WP_Block_List Returns the inner blocks for the navigation block.
 	 */
@@ -218,13 +241,11 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 			// it encounters whitespace. This code strips it.
 			$blocks = gutenberg_block_core_navigation_filter_out_empty_blocks( $parsed_blocks );
 
-			if ( function_exists( 'set_ignored_hooked_blocks_metadata' ) ) {
-				// Run Block Hooks algorithm to inject hooked blocks.
-				$markup         = gutenberg_block_core_navigation_insert_hooked_blocks( $blocks, $navigation_post );
-				$root_nav_block = parse_blocks( $markup )[0];
+			// Run Block Hooks algorithm to inject hooked blocks.
+			$markup         = gutenberg_block_core_navigation_insert_hooked_blocks( $blocks, $navigation_post );
+			$root_nav_block = parse_blocks( $markup )[0];
 
-				$blocks = isset( $root_nav_block['innerBlocks'] ) ? $root_nav_block['innerBlocks'] : $blocks;
-			}
+			$blocks = isset( $root_nav_block['innerBlocks'] ) ? $root_nav_block['innerBlocks'] : $blocks;
 
 			// TODO - this uses the full navigation block attributes for the
 			// context which could be refined.
@@ -234,6 +255,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Gets the inner blocks for the navigation block from the fallback.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array $attributes The block attributes.
 	 * @return WP_Block_List Returns the inner blocks for the navigation block.
@@ -251,6 +274,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Gets the inner blocks for the navigation block.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array    $attributes The block attributes.
 	 * @param WP_Block $block The parsed block.
@@ -310,6 +335,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Gets the name of the current navigation, if it has one.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array $attributes The block attributes.
 	 * @return string Returns the name of the navigation.
 	 */
@@ -345,6 +372,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Returns the layout class for the navigation block.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array $attributes The block attributes.
 	 * @return string Returns the layout class for the navigation block.
 	 */
@@ -376,6 +405,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Return classes for the navigation block.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array $attributes The block attributes.
 	 * @return string Returns the classes for the navigation block.
 	 */
@@ -403,6 +434,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Get styles for the navigation block.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array $attributes The block attributes.
 	 * @return string Returns the styles for the navigation block.
 	 */
@@ -415,6 +448,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Get the responsive container markup
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array         $attributes The block attributes.
 	 * @param WP_Block_List $inner_blocks The list of inner blocks.
@@ -446,7 +481,7 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 			}
 		}
 		$toggle_button_content       = $should_display_icon_label ? $toggle_button_icon : __( 'Menu' );
-		$toggle_close_button_icon    = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="M13 11.8l6.1-6.3-1-1-6.1 6.2-6.1-6.2-1 1 6.1 6.3-6.5 6.7 1 1 6.5-6.6 6.5 6.6 1-1z"></path></svg>';
+		$toggle_close_button_icon    = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false"><path d="m13.06 12 6.47-6.47-1.06-1.06L12 10.94 5.53 4.47 4.47 5.53 10.94 12l-6.47 6.47 1.06 1.06L12 13.06l6.47 6.47 1.06-1.06L13.06 12Z"></path></svg>';
 		$toggle_close_button_content = $should_display_icon_label ? $toggle_close_button_icon : __( 'Close' );
 		$toggle_aria_label_open      = $should_display_icon_label ? 'aria-label="' . __( 'Open menu' ) . '"' : ''; // Open button label.
 		$toggle_aria_label_close     = $should_display_icon_label ? 'aria-label="' . __( 'Close menu' ) . '"' : ''; // Close button label.
@@ -458,7 +493,7 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 		$close_button_directives         = '';
 		if ( $is_interactive ) {
 			$open_button_directives                  = '
-				data-wp-on--click="actions.openMenuOnClick"
+				data-wp-on-async--click="actions.openMenuOnClick"
 				data-wp-on--keydown="actions.handleMenuKeydown"
 			';
 			$responsive_container_directives         = '
@@ -466,7 +501,7 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 				data-wp-class--is-menu-open="state.isMenuOpen"
 				data-wp-watch="callbacks.initMenu"
 				data-wp-on--keydown="actions.handleMenuKeydown"
-				data-wp-on--focusout="actions.handleMenuFocusout"
+				data-wp-on-async--focusout="actions.handleMenuFocusout"
 				tabindex="-1"
 			';
 			$responsive_dialog_directives            = '
@@ -475,16 +510,18 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 				data-wp-bind--role="state.roleAttribute"
 			';
 			$close_button_directives                 = '
-				data-wp-on--click="actions.closeMenuOnClick"
+				data-wp-on-async--click="actions.closeMenuOnClick"
 			';
 			$responsive_container_content_directives = '
 				data-wp-watch="callbacks.focusFirstElement"
 			';
 		}
 
+		$overlay_inline_styles = esc_attr( safecss_filter_attr( $colors['overlay_inline_styles'] ) );
+
 		return sprintf(
 			'<button aria-haspopup="dialog" %3$s class="%6$s" %10$s>%8$s</button>
-				<div class="%5$s" style="%7$s" id="%1$s" %11$s>
+				<div class="%5$s" %7$s id="%1$s" %11$s>
 					<div class="wp-block-navigation__responsive-close" tabindex="-1">
 						<div class="wp-block-navigation__responsive-dialog" %12$s>
 							<button %4$s class="wp-block-navigation__responsive-container-close" %13$s>%9$s</button>
@@ -500,7 +537,7 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 			$toggle_aria_label_close,
 			esc_attr( implode( ' ', $responsive_container_classes ) ),
 			esc_attr( implode( ' ', $open_button_classes ) ),
-			esc_attr( safecss_filter_attr( $colors['overlay_inline_styles'] ) ),
+			( ! empty( $overlay_inline_styles ) ) ? "style=\"$overlay_inline_styles\"" : '',
 			$toggle_button_content,
 			$toggle_close_button_content,
 			$open_button_directives,
@@ -513,6 +550,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Get the wrapper attributes
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array         $attributes    The block attributes.
 	 * @param WP_Block_List $inner_blocks  A list of inner blocks.
@@ -542,6 +581,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Gets the nav element directives.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param bool $is_interactive Whether the block is interactive.
 	 * @return string the directives for the navigation element.
@@ -573,6 +614,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Handle view script module loading.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array         $attributes   The block attributes.
 	 * @param WP_Block      $block        The parsed block.
 	 * @param WP_Block_List $inner_blocks The list of inner blocks.
@@ -581,7 +624,7 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 		if ( static::is_interactive( $attributes, $inner_blocks ) ) {
 			$suffix = wp_scripts_get_suffix();
 			if ( defined( 'IS_GUTENBERG_PLUGIN' ) && IS_GUTENBERG_PLUGIN ) {
-				$module_url = gutenberg_url( '/build/interactivity/navigation.min.js' );
+				$module_url = gutenberg_url( '/build-module/block-library/navigation/view.min.js' );
 			}
 
 			wp_register_script_module(
@@ -597,6 +640,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 	/**
 	 * Returns the markup for the navigation block.
 	 *
+	 * @since 6.5.0
+	 *
 	 * @param array         $attributes The block attributes.
 	 * @param WP_Block_List $inner_blocks The list of inner blocks.
 	 * @return string Returns the navigation wrapper markup.
@@ -611,6 +656,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Returns a unique name for the navigation.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array $attributes The block attributes.
 	 * @return string Returns a unique name for the navigation.
@@ -630,6 +677,8 @@ class WP_Navigation_Block_Renderer_Gutenberg {
 
 	/**
 	 * Renders the navigation block.
+	 *
+	 * @since 6.5.0
 	 *
 	 * @param array    $attributes The block attributes.
 	 * @param string   $content    The saved content.
@@ -787,8 +836,8 @@ function gutenberg_block_core_navigation_add_directives_to_submenu( $tags, $bloc
 		$tags->set_attribute( 'tabindex', '-1' );
 
 		if ( ! isset( $block_attributes['openSubmenusOnClick'] ) || false === $block_attributes['openSubmenusOnClick'] ) {
-			$tags->set_attribute( 'data-wp-on--mouseenter', 'actions.openMenuOnHover' );
-			$tags->set_attribute( 'data-wp-on--mouseleave', 'actions.closeMenuOnHover' );
+			$tags->set_attribute( 'data-wp-on-async--mouseenter', 'actions.openMenuOnHover' );
+			$tags->set_attribute( 'data-wp-on-async--mouseleave', 'actions.closeMenuOnHover' );
 		}
 
 		// Add directives to the toggle submenu button.
@@ -798,7 +847,7 @@ function gutenberg_block_core_navigation_add_directives_to_submenu( $tags, $bloc
 				'class_name' => 'wp-block-navigation-submenu__toggle',
 			)
 		) ) {
-			$tags->set_attribute( 'data-wp-on--click', 'actions.toggleMenuOnClick' );
+			$tags->set_attribute( 'data-wp-on-async--click', 'actions.toggleMenuOnClick' );
 			$tags->set_attribute( 'data-wp-bind--aria-expanded', 'state.isMenuOpen' );
 			// The `aria-expanded` attribute for SSR is already added in the submenu block.
 		}
@@ -809,7 +858,7 @@ function gutenberg_block_core_navigation_add_directives_to_submenu( $tags, $bloc
 				'class_name' => 'wp-block-navigation__submenu-container',
 			)
 		) ) {
-			$tags->set_attribute( 'data-wp-on--focus', 'actions.openMenuOnFocus' );
+			$tags->set_attribute( 'data-wp-on-async--focus', 'actions.openMenuOnFocus' );
 		}
 
 		// Iterate through subitems if exist.
@@ -1032,15 +1081,13 @@ function gutenberg_block_core_navigation_get_fallback_blocks() {
 		// In this case default to the (Page List) fallback.
 		$fallback_blocks = ! empty( $maybe_fallback ) ? $maybe_fallback : $fallback_blocks;
 
-		if ( function_exists( 'set_ignored_hooked_blocks_metadata' ) ) {
-			// Run Block Hooks algorithm to inject hooked blocks.
-			// We have to run it here because we need the post ID of the Navigation block to track ignored hooked blocks.
-			$markup = gutenberg_block_core_navigation_insert_hooked_blocks( $fallback_blocks, $navigation_post );
-			$blocks = parse_blocks( $markup );
+		// Run Block Hooks algorithm to inject hooked blocks.
+		// We have to run it here because we need the post ID of the Navigation block to track ignored hooked blocks.
+		$markup = gutenberg_block_core_navigation_insert_hooked_blocks( $fallback_blocks, $navigation_post );
+		$blocks = parse_blocks( $markup );
 
-			if ( isset( $blocks[0]['innerBlocks'] ) ) {
-				$fallback_blocks = $blocks[0]['innerBlocks'];
-			}
+		if ( isset( $blocks[0]['innerBlocks'] ) ) {
+			$fallback_blocks = $blocks[0]['innerBlocks'];
 		}
 	}
 
@@ -1282,7 +1329,7 @@ function gutenberg_block_core_navigation_get_classic_menu_fallback() {
  * @param  object $classic_nav_menu WP_Term The classic navigation object to convert.
  * @return array the normalized parsed blocks.
  */
-function gutenberg_gutenberg_block_core_navigation_get_classic_menu_fallback_blocks( $classic_nav_menu ) {
+function gutenberg_block_core_navigation_get_classic_menu_fallback_blocks( $classic_nav_menu ) {
 
 	_deprecated_function( __FUNCTION__, '6.3.0', 'WP_Navigation_Fallback::get_classic_menu_fallback_blocks' );
 
@@ -1337,7 +1384,7 @@ function gutenberg_block_core_navigation_maybe_use_classic_menu_fallback() {
 	}
 
 	// If we have a classic menu then convert it to blocks.
-	$classic_nav_menu_blocks = gutenberg_gutenberg_block_core_navigation_get_classic_menu_fallback_blocks( $classic_nav_menu );
+	$classic_nav_menu_blocks = gutenberg_block_core_navigation_get_classic_menu_fallback_blocks( $classic_nav_menu );
 
 	if ( empty( $classic_nav_menu_blocks ) ) {
 		return;
@@ -1568,20 +1615,15 @@ function gutenberg_block_core_navigation_update_ignore_hooked_blocks_meta( $post
 $rest_insert_wp_navigation_core_callback = 'block_core_navigation_' . 'update_ignore_hooked_blocks_meta'; // phpcs:ignore Generic.Strings.UnnecessaryStringConcat.Found
 
 /*
- * Injection of hooked blocks into the Navigation block relies on some functions present in WP >= 6.5
- * that are not present in Gutenberg's WP 6.5 compatibility layer.
+ * Do not add the `gutenberg_block_core_navigation_update_ignore_hooked_blocks_meta` filter in the following cases:
+ * - If Core has added the `update_ignored_hooked_blocks_postmeta` filter already (WP >= 6.6);
+ * - or if the `$rest_insert_wp_navigation_core_callback` filter has already been added.
  */
-if ( function_exists( 'set_ignored_hooked_blocks_metadata' ) && ! has_filter( 'rest_pre_insert_wp_navigation', $rest_insert_wp_navigation_core_callback ) ) {
+if (
+	! has_filter( 'rest_pre_insert_wp_navigation', 'update_ignored_hooked_blocks_postmeta' ) &&
+	! has_filter( 'rest_pre_insert_wp_navigation', $rest_insert_wp_navigation_core_callback )
+) {
 	add_filter( 'rest_pre_insert_wp_navigation', 'gutenberg_block_core_navigation_update_ignore_hooked_blocks_meta' );
-}
-
-/*
- * Previous versions of Gutenberg were attaching the gutenberg_block_core_navigation_update_ignore_hooked_blocks_meta
- * function to the `rest_insert_wp_navigation` _action_ (rather than the `rest_pre_insert_wp_navigation` _filter_).
- * To avoid collisions, we need to remove the filter from that action if it's present.
- */
-if ( has_filter( 'rest_insert_wp_navigation', $rest_insert_wp_navigation_core_callback ) ) {
-	remove_filter( 'rest_insert_wp_navigation', $rest_insert_wp_navigation_core_callback );
 }
 
 /**
@@ -1593,7 +1635,7 @@ if ( has_filter( 'rest_insert_wp_navigation', $rest_insert_wp_navigation_core_ca
  * @param WP_Post          $post     Post object.
  * @return WP_REST_Response The response object.
  */
-function gutenberg_gutenberg_block_core_navigation_insert_hooked_blocks_into_rest_response( $response, $post ) {
+function gutenberg_block_core_navigation_insert_hooked_blocks_into_rest_response( $response, $post ) {
 	if ( ! isset( $response->data['content']['raw'] ) || ! isset( $response->data['content']['rendered'] ) ) {
 		return $response;
 	}
@@ -1603,7 +1645,9 @@ function gutenberg_gutenberg_block_core_navigation_insert_hooked_blocks_into_res
 	// Remove mock Navigation block wrapper.
 	$content = gutenberg_block_core_navigation_remove_serialized_parent_block( $content );
 
-	$response->data['content']['raw']      = $content;
+	$response->data['content']['raw'] = $content;
+
+	/** This filter is documented in wp-includes/post-template.php */
 	$response->data['content']['rendered'] = apply_filters( 'the_content', $content );
 
 	return $response;
@@ -1617,9 +1661,13 @@ function gutenberg_gutenberg_block_core_navigation_insert_hooked_blocks_into_res
 $rest_prepare_wp_navigation_core_callback = 'block_core_navigation_' . 'insert_hooked_blocks_into_rest_response';
 
 /*
- * Injection of hooked blocks into the Navigation block relies on some functions present in WP >= 6.5
- * that are not present in Gutenberg's WP 6.5 compatibility layer.
+ * Do not add the `gutenberg_block_core_navigation_insert_hooked_blocks_into_rest_response` filter in the following cases:
+ * - If Core has added the `insert_hooked_blocks_into_rest_response` filter already (WP >= 6.6);
+ * - or if the `$rest_prepare_wp_navigation_core_callback` filter has already been added.
  */
-if ( function_exists( 'set_ignored_hooked_blocks_metadata' ) && ! has_filter( 'rest_prepare_wp_navigation', $rest_prepare_wp_navigation_core_callback ) ) {
-	add_filter( 'rest_prepare_wp_navigation', 'gutenberg_gutenberg_block_core_navigation_insert_hooked_blocks_into_rest_response', 10, 3 );
+if (
+	! has_filter( 'rest_prepare_wp_navigation', 'insert_hooked_blocks_into_rest_response' ) &&
+	! has_filter( 'rest_prepare_wp_navigation', $rest_prepare_wp_navigation_core_callback )
+) {
+	add_filter( 'rest_prepare_wp_navigation', 'gutenberg_block_core_navigation_insert_hooked_blocks_into_rest_response', 10, 3 );
 }

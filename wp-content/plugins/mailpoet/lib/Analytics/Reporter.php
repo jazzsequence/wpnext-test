@@ -54,9 +54,11 @@ use MailPoet\Settings\TrackingConfig;
 use MailPoet\Subscribers\ConfirmationEmailCustomizer;
 use MailPoet\Subscribers\NewSubscriberNotificationMailer;
 use MailPoet\Subscribers\SubscriberListingRepository;
+use MailPoet\Subscription\Captcha\CaptchaConstants;
 use MailPoet\Tags\TagRepository;
 use MailPoet\Util\License\Features\Subscribers as SubscribersFeature;
 use MailPoet\WooCommerce\Helper as WooCommerceHelper;
+use MailPoet\WooCommerce\Subscription;
 use MailPoet\WP\Functions as WPFunctions;
 use MailPoet\WPCOM\DotcomHelperFunctions;
 use MailPoetVendor\Carbon\Carbon;
@@ -104,6 +106,9 @@ class Reporter {
   /*** @var DotcomHelperFunctions */
   private $dotcomHelperFunctions;
 
+  /*** @var ReporterCampaignData */
+  private $reporterCampaignData;
+
   public function __construct(
     NewslettersRepository $newslettersRepository,
     SegmentsRepository $segmentsRepository,
@@ -118,7 +123,8 @@ class Reporter {
     SubscriberListingRepository $subscriberListingRepository,
     AutomationStorage $automationStorage,
     UnsubscribeReporter $unsubscribeReporter,
-    DotcomHelperFunctions $dotcomHelperFunctions
+    DotcomHelperFunctions $dotcomHelperFunctions,
+    ReporterCampaignData $reporterCampaignData
   ) {
     $this->newslettersRepository = $newslettersRepository;
     $this->segmentsRepository = $segmentsRepository;
@@ -134,6 +140,7 @@ class Reporter {
     $this->automationStorage = $automationStorage;
     $this->unsubscribeReporter = $unsubscribeReporter;
     $this->dotcomHelperFunctions = $dotcomHelperFunctions;
+    $this->reporterCampaignData = $reporterCampaignData;
   }
 
   public function getData() {
@@ -176,8 +183,6 @@ class Reporter {
       'Tracking level' => $this->settings->get('tracking.level', TrackingConfig::LEVEL_FULL),
       'Premium key valid' => $this->servicesChecker->isPremiumKeyValid(),
       'New subscriber notifications' => NewSubscriberNotificationMailer::isDisabled($this->settings->get(NewSubscriberNotificationMailer::SETTINGS_KEY)),
-      'Number of standard newsletters sent in last 3 months' => $newsletters['sent_newsletters_3_months'],
-      'Number of standard newsletters sent in last 30 days' => $newsletters['sent_newsletters_30_days'],
       'Number of active post notifications' => $newsletters['notifications_count'],
       'Number of active welcome emails' => $newsletters['welcome_newsletters_count'],
       'Total number of standard newsletters sent' => $newsletters['sent_newsletters_count'],
@@ -185,6 +190,7 @@ class Reporter {
       'Number of lists' => isset($segments['default']) ? (int)$segments['default'] : 0,
       'Number of subscriber tags' => $this->tagRepository->countBy([]),
       'Stop sending to inactive subscribers' => $inactiveSubscribersStatus,
+      'CAPTCHA setting' => $this->settings->get(CaptchaConstants::TYPE_SETTING_NAME, '') ?: 'disabled',
       'Plugin > MailPoet Premium' => $this->wp->isPluginActive('mailpoet-premium/mailpoet-premium.php'),
       'Plugin > bounce add-on' => $this->wp->isPluginActive('mailpoet-bounce-handler/mailpoet-bounce-handler.php'),
       'Plugin > Bloom' => $this->wp->isPluginActive('bloom-for-publishers/bloom.php'),
@@ -267,12 +273,14 @@ class Reporter {
       $result,
       $this->subscriberProperties(),
       $this->automationProperties(),
+      $this->reporterCampaignData->getCampaignAnalyticsProperties(),
       $this->unsubscribeReporter->getProperties()
     );
     if ($hasWc) {
       $result['WooCommerce version'] = $woocommerce->version;
       $result['Number of WooCommerce subscribers'] = isset($segments['woocommerce_users']) ? (int)$segments['woocommerce_users'] : 0;
-      $result['WooCommerce: opt-in on checkout is active'] = $this->settings->get('woocommerce.optin_on_checkout.enabled') ?: false;
+      $result['WooCommerce: opt-in on checkout is active'] = $this->settings->get(Subscription::OPTIN_ENABLED_SETTING_NAME) ?: false;
+      $result['WooCommerce: opt-in on checkout position'] = $this->settings->get(Subscription::OPTIN_POSITION_SETTING_NAME) ?: '';
       $result['WooCommerce: set old customers as subscribed'] = $this->settings->get('mailpoet_subscribe_old_woocommerce_customers.enabled') ?: false;
       $result['WooCommerce email customizer is active'] = $this->settings->get('woocommerce.use_mailpoet_editor') ?: false;
 

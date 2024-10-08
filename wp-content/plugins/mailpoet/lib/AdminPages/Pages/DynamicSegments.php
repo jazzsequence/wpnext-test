@@ -99,6 +99,10 @@ class DynamicSegments {
    */
   public function render() {
     $data = [];
+    $data['dynamic_segment_count'] = $this->segmentsRepository->countBy([
+      'deletedAt' => null,
+      'type' => SegmentEntity::TYPE_DYNAMIC,
+    ]);
     $data['items_per_page'] = $this->listingPageLimit->getLimitPerPage('segments');
 
     $customFields = $this->customFieldsRepository->findBy([], ['name' => 'asc']);
@@ -226,15 +230,14 @@ class DynamicSegments {
     }
     global $wpdb;
 
-    $query = "
-    SELECT DISTINCT pm.meta_key, pm.meta_value
-    FROM {$wpdb->postmeta} pm
-    INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
-    WHERE pm.meta_key LIKE 'attribute_%'
-    AND p.post_type = 'product_variation'
-    GROUP BY pm.meta_key, pm.meta_value";
-
-    $results = $wpdb->get_results($query, ARRAY_A);
+    $results = $wpdb->get_results($wpdb->prepare("
+      SELECT DISTINCT pm.meta_key, pm.meta_value
+      FROM %i pm
+      INNER JOIN %i p ON pm.post_id = p.ID
+      WHERE pm.meta_key LIKE %s
+      AND p.post_type = 'product_variation'
+      GROUP BY pm.meta_key, pm.meta_value
+    ", $wpdb->postmeta, $wpdb->posts, 'attribute_%'), ARRAY_A);
 
     foreach ($results as $result) {
       $attribute = substr($result['meta_key'], 10);

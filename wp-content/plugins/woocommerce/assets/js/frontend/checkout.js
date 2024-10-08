@@ -157,10 +157,10 @@ jQuery( function( $ ) {
 			wc_checkout_form.reset_update_checkout_timer();
 			wc_checkout_form.updateTimer = setTimeout( wc_checkout_form.maybe_update_checkout, '1000' );
 		},
-		trigger_update_checkout: function() {
+		trigger_update_checkout: function( event ) {
 			wc_checkout_form.reset_update_checkout_timer();
 			wc_checkout_form.dirtyInput = false;
-			$( document.body ).trigger( 'update_checkout' );
+			$( document.body ).trigger( 'update_checkout', { current_target: event ? event.currentTarget : null } );
 		},
 		maybe_update_checkout: function() {
 			var update_totals = true;
@@ -425,6 +425,16 @@ jQuery( function( $ ) {
 					// Re-init methods
 					wc_checkout_form.init_payment_methods();
 
+					// If there is no errors and the checkout update was triggered by changing the shipping method, focus its radio input.
+					if (
+						data &&
+						'success' === data.result &&
+						args.current_target &&
+						args.current_target.id.indexOf( 'shipping_method' ) !== -1
+					) {
+						document.getElementById( args.current_target.id ).focus();
+					}
+
 					// Fire updated_checkout event.
 					$( document.body ).trigger( 'updated_checkout', [ data ] );
 				}
@@ -501,13 +511,13 @@ jQuery( function( $ ) {
 							var maybe_valid_json = raw_response.match( /{"result.*}/ );
 
 							if ( null === maybe_valid_json ) {
-								console.log( 'Unable to fix malformed JSON' );
+								console.log( 'Unable to fix malformed JSON #1' );
 							} else if ( wc_checkout_form.is_valid_json( maybe_valid_json[0] ) ) {
 								console.log( 'Fixed malformed JSON. Original:' );
 								console.log( raw_response );
 								raw_response = maybe_valid_json[0];
 							} else {
-								console.log( 'Unable to fix malformed JSON' );
+								console.log( 'Unable to fix malformed JSON #2' );
 							}
 						}
 
@@ -560,10 +570,21 @@ jQuery( function( $ ) {
 						// Detach the unload handler that prevents a reload / redirect
 						wc_checkout_form.detachUnloadEventsOnSubmit();
 
+						// This is just a technical error fallback. i18_checkout_error is expected to be always defined and localized.
+						var errorMessage = errorThrown;
+
+						if (
+							typeof wc_checkout_params === 'object' &&
+							wc_checkout_params !== null &&
+							wc_checkout_params.hasOwnProperty( 'i18n_checkout_error' ) &&
+							typeof wc_checkout_params.i18n_checkout_error === 'string' &&
+							wc_checkout_params.i18n_checkout_error.trim() !== ''
+						) {
+							errorMessage = wc_checkout_params.i18n_checkout_error;
+						}
+
 						wc_checkout_form.submit_error(
-							'<div class="woocommerce-error">' +
-							( errorThrown || wc_checkout_params.i18n_checkout_error ) +
-							'</div>'
+							'<div class="woocommerce-error">' + errorMessage + '</div>'
 						);
 					}
 				});
@@ -617,8 +638,9 @@ jQuery( function( $ ) {
 			});
 
 			var data = {
-				security:		wc_checkout_params.apply_coupon_nonce,
-				coupon_code:	$form.find( 'input[name="coupon_code"]' ).val()
+				security: wc_checkout_params.apply_coupon_nonce,
+				coupon_code: $form.find('input[name="coupon_code"]').val(),
+				billing_email: wc_checkout_form.$checkout_form.find('input[name="billing_email"]').val()
 			};
 
 			$.ajax({

@@ -1,17 +1,20 @@
 <?php
 namespace MailPoetVendor\Twig\Node;
 if (!defined('ABSPATH')) exit;
+use MailPoetVendor\Twig\Attribute\YieldReady;
 use MailPoetVendor\Twig\Compiler;
 use MailPoetVendor\Twig\Source;
+#[YieldReady]
 class Node implements \Countable, \IteratorAggregate
 {
  protected $nodes;
  protected $attributes;
  protected $lineno;
  protected $tag;
- private $name;
  private $sourceContext;
- public function __construct(array $nodes = [], array $attributes = [], int $lineno = 0, string $tag = null)
+ private $nodeNameDeprecations = [];
+ private $attributeNameDeprecations = [];
+ public function __construct(array $nodes = [], array $attributes = [], int $lineno = 0, ?string $tag = null)
  {
  foreach ($nodes as $name => $node) {
  if (!$node instanceof self) {
@@ -27,7 +30,7 @@ class Node implements \Countable, \IteratorAggregate
  {
  $attributes = [];
  foreach ($this->attributes as $name => $value) {
- $attributes[] = \sprintf('%s: %s', $name, \str_replace("\n", '', \var_export($value, \true)));
+ $attributes[] = \sprintf('%s: %s', $name, \is_callable($value) ? '\\Closure' : \str_replace("\n", '', \var_export($value, \true)));
  }
  $repr = [static::class . '(' . \implode(', ', $attributes)];
  if (\count($this->nodes)) {
@@ -48,7 +51,7 @@ class Node implements \Countable, \IteratorAggregate
  public function compile(Compiler $compiler)
  {
  foreach ($this->nodes as $node) {
- $node->compile($compiler);
+ $compiler->subcompile($node);
  }
  }
  public function getTemplateLine() : int
@@ -68,11 +71,33 @@ class Node implements \Countable, \IteratorAggregate
  if (!\array_key_exists($name, $this->attributes)) {
  throw new \LogicException(\sprintf('Attribute "%s" does not exist for Node "%s".', $name, static::class));
  }
+ $triggerDeprecation = \func_num_args() > 1 ? \func_get_arg(1) : \true;
+ if ($triggerDeprecation && isset($this->attributeNameDeprecations[$name])) {
+ $dep = $this->attributeNameDeprecations[$name];
+ if ($dep->getNewName()) {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Getting attribute "%s" on a "%s" class is deprecated, get the "%s" attribute instead.', $name, static::class, $dep->getNewName());
+ } else {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Getting attribute "%s" on a "%s" class is deprecated.', $name, static::class);
+ }
+ }
  return $this->attributes[$name];
  }
  public function setAttribute(string $name, $value) : void
  {
+ $triggerDeprecation = \func_num_args() > 2 ? \func_get_arg(2) : \true;
+ if ($triggerDeprecation && isset($this->attributeNameDeprecations[$name])) {
+ $dep = $this->attributeNameDeprecations[$name];
+ if ($dep->getNewName()) {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Setting attribute "%s" on a "%s" class is deprecated, set the "%s" attribute instead.', $name, static::class, $dep->getNewName());
+ } else {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Setting attribute "%s" on a "%s" class is deprecated.', $name, static::class);
+ }
+ }
  $this->attributes[$name] = $value;
+ }
+ public function deprecateAttribute(string $name, NameDeprecation $dep) : void
+ {
+ $this->attributeNameDeprecations[$name] = $dep;
  }
  public function removeAttribute(string $name) : void
  {
@@ -87,15 +112,40 @@ class Node implements \Countable, \IteratorAggregate
  if (!isset($this->nodes[$name])) {
  throw new \LogicException(\sprintf('Node "%s" does not exist for Node "%s".', $name, static::class));
  }
+ $triggerDeprecation = \func_num_args() > 1 ? \func_get_arg(1) : \true;
+ if ($triggerDeprecation && isset($this->nodeNameDeprecations[$name])) {
+ $dep = $this->nodeNameDeprecations[$name];
+ if ($dep->getNewName()) {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Getting node "%s" on a "%s" class is deprecated, get the "%s" node instead.', $name, static::class, $dep->getNewName());
+ } else {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Getting node "%s" on a "%s" class is deprecated.', $name, static::class);
+ }
+ }
  return $this->nodes[$name];
  }
  public function setNode(string $name, self $node) : void
  {
+ $triggerDeprecation = \func_num_args() > 2 ? \func_get_arg(2) : \true;
+ if ($triggerDeprecation && isset($this->nodeNameDeprecations[$name])) {
+ $dep = $this->nodeNameDeprecations[$name];
+ if ($dep->getNewName()) {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Setting node "%s" on a "%s" class is deprecated, set the "%s" node instead.', $name, static::class, $dep->getNewName());
+ } else {
+ trigger_deprecation($dep->getPackage(), $dep->getVersion(), 'Setting node "%s" on a "%s" class is deprecated.', $name, static::class);
+ }
+ }
+ if (null !== $this->sourceContext) {
+ $node->setSourceContext($this->sourceContext);
+ }
  $this->nodes[$name] = $node;
  }
  public function removeNode(string $name) : void
  {
  unset($this->nodes[$name]);
+ }
+ public function deprecateNode(string $name, NameDeprecation $dep) : void
+ {
+ $this->nodeNameDeprecations[$name] = $dep;
  }
  #[\ReturnTypeWillChange]
  public function count()

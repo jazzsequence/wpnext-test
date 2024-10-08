@@ -82,7 +82,7 @@ function gutenberg_render_block_core_search( $attributes ) {
 		if ( $is_expandable_searchfield ) {
 			$suffix = wp_scripts_get_suffix();
 			if ( defined( 'IS_GUTENBERG_PLUGIN' ) && IS_GUTENBERG_PLUGIN ) {
-				$module_url = gutenberg_url( '/build/interactivity/search.min.js' );
+				$module_url = gutenberg_url( '/build-module/block-library/search/view.min.js' );
 			}
 
 			wp_register_script_module(
@@ -191,8 +191,8 @@ function gutenberg_render_block_core_search( $attributes ) {
 		 data-wp-interactive="core/search"'
 		. $form_context .
 		'data-wp-class--wp-block-search__searchfield-hidden="!context.isSearchInputVisible"
-		 data-wp-on--keydown="actions.handleSearchKeydown"
-		 data-wp-on--focusout="actions.handleSearchFocusout"
+		 data-wp-on-async--keydown="actions.handleSearchKeydown"
+		 data-wp-on-async--focusout="actions.handleSearchFocusout"
 		';
 	}
 
@@ -324,7 +324,7 @@ function gutenberg_apply_block_core_search_border_style( $attributes, $property,
  * @param array  $button_styles  Current collection of button styles.
  * @param array  $input_styles   Current collection of input styles.
  */
-function gutenberg_gutenberg_apply_block_core_search_border_styles( $attributes, $property, &$wrapper_styles, &$button_styles, &$input_styles ) {
+function gutenberg_apply_block_core_search_border_styles( $attributes, $property, &$wrapper_styles, &$button_styles, &$input_styles ) {
 	gutenberg_apply_block_core_search_border_style( $attributes, $property, null, $wrapper_styles, $button_styles, $input_styles );
 	gutenberg_apply_block_core_search_border_style( $attributes, $property, 'top', $wrapper_styles, $button_styles, $input_styles );
 	gutenberg_apply_block_core_search_border_style( $attributes, $property, 'right', $wrapper_styles, $button_styles, $input_styles );
@@ -366,9 +366,9 @@ function gutenberg_styles_for_block_core_search( $attributes ) {
 	}
 
 	// Add border width and color styles.
-	gutenberg_gutenberg_apply_block_core_search_border_styles( $attributes, 'width', $wrapper_styles, $button_styles, $input_styles );
-	gutenberg_gutenberg_apply_block_core_search_border_styles( $attributes, 'color', $wrapper_styles, $button_styles, $input_styles );
-	gutenberg_gutenberg_apply_block_core_search_border_styles( $attributes, 'style', $wrapper_styles, $button_styles, $input_styles );
+	gutenberg_apply_block_core_search_border_styles( $attributes, 'width', $wrapper_styles, $button_styles, $input_styles );
+	gutenberg_apply_block_core_search_border_styles( $attributes, 'color', $wrapper_styles, $button_styles, $input_styles );
+	gutenberg_apply_block_core_search_border_styles( $attributes, 'style', $wrapper_styles, $button_styles, $input_styles );
 
 	// Add border radius styles.
 	$has_border_radius = ! empty( $attributes['style']['border']['radius'] );

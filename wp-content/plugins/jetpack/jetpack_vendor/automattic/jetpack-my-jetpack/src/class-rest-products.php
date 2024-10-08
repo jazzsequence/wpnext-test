@@ -77,9 +77,18 @@ class REST_Products {
 					'methods'             => \WP_REST_Server::EDITABLE,
 					'callback'            => __CLASS__ . '::install_standalone',
 					'permission_callback' => __CLASS__ . '::edit_permissions_callback',
-					'args'                => array(
-						'product' => $product_arg,
-					),
+				),
+			)
+		);
+
+		register_rest_route(
+			'my-jetpack/v1',
+			'site/products-ownership',
+			array(
+				array(
+					'methods'             => \WP_REST_Server::READABLE,
+					'callback'            => __CLASS__ . '::get_products_by_ownership',
+					'permission_callback' => __CLASS__ . '::permissions_callback',
 				),
 			)
 		);
@@ -143,6 +152,19 @@ class REST_Products {
 	}
 
 	/**
+	 * Site products endpoint.
+	 *
+	 * @return array of site products list.
+	 */
+	public static function get_products_by_ownership() {
+		$response = array(
+			'unownedProducts' => Products::get_products_by_ownership( 'unowned' ),
+			'ownedProducts'   => Products::get_products_by_ownership( 'owned' ),
+		);
+		return rest_ensure_response( $response, 200 );
+	}
+
+	/**
 	 * Site single product endpoint.
 	 *
 	 * @param \WP_REST_Request $request The request object.
@@ -190,6 +212,7 @@ class REST_Products {
 			$activate_product_result->add_data( array( 'status' => 400 ) );
 			return $activate_product_result;
 		}
+		set_transient( 'my_jetpack_product_activated', $product_slug, 10 );
 
 		return rest_ensure_response( Products::get_product( $product_slug ), 200 );
 	}

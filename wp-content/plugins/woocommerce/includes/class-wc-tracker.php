@@ -15,6 +15,8 @@ use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
 use Automattic\WooCommerce\Utilities\{ FeaturesUtil, OrderUtil, PluginUtil };
 use Automattic\WooCommerce\Internal\Utilities\BlocksUtil;
 use Automattic\WooCommerce\Proxies\LegacyProxy;
+use Automattic\WooCommerce\Blocks\Package;
+use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFields;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -110,13 +112,20 @@ class WC_Tracker {
 	 * However, there are version of JP where \Automattic\Jetpack\Status exists, but does *not* contain is_staging_site method,
 	 * so with those, code still needs to use the previous check as a fallback.
 	 *
+	 * After upgrading Jetpack Status to v3.3.2 is_staging_site is also deprecated and in_safe_mode is the new replacement.
+	 * So we check this first of all.
+	 *
 	 * @return bool
 	 */
 	private static function is_jetpack_staging_site() {
 		if ( class_exists( '\Automattic\Jetpack\Status' ) ) {
-			// Preferred way of checking with Jetpack 8.1+.
+
 			$jp_status = new \Automattic\Jetpack\Status();
-			if ( is_callable( array( $jp_status, 'is_staging_site' ) ) ) {
+
+			if ( is_callable( array( $jp_status, 'in_safe_mode' ) ) ) {
+				return $jp_status->in_safe_mode();
+			} elseif ( is_callable( array( $jp_status, 'is_staging_site' ) ) ) {
+				// Preferred way of checking with Jetpack 8.1+.
 				return $jp_status->is_staging_site();
 			}
 		}
@@ -364,7 +373,7 @@ class WC_Tracker {
 	}
 
 	/**
-	 * Check to see if the helper is connected to Woo.com
+	 * Check to see if the helper is connected to WooCommerce.com
 	 *
 	 * @return string
 	 */
@@ -944,7 +953,7 @@ class WC_Tracker {
 			'base_state'                            => WC()->countries->get_base_state(),
 			'base_postcode'                         => WC()->countries->get_base_postcode(),
 			'selling_locations'                     => WC()->countries->get_allowed_countries(),
-			'api_enabled'                           => get_option( 'woocommerce_api_enabled' ),
+			'api_enabled'                           => get_option( 'woocommerce_api_enabled', 'no' ),
 			'weight_unit'                           => get_option( 'woocommerce_weight_unit' ),
 			'dimension_unit'                        => get_option( 'woocommerce_dimension_unit' ),
 			'download_method'                       => get_option( 'woocommerce_file_download_method' ),
@@ -958,12 +967,12 @@ class WC_Tracker {
 			'enable_myaccount_registration'         => get_option( 'woocommerce_enable_myaccount_registration' ),
 			'registration_generate_username'        => get_option( 'woocommerce_registration_generate_username' ),
 			'registration_generate_password'        => get_option( 'woocommerce_registration_generate_password' ),
-			'hpos_enabled'                          => get_option( 'woocommerce_feature_custom_order_tables_enabled' ),
 			'hpos_sync_enabled'                     => get_option( 'woocommerce_custom_orders_table_data_sync_enabled' ),
 			'hpos_cot_authoritative'                => get_option( 'woocommerce_custom_orders_table_enabled' ),
 			'hpos_transactions_enabled'             => get_option( 'woocommerce_use_db_transactions_for_custom_orders_table_data_sync' ),
 			'hpos_transactions_level'               => get_option( 'woocommerce_db_transactions_isolation_level_for_custom_orders_table_data_sync' ),
 			'show_marketplace_suggestions'          => get_option( 'woocommerce_show_marketplace_suggestions' ),
+			'admin_install_timestamp'               => get_option( 'woocommerce_admin_install_timestamp' ),
 		);
 	}
 
@@ -1091,6 +1100,19 @@ class WC_Tracker {
 	}
 
 	/**
+	 * Get tracker data for additional fields on the checkout page.
+	 *
+	 * @return array Array of fields count and names.
+	 */
+	public static function get_checkout_additional_fields_data() {
+		$additional_fields_controller = Package::container()->get( CheckoutFields::class );
+
+		return array(
+			'fields_count' => count( $additional_fields_controller->get_additional_fields() ),
+			'fields_names' => array_keys( $additional_fields_controller->get_additional_fields() ),
+		);
+	}
+	/**
 	 * Get info about the cart & checkout pages.
 	 *
 	 * @return array
@@ -1103,6 +1125,8 @@ class WC_Tracker {
 		$checkout_block_data = self::get_block_tracker_data( 'woocommerce/checkout', 'checkout' );
 
 		$pickup_location_data = self::get_pickup_location_data();
+
+		$additional_fields_data = self::get_checkout_additional_fields_data();
 
 		return array(
 			'cart_page_contains_cart_shortcode'         => self::post_contains_text(
@@ -1119,6 +1143,7 @@ class WC_Tracker {
 			'checkout_page_contains_checkout_block'     => $checkout_block_data['page_contains_block'],
 			'checkout_block_attributes'                 => $checkout_block_data['block_attributes'],
 			'pickup_location'                           => $pickup_location_data,
+			'additional_fields'                         => $additional_fields_data,
 		);
 	}
 
@@ -1145,5 +1170,3 @@ class WC_Tracker {
 		return get_option( 'woocommerce_mobile_app_usage' );
 	}
 }
-
-WC_Tracker::init();

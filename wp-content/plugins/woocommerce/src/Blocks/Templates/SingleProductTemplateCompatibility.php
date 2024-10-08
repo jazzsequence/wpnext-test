@@ -31,7 +31,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 
 		$block_hooks = array_filter(
 			$this->hook_data,
-			function( $hook ) use ( $block_name ) {
+			function ( $hook ) use ( $block_name ) {
 				return in_array( $block_name, $hook['block_names'], true );
 			}
 		);
@@ -55,6 +55,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 	 * Since that there is a custom logic for the first and last block, we have to inject the hooks manually.
 	 * The first block supports the following hooks:
 	 * woocommerce_before_single_product
+	 * woocommerce_before_single_product_summary
 	 *
 	 * The last block supports the following hooks:
 	 * woocommerce_after_single_product
@@ -69,6 +70,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 			'before' => array(
 				'woocommerce_before_main_content'   => $this->hook_data['woocommerce_before_main_content'],
 				'woocommerce_before_single_product' => $this->hook_data['woocommerce_before_single_product'],
+				'woocommerce_before_single_product_summary' => $this->hook_data['woocommerce_before_single_product_summary'],
 			),
 			'after'  => array(),
 		);
@@ -195,7 +197,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 				),
 			),
 			'woocommerce_before_single_product_summary' => array(
-				'block_names' => array( 'core/post-excerpt' ),
+				'block_names' => array(),
 				'position'    => 'before',
 				'hooked'      => array(
 					'woocommerce_show_product_sale_flash' => 10,
@@ -279,7 +281,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 		$grouped_blocks = self::group_blocks( $parsed_blocks );
 
 		$wrapped_blocks = array_map(
-			function( $blocks ) {
+			function ( $blocks ) {
 				if ( 'core/template-part' === $blocks[0]['blockName'] ) {
 					return $blocks;
 				}
@@ -306,7 +308,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 	private static function inject_custom_attributes_to_first_and_last_block_single_product_template( $wrapped_blocks ) {
 		$template_with_custom_attributes = array_reduce(
 			$wrapped_blocks,
-			function( $carry, $item ) {
+			function ( $carry, $item ) {
 
 				$index          = $carry['index'];
 				$carry['index'] = $carry['index'] + 1;
@@ -379,7 +381,6 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 		$new_block['innerBlocks'] = $blocks;
 
 		return $new_block;
-
 	}
 
 	/**
@@ -421,7 +422,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 	private static function group_blocks( $parsed_blocks ) {
 		return array_reduce(
 			$parsed_blocks,
-			function( array $carry, array $block ) {
+			function ( array $carry, array $block ) {
 				if ( 'core/template-part' === $block['blockName'] ) {
 					$carry[] = array( $block );
 					return $carry;
@@ -480,7 +481,7 @@ class SingleProductTemplateCompatibility extends AbstractTemplateCompatibility {
 	private static function serialize_blocks( $parsed_blocks ) {
 		return array_reduce(
 			$parsed_blocks,
-			function( $carry, $item ) {
+			function ( $carry, $item ) {
 				if ( is_array( $item ) ) {
 					return $carry . serialize_blocks( $item );
 				}

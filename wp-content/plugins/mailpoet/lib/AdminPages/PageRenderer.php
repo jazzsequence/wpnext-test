@@ -197,6 +197,7 @@ class PageRenderer {
       'email_volume_limit' => $this->subscribersFeature->getEmailVolumeLimit(),
       'email_volume_limit_reached' => $this->subscribersFeature->checkEmailVolumeLimitIsReached(),
       'capabilities' => $this->capabilitiesManager->getCapabilities(),
+      'tier' => $this->capabilitiesManager->getTier(),
       'urls' => [
         'automationListing' => admin_url('admin.php?page=mailpoet-automation'),
         'automationEditor' => admin_url('admin.php?page=mailpoet-automation-editor'),
@@ -212,6 +213,7 @@ class PageRenderer {
       }, $this->tagRepository->findAll()),
       'display_docsbot_widget' => $this->displayDocsBotWidget(),
       'is_woocommerce_subscriptions_active' => $this->wooCommerceSubscriptionsHelper->isWooCommerceSubscriptionsActive(),
+      'cron_trigger_method' => $this->settings->get('cron_trigger.method'),
     ];
 
     if (!$defaults['premium_plugin_active']) {
@@ -235,7 +237,7 @@ class PageRenderer {
       $this->wp->doAction('mailpoet_styles_admin_after');
 
       // We are in control of the template and the data can be considered safe at this point
-      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped, WordPressDotOrg.sniffs.OutputEscaping.UnescapedOutputParameter
+      // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
       echo $this->renderer->render($template, $data + $defaults);
     } catch (\Exception $e) {
       $notice = new WPNotice(WPNotice::TYPE_ERROR, $e->getMessage());

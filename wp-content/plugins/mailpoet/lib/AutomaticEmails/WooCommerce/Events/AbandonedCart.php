@@ -41,6 +41,9 @@ class AbandonedCart {
   /** @var SubscribersRepository */
   private $subscribersRepository;
 
+  /** @var bool */
+  private $loadSavedCartAfterLogin;
+
   public function __construct(
     WPFunctions $wp,
     WooCommerceHelper $wooCommerceHelper,
@@ -120,9 +123,9 @@ class AbandonedCart {
       10
     );
 
-    // item quantity set to zero (it removes the item but does not fire remove event)
+    // item quantity set to zero
     $this->wp->addAction(
-      'woocommerce_before_cart_item_quantity_zero',
+      'woocommerce_remove_cart_item',
       [$this, 'handleCartChange'],
       10
     );
@@ -138,6 +141,20 @@ class AbandonedCart {
     $this->wp->addAction(
       'woocommerce_cart_item_restored',
       [$this, 'handleCartChange'],
+      10
+    );
+
+    // we should handle loading cart from session if user logs in
+    $this->wp->addAction(
+      'woocommerce_load_cart_from_session',
+      [$this, 'handleUserLogin'],
+      10
+    );
+
+    // cart loaded from session (only processed after login, not on every page load)
+    $this->wp->addAction(
+      'woocommerce_cart_loaded_from_session',
+      [$this, 'handleCartChangeOnLogin'],
       10
     );
 
@@ -158,6 +175,21 @@ class AbandonedCart {
     }
   }
 
+  public function handleUserLogin() {
+    $wpUserId = $this->wp->getCurrentUserId();
+    if (!$wpUserId) {
+      return false;
+    }
+    $this->loadSavedCartAfterLogin = (bool)$this->wp->getUserMeta($wpUserId, '_woocommerce_load_saved_cart_after_login', true);
+  }
+
+  public function handleCartChangeOnLogin() {
+    if (!$this->loadSavedCartAfterLogin) {
+      return false;
+    }
+    $this->handleCartChange();
+  }
+
   public function handleSubscriberActivity(SubscriberEntity $subscriber) {
     // on subscriber activity on site reschedule all currently scheduled (not yet sent) emails for given subscriber
     // (it tracks at most once per minute to avoid processing many calls at the same time, i.e. AJAX)
@@ -171,7 +203,7 @@ class AbandonedCart {
 
   private function scheduleAbandonedCartEmail(array $cartProductIds = []) {
     $subscriber = $this->getSubscriber();
-    if (!$subscriber || $subscriber->getStatus() !== SubscriberEntity::STATUS_SUBSCRIBED) {
+    if (!$subscriber) {
       return;
     }
 

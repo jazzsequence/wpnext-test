@@ -9,7 +9,7 @@
 // order to ensure that the specific version of this file always get loaded. Otherwise, Jetpack autoloader might decide
 // to load an older/newer version of the class (if, for example, both the standalone and bundled versions of the plugin
 // are installed, or in some other cases).
-namespace Automattic\Jetpack\Backup\V0003;
+namespace Automattic\Jetpack\Backup\V0004;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Automattic\Jetpack\Admin_UI\Admin_Menu;
 use Automattic\Jetpack\Assets;
-use Automattic\Jetpack\Backup\V0003\Initial_State as Backup_Initial_State;
+use Automattic\Jetpack\Backup\V0004\Initial_State as Backup_Initial_State;
 use Automattic\Jetpack\Config;
 use Automattic\Jetpack\Connection\Client;
 use Automattic\Jetpack\Connection\Initial_State as Connection_Initial_State;
@@ -124,7 +124,8 @@ class Jetpack_Backup {
 			_x( 'VaultPress Backup', 'The Jetpack VaultPress Backup product name, without the Jetpack prefix', 'jetpack-backup-pkg' ),
 			'manage_options',
 			'jetpack-backup',
-			array( __CLASS__, 'plugin_settings_page' )
+			array( __CLASS__, 'plugin_settings_page' ),
+			7
 		);
 		add_action( 'load-' . $page_suffix, array( __CLASS__, 'admin_init' ) );
 
@@ -369,6 +370,17 @@ class Jetpack_Backup {
 						'type'     => 'numeric',
 					),
 				),
+			)
+		);
+
+		// Enqueue a new backup
+		register_rest_route(
+			'jetpack/v4',
+			'/site/backup/enqueue',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => __CLASS__ . '::enqueue_backup',
+				'permission_callback' => __CLASS__ . '::backups_permissions_callback',
 			)
 		);
 	}
@@ -714,7 +726,7 @@ class Jetpack_Backup {
 	/**
 	 * Get the best addon offer for this site, including pricing details
 	 *
-	 * @param WP_Request $request Object including storage usage.
+	 * @param \WP_REST_Request $request Object including storage usage.
 	 *
 	 * @return string|WP_Error A JSON object with the suggested storage addon details if the request was successful,
 	 *                         or a WP_Error otherwise.
@@ -742,6 +754,35 @@ class Jetpack_Backup {
 		);
 
 		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Enqueue a new backup on demand
+	 *
+	 * @return string|WP_Error A JSON object with `success` if the request was successful,
+	 * or a WP_Error otherwise.
+	 */
+	public static function enqueue_backup() {
+		$blog_id  = Jetpack_Options::get_option( 'id' );
+		$endpoint = sprintf( '/sites/%d/rewind/backups/enqueue', $blog_id );
+
+		$response = Client::wpcom_json_api_request_as_user(
+			$endpoint,
+			'v2',
+			array(
+				'method' => 'POST',
+			),
+			null,
+			'wpcom'
+		);
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return null;
+		}
+
+		return rest_ensure_response(
+			json_decode( $response['body'], true )
+		);
 	}
 
 	/**

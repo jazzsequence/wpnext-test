@@ -14,7 +14,6 @@ use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Entities\SubscriberEntity;
 use MailPoet\Logging\LoggerFactory;
 use MailPoet\Segments\DynamicSegments\FilterFactory;
-use MailPoet\WP\Functions as WPFunctions;
 use MailPoetVendor\Carbon\Carbon;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
 
@@ -25,9 +24,6 @@ class SendingQueuesRepository extends Repository {
   /** @var ScheduledTaskSubscribersRepository */
   private $scheduledTaskSubscribersRepository;
 
-  /** @var WPFunctions */
-  private $wp;
-
   /** @var FilterFactory */
   private $filterFactory;
 
@@ -36,14 +32,12 @@ class SendingQueuesRepository extends Repository {
 
   public function __construct(
     EntityManager $entityManager,
-    WPFunctions $wp,
     ScheduledTaskSubscribersRepository $scheduledTaskSubscribersRepository,
     FilterFactory $filterFactory,
     LoggerFactory $loggerFactory
   ) {
     parent::__construct($entityManager);
     $this->scheduledTaskSubscribersRepository = $scheduledTaskSubscribersRepository;
-    $this->wp = $wp;
     $this->filterFactory = $filterFactory;
     $this->loggerFactory = $loggerFactory;
   }
@@ -76,14 +70,11 @@ class SendingQueuesRepository extends Repository {
     return $queryBuilder->getQuery()->getOneOrNullResult();
   }
 
-  public function countAllByNewsletterAndTaskStatus(NewsletterEntity $newsletter, string $status): int {
+  public function countAllToProcessByNewsletter(NewsletterEntity $newsletter): int {
     return intval($this->entityManager->createQueryBuilder()
-      ->select('count(s.task)')
+      ->select('sum(s.countToProcess)')
       ->from(SendingQueueEntity::class, 's')
-      ->join('s.task', 't')
-      ->where('t.status = :status')
       ->andWhere('s.newsletter = :newsletter')
-      ->setParameter('status', $status)
       ->setParameter('newsletter', $newsletter)
       ->getQuery()
       ->getSingleScalarResult());
@@ -137,6 +128,47 @@ class SendingQueuesRepository extends Repository {
     return $qb->getQuery()->getResult();
   }
 
+  public function getCampaignAnalyticsQuery() {
+    $sevenDaysAgo = Carbon::now()->subDays(7);
+    $thirtyDaysAgo = Carbon::now()->subDays(30);
+    $threeMonthsAgo = Carbon::now()->subMonths(3);
+
+    return $this->doctrineRepository->createQueryBuilder('q')
+      ->select('
+        n.type as newsletterType,
+        q.meta as sendingQueueMeta,
+        CASE
+            WHEN COUNT(s.id) > 0 THEN true
+            ELSE false
+        END as sentToSegment,
+        CASE
+            WHEN t.processedAt >= :sevenDaysAgo THEN true
+            ELSE false
+        END as sentLast7Days,
+        CASE
+            WHEN t.processedAt >= :thirtyDaysAgo THEN true
+            ELSE false
+        END as sentLast30Days,
+        CASE
+            WHEN t.processedAt >= :threeMonthsAgo THEN true
+            ELSE false
+        END as sentLast3Months')
+      ->join('q.task', 't')
+      ->leftJoin('q.newsletter', 'n')
+      ->leftJoin('n.newsletterSegments', 'ns')
+      ->leftJoin('ns.segment', 's', 'WITH', 's.type = :dynamicType')
+      ->andWhere('t.status = :taskStatus')
+      ->andWhere('t.processedAt >= :since')
+      ->setParameter('sevenDaysAgo', $sevenDaysAgo)
+      ->setParameter('thirtyDaysAgo', $thirtyDaysAgo)
+      ->setParameter('threeMonthsAgo', $threeMonthsAgo)
+      ->setParameter('dynamicType', SegmentEntity::TYPE_DYNAMIC)
+      ->setParameter('taskStatus', ScheduledTaskEntity::STATUS_COMPLETED)
+      ->setParameter('since', $threeMonthsAgo)
+      ->groupBy('q.id')
+      ->getQuery();
+  }
+
   public function pause(SendingQueueEntity $queue): void {
     if ($queue->getCountProcessed() !== $queue->getCountTotal()) {
       $task = $queue->getTask();
@@ -152,7 +184,7 @@ class SendingQueuesRepository extends Repository {
     if (!$task instanceof ScheduledTaskEntity) return;
 
     if ($queue->getCountProcessed() === $queue->getCountTotal()) {
-      $processedAt = Carbon::createFromTimestamp($this->wp->currentTime('timestamp'));
+      $processedAt = Carbon::now()->millisecond(0);
       $task->setProcessedAt($processedAt);
       $task->setStatus(ScheduledTaskEntity::STATUS_COMPLETED);
       // Update also status of newsletter if necessary

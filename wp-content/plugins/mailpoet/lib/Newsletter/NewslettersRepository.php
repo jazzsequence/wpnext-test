@@ -19,7 +19,7 @@ use MailPoet\Entities\SendingQueueEntity;
 use MailPoet\Logging\LoggerFactory;
 use MailPoet\Util\Helpers;
 use MailPoetVendor\Carbon\Carbon;
-use MailPoetVendor\Doctrine\DBAL\Connection;
+use MailPoetVendor\Doctrine\DBAL\ArrayParameterType;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
 use MailPoetVendor\Doctrine\ORM\Query\Expr\Join;
 
@@ -50,7 +50,7 @@ class NewslettersRepository extends Repository {
       ->select('n')
       ->from(NewsletterEntity::class, 'n')
       ->where('n.status = :status')
-      ->setParameter(':status', NewsletterEntity::STATUS_ACTIVE)
+      ->setParameter('status', NewsletterEntity::STATUS_ACTIVE)
       ->andWhere('n.deletedAt is null')
       ->andWhere('n.type IN (:types)')
       ->setParameter('types', $types)
@@ -79,13 +79,22 @@ class NewslettersRepository extends Repository {
       ->from(NewsletterEntity::class, 'n')
       ->where('n.status = :status')
       ->andWhere('n.deletedAt IS NULL')
-      ->andWhere('n.type = :type')
+      ->andWhere('n.type IN (:types)')
       ->join('n.options', 'o', Join::WITH, 'o.value = :event')
-      ->join('o.optionField', 'f', Join::WITH, 'f.name = :nameEvent AND f.newsletterType = :type')
+      ->join('o.optionField', 'f', Join::WITH, 'f.name = :nameEvent AND f.newsletterType IN (:types)')
       ->setParameter('status', NewsletterEntity::STATUS_ACTIVE)
       ->setParameter('nameEvent', NewsletterOptionFieldEntity::NAME_EVENT)
-      ->setParameter('type', NewsletterEntity::TYPE_AUTOMATIC)
+      ->setParameter('types', [NewsletterEntity::TYPE_AUTOMATION_TRANSACTIONAL, NewsletterEntity::TYPE_AUTOMATIC], ArrayParameterType::STRING)
       ->setParameter('event', $event)
+      ->getQuery()
+      ->getSingleScalarResult());
+  }
+
+  public function getCountOfEmailsWithWPPost(): int {
+    return intval($this->entityManager->createQueryBuilder()
+      ->select('COUNT(n.id)')
+      ->from(NewsletterEntity::class, 'n')
+      ->andWhere('n.wpPost IS NOT NULL')
       ->getQuery()
       ->getSingleScalarResult());
   }
@@ -99,7 +108,7 @@ class NewslettersRepository extends Repository {
       ->select('n')
       ->from(NewsletterEntity::class, 'n')
       ->where('n.status = :status')
-      ->setParameter(':status', NewsletterEntity::STATUS_ACTIVE)
+      ->setParameter('status', NewsletterEntity::STATUS_ACTIVE)
       ->andWhere('n.deletedAt IS NULL')
       ->andWhere('n.type = :type')
       ->setParameter('type', $type);
@@ -124,7 +133,7 @@ class NewslettersRepository extends Repository {
       ->select('n')
       ->from(NewsletterEntity::class, 'n')
       ->where('n.status = :status')
-      ->setParameter(':status', NewsletterEntity::STATUS_DRAFT)
+      ->setParameter('status', NewsletterEntity::STATUS_DRAFT)
       ->andWhere('n.deletedAt is null')
       ->andWhere('n.type IN (:types)')
       ->setParameter('types', $types)
@@ -190,6 +199,7 @@ class NewslettersRepository extends Repository {
       'automation_emails_count' => $analyticsMap[NewsletterEntity::TYPE_AUTOMATION] ?? 0,
       're-engagement_emails_count' => $analyticsMap[NewsletterEntity::TYPE_RE_ENGAGEMENT] ?? 0,
       'sent_newsletters_count' => $analyticsMap[NewsletterEntity::TYPE_STANDARD] ?? 0,
+      'sent_newsletters_7_days' => $this->getStandardNewsletterSentCount(Carbon::now()->subDays(7)),
       'sent_newsletters_3_months' => $this->getStandardNewsletterSentCount(Carbon::now()->subMonths(3)),
       'sent_newsletters_30_days' => $this->getStandardNewsletterSentCount(Carbon::now()->subDays(30)),
       'first_purchase_emails_count' => $analyticsMap[NewsletterEntity::TYPE_AUTOMATIC][FirstPurchase::SLUG] ?? 0,
@@ -296,14 +306,21 @@ class NewslettersRepository extends Repository {
        JOIN $sendingQueueTable q ON t.`id` = q.`task_id`
        SET t.`deleted_at` = NOW()
        WHERE q.`newsletter_id` IN (:ids)
-    ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
+    ", ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]);
 
     // Trash sending queues
     $this->entityManager->getConnection()->executeStatement("
        UPDATE $sendingQueueTable q
        SET q.`deleted_at` = NOW()
        WHERE q.`newsletter_id` IN (:ids)
-    ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
+    ", ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]);
+
+    // Trash CPT.
+    $wpPostIds = $this->getWpPostIds($ids);
+
+    foreach ($wpPostIds as $wpPostId) {
+      wp_trash_post($wpPostId);
+    }
 
     return count($ids);
   }
@@ -335,7 +352,7 @@ class NewslettersRepository extends Repository {
       'ids' => $ids,
       'pausedStatus' => ScheduledTaskEntity::STATUS_PAUSED,
     ], [
-      'ids' => Connection::PARAM_INT_ARRAY,
+      'ids' => ArrayParameterType::INTEGER,
     ]);
 
     // Restore sending queues
@@ -343,8 +360,14 @@ class NewslettersRepository extends Repository {
        UPDATE $sendingQueueTable q
        SET q.`deleted_at` = null
        WHERE q.`newsletter_id` IN (:ids)
-    ", ['ids' => $ids], ['ids' => Connection::PARAM_INT_ARRAY]);
+    ", ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]);
 
+    // Untrash CPT.
+    $wpPostIds = $this->getWpPostIds($ids);
+
+    foreach ($wpPostIds as $wpPostId) {
+      wp_untrash_post($wpPostId);
+    }
     return count($ids);
   }
 
@@ -548,5 +571,21 @@ class NewslettersRepository extends Repository {
       ->getQuery()
       ->getSingleColumnResult();
     return array_map('intval', $ids);
+  }
+
+  public function getWpPostIds(array $ids): array {
+      /** @var string[] $wpPostIds */
+      $wpPostIds = $this->entityManager->createQueryBuilder()
+        ->select('IDENTITY(n.wpPost) AS id')
+        ->from(NewsletterEntity::class, 'n')
+        ->where('n.id IN (:ids)')
+        ->andWhere('n.wpPost IS NOT NULL')
+        ->setParameter('ids', $ids)
+        ->getQuery()
+        ->getSingleColumnResult();
+
+      $wpPostIds = array_map('intval', $wpPostIds);
+
+      return $wpPostIds;
   }
 }

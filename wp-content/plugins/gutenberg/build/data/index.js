@@ -541,6 +541,7 @@ __webpack_require__.d(__webpack_exports__, {
   createRegistry: () => (/* reexport */ createRegistry),
   createRegistryControl: () => (/* reexport */ createRegistryControl),
   createRegistrySelector: () => (/* reexport */ createRegistrySelector),
+  createSelector: () => (/* reexport */ rememo),
   dispatch: () => (/* reexport */ dispatch_dispatch),
   plugins: () => (/* reexport */ plugins_namespaceObject),
   register: () => (/* binding */ register),
@@ -611,6 +612,7 @@ function _typeof(o) {
     return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
   }, _typeof(o);
 }
+
 ;// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/toPrimitive.js
 
 function toPrimitive(t, r) {
@@ -623,29 +625,26 @@ function toPrimitive(t, r) {
   }
   return ("string" === r ? String : Number)(t);
 }
+
 ;// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/toPropertyKey.js
 
 
 function toPropertyKey(t) {
   var i = toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : String(i);
+  return "symbol" == _typeof(i) ? i : i + "";
 }
+
 ;// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/defineProperty.js
 
-function _defineProperty(obj, key, value) {
-  key = toPropertyKey(key);
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-  return obj;
+function _defineProperty(e, r, t) {
+  return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
+    value: t,
+    enumerable: !0,
+    configurable: !0,
+    writable: !0
+  }) : e[r] = t, e;
 }
+
 ;// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/objectSpread2.js
 
 function ownKeys(e, r) {
@@ -669,6 +668,7 @@ function _objectSpread2(e) {
   }
   return e;
 }
+
 ;// CONCATENATED MODULE: ./node_modules/redux/es/redux.js
 
 
@@ -1552,7 +1552,7 @@ function resolveSelect(storeNameOrDescriptor, selectorName, ...args) {
  *
  * // Action generator using dispatch
  * export function* myAction() {
- *   yield controls.dispatch( 'core/edit-post', 'togglePublishSidebar' );
+ *   yield controls.dispatch( 'core/editor', 'togglePublishSidebar' );
  *   // do some other things.
  * }
  * ```
@@ -1603,7 +1603,7 @@ const external_wp_privateApis_namespaceObject = window["wp"]["privateApis"];
 const {
   lock,
   unlock
-} = (0,external_wp_privateApis_namespaceObject.__dangerousOptInToUnstableAPIsOnlyForCoreModules)('I know using unstable features means my theme or plugin will inevitably break in the next version of WordPress.', '@wordpress/data');
+} = (0,external_wp_privateApis_namespaceObject.__dangerousOptInToUnstableAPIsOnlyForCoreModules)('I acknowledge private features are not for use in themes or plugins and doing so will break in the next version of WordPress.', '@wordpress/data');
 
 ;// CONCATENATED MODULE: ./node_modules/is-promise/index.mjs
 function isPromise(obj) {
@@ -2164,11 +2164,6 @@ function isShallowEqual(a, b, fromIndex) {
 
 ;// CONCATENATED MODULE: ./packages/data/build-module/redux-store/metadata/selectors.js
 /**
- * External dependencies
- */
-
-
-/**
  * WordPress dependencies
  */
 
@@ -2176,6 +2171,7 @@ function isShallowEqual(a, b, fromIndex) {
 /**
  * Internal dependencies
  */
+
 
 
 /** @typedef {Record<string, import('./reducer').State>} State */
@@ -3414,9 +3410,12 @@ function createRegistry(storeConfigs = {}, parent = null) {
     }
     emitter.pause();
     Object.values(stores).forEach(store => store.emitter.pause());
-    callback();
-    emitter.resume();
-    Object.values(stores).forEach(store => store.emitter.resume());
+    try {
+      callback();
+    } finally {
+      emitter.resume();
+      Object.values(stores).forEach(store => store.emitter.resume());
+    }
   }
   let registry = {
     batch,
@@ -3769,8 +3768,6 @@ persistencePlugin.__unstableMigrate = () => {};
 ;// CONCATENATED MODULE: ./packages/data/build-module/plugins/index.js
 
 
-;// CONCATENATED MODULE: external "React"
-const external_React_namespaceObject = window["React"];
 ;// CONCATENATED MODULE: external ["wp","priorityQueue"]
 const external_wp_priorityQueue_namespaceObject = window["wp"]["priorityQueue"];
 ;// CONCATENATED MODULE: external ["wp","element"]
@@ -3799,7 +3796,7 @@ const {
  * children components. Used along with the RegistryProvider.
  *
  * You can read more about the react context api here:
- * https://reactjs.org/docs/context.html#contextprovider
+ * https://react.dev/learn/passing-data-deeply-with-context#step-3-provide-the-context
  *
  * @example
  * ```js
@@ -4156,7 +4153,7 @@ function useMappingSelect(suspense, mapSelect, deps) {
  * Custom react hook for retrieving props from registered selectors.
  *
  * In general, this custom React hook follows the
- * [rules of hooks](https://reactjs.org/docs/hooks-rules.html).
+ * [rules of hooks](https://react.dev/reference/rules/rules-of-hooks).
  *
  * @template {MapSelect | StoreDescriptor<any>} T
  * @param {T}         mapSelect Function called on every state change. The returned value is
@@ -4235,26 +4232,31 @@ function useSelect(mapSelect, deps) {
 }
 
 /**
- * A variant of the `useSelect` hook that has the same API, but will throw a
- * suspense Promise if any of the called selectors is in an unresolved state.
+ * A variant of the `useSelect` hook that has the same API, but is a compatible
+ * Suspense-enabled data source.
  *
- * @param {Function} mapSelect Function called on every state change. The
- *                             returned value is exposed to the component
- *                             using this hook. The function receives the
- *                             `registry.suspendSelect` method as the first
- *                             argument and the `registry` as the second one.
- * @param {Array}    deps      A dependency array used to memoize the `mapSelect`
- *                             so that the same `mapSelect` is invoked on every
- *                             state change unless the dependencies change.
+ * @template {MapSelect} T
+ * @param {T}     mapSelect Function called on every state change. The
+ *                          returned value is exposed to the component
+ *                          using this hook. The function receives the
+ *                          `registry.suspendSelect` method as the first
+ *                          argument and the `registry` as the second one.
+ * @param {Array} deps      A dependency array used to memoize the `mapSelect`
+ *                          so that the same `mapSelect` is invoked on every
+ *                          state change unless the dependencies change.
  *
- * @return {Object} Data object returned by the `mapSelect` function.
+ * @throws {Promise} A suspense Promise that is thrown if any of the called
+ * selectors is in an unresolved state.
+ *
+ * @return {ReturnType<T>} Data object returned by the `mapSelect` function.
  */
 function useSuspenseSelect(mapSelect, deps) {
   return useMappingSelect(true, mapSelect, deps);
 }
 
+;// CONCATENATED MODULE: external "ReactJSXRuntime"
+const external_ReactJSXRuntime_namespaceObject = window["ReactJSXRuntime"];
 ;// CONCATENATED MODULE: ./packages/data/build-module/components/with-select/index.js
-
 /**
  * WordPress dependencies
  */
@@ -4307,10 +4309,11 @@ function useSuspenseSelect(mapSelect, deps) {
  *
  * @return {ComponentType} Enhanced component with merged state data props.
  */
+
 const withSelect = mapSelectToProps => (0,external_wp_compose_namespaceObject.createHigherOrderComponent)(WrappedComponent => (0,external_wp_compose_namespaceObject.pure)(ownProps => {
   const mapSelect = (select, registry) => mapSelectToProps(select, ownProps, registry);
   const mergeProps = useSelect(mapSelect);
-  return (0,external_React_namespaceObject.createElement)(WrappedComponent, {
+  return /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(WrappedComponent, {
     ...ownProps,
     ...mergeProps
   });
@@ -4345,25 +4348,24 @@ const withSelect = mapSelectToProps => (0,external_wp_compose_namespaceObject.cr
  */
 const useDispatchWithMap = (dispatchMap, deps) => {
   const registry = useRegistry();
-  const currentDispatchMap = (0,external_wp_element_namespaceObject.useRef)(dispatchMap);
+  const currentDispatchMapRef = (0,external_wp_element_namespaceObject.useRef)(dispatchMap);
   (0,external_wp_compose_namespaceObject.useIsomorphicLayoutEffect)(() => {
-    currentDispatchMap.current = dispatchMap;
+    currentDispatchMapRef.current = dispatchMap;
   });
   return (0,external_wp_element_namespaceObject.useMemo)(() => {
-    const currentDispatchProps = currentDispatchMap.current(registry.dispatch, registry);
+    const currentDispatchProps = currentDispatchMapRef.current(registry.dispatch, registry);
     return Object.fromEntries(Object.entries(currentDispatchProps).map(([propName, dispatcher]) => {
       if (typeof dispatcher !== 'function') {
         // eslint-disable-next-line no-console
         console.warn(`Property ${propName} returned from dispatchMap in useDispatchWithMap must be a function.`);
       }
-      return [propName, (...args) => currentDispatchMap.current(registry.dispatch, registry)[propName](...args)];
+      return [propName, (...args) => currentDispatchMapRef.current(registry.dispatch, registry)[propName](...args)];
     }));
   }, [registry, ...deps]);
 };
 /* harmony default export */ const use_dispatch_with_map = (useDispatchWithMap);
 
 ;// CONCATENATED MODULE: ./packages/data/build-module/components/with-dispatch/index.js
-
 /**
  * WordPress dependencies
  */
@@ -4457,10 +4459,11 @@ const useDispatchWithMap = (dispatchMap, deps) => {
  *
  * @return {ComponentType} Enhanced component with merged dispatcher props.
  */
+
 const withDispatch = mapDispatchToProps => (0,external_wp_compose_namespaceObject.createHigherOrderComponent)(WrappedComponent => ownProps => {
   const mapDispatch = (dispatch, registry) => mapDispatchToProps(dispatch, ownProps, registry);
   const dispatchProps = use_dispatch_with_map(mapDispatch, []);
-  return (0,external_React_namespaceObject.createElement)(WrappedComponent, {
+  return /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(WrappedComponent, {
     ...ownProps,
     ...dispatchProps
   });
@@ -4468,7 +4471,6 @@ const withDispatch = mapDispatchToProps => (0,external_wp_compose_namespaceObjec
 /* harmony default export */ const with_dispatch = (withDispatch);
 
 ;// CONCATENATED MODULE: ./packages/data/build-module/components/with-registry/index.js
-
 /**
  * WordPress dependencies
  */
@@ -4487,10 +4489,13 @@ const withDispatch = mapDispatchToProps => (0,external_wp_compose_namespaceObjec
  *
  * @return {Component} Enhanced component.
  */
-const withRegistry = (0,external_wp_compose_namespaceObject.createHigherOrderComponent)(OriginalComponent => props => (0,external_React_namespaceObject.createElement)(RegistryConsumer, null, registry => (0,external_React_namespaceObject.createElement)(OriginalComponent, {
-  ...props,
-  registry: registry
-})), 'withRegistry');
+
+const withRegistry = (0,external_wp_compose_namespaceObject.createHigherOrderComponent)(OriginalComponent => props => /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(RegistryConsumer, {
+  children: registry => /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(OriginalComponent, {
+    ...props,
+    registry: registry
+  })
+}), 'withRegistry');
 /* harmony default export */ const with_registry = (withRegistry);
 
 ;// CONCATENATED MODULE: ./packages/data/build-module/components/use-dispatch/use-dispatch.js
@@ -4631,6 +4636,7 @@ function select_select(storeNameOrDescriptor) {
 
 
 /** @typedef {import('./types').StoreDescriptor} StoreDescriptor */
+
 
 
 

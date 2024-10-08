@@ -7,6 +7,7 @@ use Automattic\WooCommerce\Admin\Features\OnboardingTasks\Task;
 use Automattic\WooCommerce\Admin\PluginsHelper;
 use Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions\Init as Suggestions;
 use Automattic\WooCommerce\Internal\Admin\WCPayPromotion\Init as WCPayPromotionInit;
+use Automattic\WooCommerce\Admin\Features\PaymentGatewaySuggestions\DefaultPaymentGateways;
 
 /**
  * WooCommercePayments Task
@@ -34,7 +35,7 @@ class WooCommercePayments extends Task {
 	 * @return string
 	 */
 	public function get_title() {
-		return __( 'Set up WooPayments', 'woocommerce' );
+		return __( 'Get paid with WooPayments', 'woocommerce' );
 	}
 
 	/**
@@ -83,18 +84,6 @@ class WooCommercePayments extends Task {
 	}
 
 	/**
-	 * Additional info.
-	 *
-	 * @return string
-	 */
-	public function get_additional_info() {
-		return __(
-			'Accept credit/debit cards and other popular payment methods with no setup or monthly fees — and manage payments right from your store dashboard.',
-			'woocommerce'
-		);
-	}
-
-	/**
 	 * Task completion.
 	 *
 	 * @return bool
@@ -115,13 +104,12 @@ class WooCommercePayments extends Task {
 	public function can_view() {
 		$payments = $this->task_list->get_task( 'payments' );
 
-		return ! $payments->is_complete() && // Do not re-display the task if the "add payments" task has already been completed.
-			self::is_installed() &&
+		return ! $payments->is_complete() && // Do not re-display the task if the general "Payments" task has already been completed.
 			self::is_supported();
 	}
 
 	/**
-	 * Check if the plugin was requested during onboarding.
+	 * Check if the WooPayments plugin was requested during onboarding.
 	 *
 	 * @return bool
 	 */
@@ -135,7 +123,7 @@ class WooCommercePayments extends Task {
 	}
 
 	/**
-	 * Check if the plugin is installed.
+	 * Check if the WooPayments plugin is installed.
 	 *
 	 * @return bool
 	 */
@@ -145,7 +133,16 @@ class WooCommercePayments extends Task {
 	}
 
 	/**
-	 * Check if WooCommerce Payments is connected.
+	 * Check if the WooPayments plugin is active.
+	 *
+	 * @return bool
+	 */
+	public static function is_wcpay_active() {
+		return class_exists( '\WC_Payments' );
+	}
+
+	/**
+	 * Check if WooPayments is connected.
 	 *
 	 * @return bool
 	 */
@@ -161,7 +158,7 @@ class WooCommercePayments extends Task {
 	}
 
 	/**
-	 * Check if WooCommerce Payments needs setup.
+	 * Check if WooPayments needs setup.
 	 * Errored data or payments not enabled.
 	 *
 	 * @return bool
@@ -178,16 +175,16 @@ class WooCommercePayments extends Task {
 	}
 
 	/**
-	 * Check if the store is in a supported country.
+	 * Check if the store is in a WooPayments supported country.
 	 *
 	 * @return bool
 	 */
 	public static function is_supported() {
-		$suggestions              = Suggestions::get_suggestions();
+		$suggestions              = Suggestions::get_suggestions( DefaultPaymentGateways::get_all() );
 		$suggestion_plugins       = array_merge(
 			...array_filter(
 				array_column( $suggestions, 'plugins' ),
-				function( $plugins ) {
+				function ( $plugins ) {
 					return is_array( $plugins );
 				}
 			)
