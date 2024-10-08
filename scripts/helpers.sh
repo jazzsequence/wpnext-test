@@ -27,7 +27,7 @@ get_latest_wp_release() {
 
     if [ -n "$latest_version" ]; then
         # Properly format the version for WP-CLI, converting "Beta" to "beta" and "RC" to "rc"
-        version_formatted=$(echo "$latest_version" | sed -E 's/ (Beta|RC) ?([0-9]*)/-\L\1\2/')
+        version_formatted=$(echo "$latest_version" | sed -E 's/ (Beta|RC) ?([0-9]*)/-\L\1\2/' | tr '[:upper:]' '[:lower:]')
 
         echo "$version_formatted"
     else
