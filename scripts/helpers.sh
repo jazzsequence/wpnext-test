@@ -7,10 +7,10 @@ get_latest_wp_release() {
     # Fetch the RSS feed
     rss_content=$(curl -s "$feed_url")
 
-    # Extract all Beta and RC versions
-    all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|RC)[0-9]+' | sed 's/WordPress //' | sort -V -r)
+    # Extract all Beta and RC versions, removing "WordPress" prefix
+    all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|RC) ?[0-9]*' | sed 's/WordPress //g' | sort -V -r)
 
-    # Loop through the versions and pick the highest one,
+    # Loop through the versions to select the highest version,
     # prioritizing RC over Beta for the same version number
     latest_version=""
     latest_major_minor=""
@@ -26,8 +26,8 @@ get_latest_wp_release() {
     done <<< "$all_versions"
 
     if [ -n "$latest_version" ]; then
-        # Format the version string to match the expected format for RCs and Betas
-        version_formatted=$(echo "$latest_version" | sed -E 's/(RC|Beta)([0-9]+)/-\1\2/')
+        # Properly format the version for WP-CLI, converting "Beta" to "beta" and "RC" to "rc"
+        version_formatted=$(echo "$latest_version" | sed -E 's/ (Beta|RC) ?([0-9]*)/-\L\1\2/')
 
         echo "$version_formatted"
     else
