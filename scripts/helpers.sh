@@ -8,28 +8,28 @@ get_latest_wp_release() {
     rss_content=$(curl -s "$feed_url")
 
     # Extract all Beta and RC versions, removing "WordPress" prefix
-    all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|RC) ?[0-9]*' | sed 's/WordPress //g' | sort -V -r)
+    all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|RC) ?[0-9]*' | sed 's/WordPress //g')
 
-    # Loop through the versions to select the highest version,
-    # prioritizing RC over Beta for the same version number
-    latest_version=""
-    latest_major_minor=""
+    # Normalize version strings for sorting
+    normalized_versions=$(echo "$all_versions" | awk '
+    {
+        split($1, parts, "[ .]");
+        major_minor = parts[1] "." parts[2];
+        if ($2 ~ /Beta|RC/) {
+            suffix = tolower($2);
+            suffix_number = ($3 ~ /^[0-9]+$/) ? $3 : "0";
+            printf "%s %s %d\n", major_minor, suffix, suffix_number;
+        }
+    }')
 
-    while IFS= read -r version; do
-        major_minor=$(echo "$version" | grep -Eo '^[0-9]+\.[0-9]+')
-        if [ -z "$latest_version" ] || [ "$major_minor" != "$latest_major_minor" ]; then
-            latest_version="$version"
-            latest_major_minor="$major_minor"
-        elif [[ "$version" == *"RC"* && "$latest_version" == *"Beta"* && "$major_minor" == "$latest_major_minor" ]]; then
-            latest_version="$version"
-        fi
-    done <<< "$all_versions"
+    # Sort the versions: first by major.minor version, then RC > Beta, and then the suffix number
+    latest_version=$(echo "$normalized_versions" | sort -k1,1Vr -k2,2 -k3,3nr | head -1)
 
-    if [ -n "$latest_version" ]; then
-        # Properly format the version for WP-CLI, converting "Beta" to "beta" and "RC" to "rc"
-        version_formatted=$(echo "$latest_version" | sed -E 's/ (Beta|RC) ?([0-9]*)/-\L\1\2/' | tr '[:upper:]' '[:lower:]')
+    # Convert the normalized version back to the expected format without leading zero
+    formatted_version=$(echo "$latest_version" | awk '{ printf "%s-%s%s\n", $1, $2, ($3 == "0" ? "" : $3) }')
 
-        echo "$version_formatted"
+    if [ -n "$formatted_version" ]; then
+        echo "$formatted_version"
     else
         echo "No Beta/RC versions found."
         exit 1
