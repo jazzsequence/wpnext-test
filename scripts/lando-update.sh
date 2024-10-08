@@ -51,6 +51,7 @@ else
   exit 1
 fi
 
+terminus connection:set wp59-test.dev git
 echo "Pushing changes to Pantheon..."
 git push origin master
 
