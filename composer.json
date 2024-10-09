@@ -31,7 +31,8 @@
         "humanmade/wordpress-importer": "dev-master",
         "pantheon-systems/pantheon-wordpress-upstream-tests": "dev-master",
         "pantheon-systems/customer-secrets-php-sdk": "^1.0",
-        "wpackagist-plugin/test-reports": "^1.0"
+        "wpackagist-plugin/test-reports": "^1.0",
+        "jazzsequence/games-collector": "^1.3"
     },
     "config": {
         "process-timeout": 6000,

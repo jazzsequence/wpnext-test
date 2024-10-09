@@ -21,6 +21,8 @@ sitemap.xml.gz
 # WordPress plugins managed by Composer
 wp-content/plugins/wordpress-importer
 wp-content/plugins/test-reports
+wp-content/plugins/games-collector
+wp-content/plugins/cmb2
 
 # @TODO writable paths
 wp-content/cache/
