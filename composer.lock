@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "048d8bc92f44fe9dd2beb1e416b5db34",
+    "content-hash": "e29c6eedaf85b58f50c9f2d37b7014b8",
     "packages": [
         {
             "name": "behat/behat",
@@ -3927,6 +3927,24 @@
             "time": "2024-07-20T21:52:34+00:00"
         },
         {
+            "name": "wpackagist-plugin/gutenberg",
+            "version": "19.4.0",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/gutenberg/",
+                "reference": "tags/19.4.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/gutenberg.19.4.0.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/gutenberg/"
+        },
+        {
             "name": "wpackagist-plugin/test-reports",
             "version": "1.1.0",
             "source": {
@@ -3943,6 +3961,24 @@
             },
             "type": "wordpress-plugin",
             "homepage": "https://wordpress.org/plugins/test-reports/"
+        },
+        {
+            "name": "wpackagist-plugin/wordpress-beta-tester",
+            "version": "3.6.0",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/wordpress-beta-tester/",
+                "reference": "tags/3.6.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/wordpress-beta-tester.3.6.0.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/wordpress-beta-tester/"
         }
     ],
     "packages-dev": [],
