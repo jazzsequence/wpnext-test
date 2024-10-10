@@ -22,6 +22,7 @@ sitemap.xml.gz
 wp-content/plugins/wordpress-importer
 wp-content/plugins/test-reports
 wp-content/plugins/games-collector
+!wp-content/plugins/games-collector/vendor
 wp-content/mu-plugins/cmb2
 
 # @TODO writable paths
