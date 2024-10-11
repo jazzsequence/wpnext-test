@@ -23,7 +23,8 @@
             "wp-content/mu-plugins/{$name}/": [
                 "type:wordpress-muplugin", 
                 "pantheon-systems/pantheon-mu-plugin",
-                "cmb2/cmb2"
+                "cmb2/cmb2",
+                "afragen/git-updater"
             ],
             "wp-content/plugins/{$name}/": ["type:wordpress-plugin"],
             "wp-content/themes/{$name}/": ["type:wordpress-theme"]

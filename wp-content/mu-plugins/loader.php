@@ -12,6 +12,7 @@
 $_mu_plugins = [
 	'pantheon-mu-plugin/pantheon.php',
 	'cmb2/init.php',
+	'git-updater/mu/mu-loader.php',
 ];
 
 foreach ( $_mu_plugins as $mu_plugin ) {
