@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e41ef6822fcdaa7d73bebe2f9846c2d3",
+    "content-hash": "a210db53c6e73b6b1be50406f3c69cc7",
     "packages": [
         {
             "name": "afragen/git-updater",
