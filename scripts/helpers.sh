@@ -7,7 +7,7 @@ get_latest_wp_release() {
     # Fetch the RSS feed
     rss_content=$(curl -s "$feed_url")
 
-    # Extract all Beta and Release Candidate versions, removing "WordPress" prefix
+    # Extract all Beta and Release Candidate items
     all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|Release Candidate|RC) ?[0-9]*' | sed 's/WordPress //g')
 
     # Normalize version strings for sorting
@@ -17,14 +17,14 @@ get_latest_wp_release() {
         major_minor = parts[1] "." parts[2];
         suffix = tolower($2);
         if (suffix == "release") {
-            suffix = "rc";
+            suffix = "RC";
         } else if (suffix == "candidate") {
             next; # Skip the "Candidate" line from splitting "Release Candidate"
         }
         suffix_number = ($3 ~ /^[0-9]+$/) ? $3 : "0";
 
-        # Assign priority numbers for sorting (rc > beta)
-        if (suffix == "rc") {
+        # Assign priority numbers for sorting (RC > beta)
+        if (suffix == "RC") {
             priority = 1;
         } else if (suffix == "beta") {
             priority = 2;
@@ -38,14 +38,24 @@ get_latest_wp_release() {
     latest_version=$(echo "$normalized_versions" | sort -k1,1Vr -k2,2n -k3,3nr | head -1)
 
     # Convert the normalized version back to the expected format
-    formatted_version=$(echo "$latest_version" | awk '{ suffix = ($2 == 1 ? "rc" : "beta"); printf "%s-%s%s\n", $1, suffix, ($3 == "0" ? "1" : $3) }')
+    formatted_version=$(echo "$latest_version" | awk '{ suffix = ($2 == 1 ? "RC" : "beta"); printf "%s-%s%s\n", $1, suffix, ($3 == "0" ? "1" : $3) }')
 
-    if [ -n "$formatted_version" ]; then
-        echo "$formatted_version"
-    else
+    if [ -z "$formatted_version" ]; then
         echo "No Beta/RC versions found."
         exit 1
     fi
+
+    # Extract the download link for the latest version using sed
+    download_url=$(echo "$rss_content" | sed -n "s/.*\(https:\/\/wordpress\.org\/wordpress-${formatted_version}\.zip\).*/\1/p" | head -1)
+
+    # If the download link is not found, exit with an error
+    if [ -z "$download_url" ]; then
+        echo "No download link found for version $formatted_version." >&2
+        exit 1
+    fi
+
+    # Only output the version number
+    echo "$formatted_version"
 }
 
 get_lando() {
