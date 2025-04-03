@@ -18,8 +18,11 @@ fi
 # Set up test-base.
 wp_version=$(get_latest_wp_release)
 
-echo "Updating WordPress core to $wp_version..."
-terminus wp -- wp59-test.test-base core update --version=$wp_version --force
+
+if terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force; then
+	echo "Updated WordPress core to $wp_version on test-base..."
+else
+	terminus wp -- $TERMINUS_SITE.test-base core install
 terminus env:commit $SITE_ENV --message="WordPress core update $wp_version"
 terminus build:workflow:wait $SITE_ENV --max=30
 

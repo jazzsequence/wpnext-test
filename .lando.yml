@@ -1,9 +1,9 @@
-name: wp59-test
+name: wpnext-test
 recipe: pantheon
 config:
   framework: wordpress
-  site: wp59-test
-  id: 61d28a5a-e18a-4d10-8232-6b7d0034d9a5
+  site: wpnext-test
+  id: cd0b8608-90bb-4c73-b410-9eec0495a59a
 env_file:
   - .env.lando
 services:
