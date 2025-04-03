@@ -21,7 +21,7 @@ class PostContentManager {
   private $wp;
 
   public function __construct(
-    WooCommerceHelper $woocommerceHelper = null
+    ?WooCommerceHelper $woocommerceHelper = null
   ) {
     $this->wp = new WPFunctions;
     $this->maxExcerptLength = $this->wp->applyFilters('mailpoet_newsletter_post_excerpt_length', $this->maxExcerptLength);
@@ -42,7 +42,13 @@ class PostContentManager {
       if ($this->wp->hasExcerpt($post)) {
         return self::stripShortCodes($this->wp->getTheExcerpt($post));
       }
-      return $this->generateExcerpt($post->post_content); // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+      return self::stripShortCodes(
+        $this->wp->applyFilters(
+          'get_the_excerpt',
+          $this->generateExcerpt($post->post_content), // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
+          $post
+        )
+      );
     }
     return self::stripShortCodes($post->post_content); // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
   }

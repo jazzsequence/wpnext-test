@@ -1,5 +1,40 @@
 [unreleased]
 
+#### 2.4.4 / 2025-02-27
+* add `added` meta data
+
+#### 2.4.3 / 2025-02-21
+* update workflows
+* update test
+
+#### 2.4.2 / 2025-01-05
+* pass slug in credentials for authentication headers
+
+#### 2.4.1 / 2025-01-02
+* update `Bitbucket_Server_API`
+* update `Bitbucket_API::parse_asset_dir_response`
+
+#### 2.4.0 / 2024-12-30
+* update for checking contents, assets, changes, and readmes
+
+#### 2.3.2 / 2024-12-26
+* revert fix for deprecated parameter
+
+#### 2.3.1 / 2024-12-25
+* update for no parameter in `get_remote_changes()`
+
+#### 2.3.0 / 2024-12-13
+* minor update for release asset download link
+* update for changes in Git Updater
+
+#### 2.2.0 / 2024-12-11
+* update GA
+* load in `init` for `_load_textdomain_just_in_time`
+
+#### 2.1.0 / 2024-10-31 🎃
+* remove `load_plugin_textdomain()`
+* don't save Bitbucket.com token during remote install
+
 #### 2.0.3 / 2023-09-10
 * WPCS 3.0.0
 

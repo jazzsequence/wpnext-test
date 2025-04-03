@@ -156,6 +156,17 @@ class OrderFieldsFactory {
           }
         ),
         new Field(
+          'woocommerce:order:created-via',
+          Field::TYPE_ENUM,
+          __('Created via', 'mailpoet'),
+          function (OrderPayload $payload) {
+            return $payload->getOrder()->get_created_via();
+          },
+          [
+            'options' => $this->getOrderCreatedViaOptions(),
+          ]
+        ),
+        new Field(
           'woocommerce:order:paid-date',
           Field::TYPE_DATETIME,
           __('Paid date', 'mailpoet'),
@@ -306,6 +317,10 @@ class OrderFieldsFactory {
     $options = [];
     foreach ($statuses as $id => $name) {
       $options[] = [
+        // WooCommerce order statuses are internally saved with 'wc-' prefix:
+        // https://github.com/woocommerce/woocommerce/blob/9c58f198/plugins/woocommerce/includes/wc-order-functions.php#L98-L109
+        // However, when getting the status from the order object, it doesn't have the prefix.
+        // To make the status codes consistent, we remove the prefix here and only work with unprefixed statuses.
         'id' => substr($id, 0, 3) === 'wc-' ? substr($id, 3) : $id,
         'name' => $name,
       ];
@@ -395,5 +410,26 @@ class OrderFieldsFactory {
       $title = $product['post_title'];
       return ['id' => (int)$id, 'name' => "$title (#$id)"];
     }, (array)$products);
+  }
+
+  private function getOrderCreatedViaOptions(): array {
+    // Common sources for WooCommerce orders
+    // https://github.com/search?q=repo%3Awoocommerce%2Fwoocommerce+order-%3Eset_created_via&type=code
+    $sources = [
+      'checkout' => __('Checkout', 'mailpoet'),
+      'admin' => __('Admin', 'mailpoet'),
+      'rest-api' => __('REST API', 'mailpoet'),
+      'webhook' => __('Webhook', 'mailpoet'),
+      'subscription' => __('Subscription', 'mailpoet'),
+      'pos' => __('POS', 'mailpoet'),
+      'checkout-draft' => __('Checkout Draft', 'mailpoet'),
+    ];
+    
+    $options = [];
+    foreach ($sources as $id => $name) {
+      $options[] = ['id' => $id, 'name' => $name];
+    }
+    
+    return $options;
   }
 }

@@ -63,7 +63,7 @@ class AutomationRunLog {
     int $automationRunId,
     string $stepId,
     string $stepType,
-    int $id = null
+    ?int $id = null
   ) {
     $this->automationRunId = $automationRunId;
     $this->stepId = $stepId;
@@ -80,7 +80,7 @@ class AutomationRunLog {
     }
   }
 
-  public function getId(): int {
+  public function getId(): ?int {
     return $this->id;
   }
 

@@ -72,6 +72,11 @@ class WPForms_Field_Name extends WPForms_Field {
 		// Remove primary for expanded formats since we have first, middle, last.
 		unset( $properties['inputs']['primary'] );
 
+		// Remove reference to an input element to prevent duplication.
+		if ( empty( $field['sublabel_hide'] ) ) {
+			unset( $properties['label']['attr']['for'] );
+		}
+
 		$form_id  = absint( $form_data['id'] );
 		$field_id = wpforms_validate_field_id( $field['id'] );
 
@@ -470,9 +475,9 @@ class WPForms_Field_Name extends WPForms_Field {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $field Field information.
+	 * @param array $field      Field information.
 	 * @param array $deprecated Deprecated parameter, not used anymore.
-	 * @param array $form_data Form data and settings.
+	 * @param array $form_data  Form data and settings.
 	 */
 	public function field_display( $field, $deprecated, $form_data ) {
 

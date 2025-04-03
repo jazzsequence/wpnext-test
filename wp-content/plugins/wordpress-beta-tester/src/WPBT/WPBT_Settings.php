@@ -53,8 +53,7 @@ class WPBT_Settings {
 	public function run() {
 		$this->load_hooks();
 		( new WPBT_Core( $this->wp_beta_tester, self::$options ) )->load_hooks();
-		( new WPBT_Extras( $this->wp_beta_tester, self::$options ) )->load_hooks();
-		( new WPBT_Extras( $this->wp_beta_tester, self::$options ) )->skip_autoupdate_email();
+		( new WPBT_Extras( $this->wp_beta_tester, self::$options ) )->init();
 		( new WPBT_Help() )->load_hooks();
 	}
 
@@ -337,7 +336,7 @@ class WPBT_Settings {
 			<?php echo esc_attr( $args['title'] ); ?>
 			<?php
 			if ( isset( $args['description'] ) ) {
-				echo '<p class="description">' . esc_attr__( $args['description'] ) . '</p>';
+				echo '<p class="description">' . esc_attr( $args['description'] ) . '</p>';
 			}
 			?>
 		</label>

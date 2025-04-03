@@ -14,7 +14,7 @@ class Helpers {
 	 *
 	 * @since 1.9.1
 	 */
-	const DISABLE_KEY = 'ai-feature-disabled';
+	public const DISABLE_KEY = 'ai-feature-disabled';
 
 	/**
 	 * Key for a state whether integration is used (or has been used).
@@ -22,7 +22,7 @@ class Helpers {
 	 *
 	 * @since 1.9.1
 	 */
-	const USE_KEY = 'ai-feature-used';
+	private const USE_KEY = 'ai-feature-used';
 
 	/**
 	 * Determine whether integration is disabled.
@@ -72,13 +72,14 @@ class Helpers {
 	 * @since 1.9.1
 	 *
 	 * @return bool
+	 * @noinspection PhpUndefinedConstantInspection
 	 */
 	public static function is_disabled_by_rule(): bool {
 
 		$is_disabled = defined( 'WPFORMS_DISABLE_AI_FEATURES' ) && WPFORMS_DISABLE_AI_FEATURES;
 
 		/**
-		 * Allow to modify whether AI integration is disabled in WPForms.
+		 * Allow modifying whether AI integration is disabled in WPForms.
 		 *
 		 * @since 1.9.1
 		 *
@@ -100,12 +101,45 @@ class Helpers {
 
 		wpforms_log(
 			'AI Integration Error',
-			$message,
 			[
-				'type'     => [ 'ai', 'error' ],
+				'error'    => $message,
 				'endpoint' => $endpoint,
 				'args'     => $args,
+			],
+			[
+				'type' => [ 'ai', 'error' ],
 			]
 		);
+	}
+
+	/**
+	 * Get the license type.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @return string
+	 */
+	public static function get_license_type(): string {
+
+		$license = (array) get_option( 'wpforms_license', [] );
+
+		return $license['type'] ?? '';
+	}
+
+	/**
+	 * Determine whether a license key is active.
+	 *
+	 * @since 1.9.4
+	 *
+	 * @return bool
+	 */
+	public static function is_license_active(): bool {
+
+		$license = (array) get_option( 'wpforms_license', [] );
+
+		return ! empty( wpforms_get_license_key() ) &&
+			empty( $license['is_expired'] ) &&
+			empty( $license['is_disabled'] ) &&
+			empty( $license['is_invalid'] );
 	}
 }

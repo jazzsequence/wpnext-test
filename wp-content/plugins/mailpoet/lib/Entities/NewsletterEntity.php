@@ -68,6 +68,17 @@ class NewsletterEntity {
   // automatic newsletters status
   const STATUS_ACTIVE = 'active';
 
+  /**
+   * Newsletters that use status "active"
+   */
+  const ACTIVABLE_EMAILS = [
+    NewsletterEntity::TYPE_NOTIFICATION,
+    NewsletterEntity::TYPE_WELCOME,
+    NewsletterEntity::TYPE_AUTOMATIC,
+    NewsletterEntity::TYPE_AUTOMATION,
+    NewsletterEntity::TYPE_RE_ENGAGEMENT,
+  ];
+
   use AutoincrementedIdTrait;
   use CreatedAtTrait;
   use UpdatedAtTrait;
@@ -199,12 +210,18 @@ class NewsletterEntity {
 
   /**
    * @deprecated This is here only for backward compatibility with custom shortcodes https://kb.mailpoet.com/article/160-create-a-custom-shortcode
-   * This can be removed after 2021-08-01
+   * This can be removed after 2026-01-01
    */
   public function __get($key) {
     $getterName = 'get' . Helpers::underscoreToCamelCase($key, $capitaliseFirstChar = true);
     $callable = [$this, $getterName];
     if (is_callable($callable)) {
+      // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_trigger_error -- Intended for deprecation warnings
+      trigger_error(
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- if the function is callable, it's safe to output
+        "Direct access to \$newsletter->{$key} is deprecated and will be removed after 2026-01-01. Use \$newsletter->{$getterName}() instead.",
+        E_USER_DEPRECATED
+      );
       return call_user_func($callable);
     }
   }
@@ -303,12 +320,10 @@ class NewsletterEntity {
 
     // activate/deactivate unfinished tasks
     $newTaskStatus = null;
-    $typesWithActivation = [self::TYPE_NOTIFICATION, self::TYPE_WELCOME, self::TYPE_AUTOMATIC];
-
-    if (($status === self::STATUS_DRAFT) && in_array($this->type, $typesWithActivation)) {
+    if (($status === self::STATUS_DRAFT) && $this->canBeSetActive()) {
       $newTaskStatus = ScheduledTaskEntity::STATUS_PAUSED;
     }
-    if (($status === self::STATUS_ACTIVE) && in_array($this->type, $typesWithActivation)) {
+    if (($status === self::STATUS_ACTIVE) && $this->canBeSetActive()) {
       $newTaskStatus = ScheduledTaskEntity::STATUS_SCHEDULED;
     }
 
@@ -462,7 +477,7 @@ class NewsletterEntity {
    * @return int[]
    */
   public function getSegmentIds() {
-    return array_filter($this->newsletterSegments->map(function(NewsletterSegmentEntity $newsletterSegment = null) {
+    return array_filter($this->newsletterSegments->map(function(?NewsletterSegmentEntity $newsletterSegment = null) {
       if (!$newsletterSegment) return null;
       $segment = $newsletterSegment->getSegment();
       return $segment ? (int)$segment->getId() : null;
@@ -477,7 +492,7 @@ class NewsletterEntity {
   }
 
   public function getOption(string $name): ?NewsletterOptionEntity {
-    $option = $this->options->filter(function (NewsletterOptionEntity $option = null) use ($name): bool {
+    $option = $this->options->filter(function (?NewsletterOptionEntity $option = null) use ($name): bool {
       if (!$option) return false;
       return ($field = $option->getOptionField()) ? $field->getName() === $name : false;
     })->first();
@@ -540,7 +555,7 @@ class NewsletterEntity {
   /**
    * @return Collection<int, SendingQueueEntity>
    */
-  private function getUnfinishedQueues(): Collection {
+  public function getUnfinishedQueues(): Collection {
     $criteria = new Criteria();
     $expr = Criteria::expr();
     $criteria->where($expr->neq('countToProcess', 0));
@@ -588,6 +603,10 @@ class NewsletterEntity {
    */
   public function canBeSetSent(): bool {
     return in_array($this->getType(), [self::TYPE_NOTIFICATION_HISTORY, self::TYPE_STANDARD], true);
+  }
+
+  public function canBeSetActive(): bool {
+    return in_array($this->getType(), self::ACTIVABLE_EMAILS, true);
   }
 
   public function getWpPost(): ?WpPostEntity {

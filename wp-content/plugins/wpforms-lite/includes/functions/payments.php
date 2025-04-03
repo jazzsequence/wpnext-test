@@ -120,7 +120,7 @@ function wpforms_get_currencies() {
 			'decimals'            => 2,
 		],
 		'INR' => [
-			'name'                => esc_html__( 'Indian Rupiah', 'wpforms-lite' ),
+			'name'                => esc_html__( 'Indian Rupee', 'wpforms-lite' ),
 			'symbol'              => '&#8377;',
 			'symbol_pos'          => 'left',
 			'thousands_separator' => ',',
@@ -667,15 +667,22 @@ function wpforms_get_total_payment( $fields ) {
 	}
 
 	foreach ( $fields as $field ) {
-		if ( ! empty( $field['amount'] ) ) {
-			$amount = wpforms_sanitize_amount( $field['amount'] );
-
-			if ( ! empty( $field['quantity'] ) ) {
-				$amount *= (int) $field['quantity'];
-			}
-
-			$total += $amount;
+		// Skip the field hidden by conditional logic.
+		if ( isset( $field['visible'] ) && $field['visible'] === false ) {
+			continue;
 		}
+
+		if ( empty( $field['amount'] ) ) {
+			continue;
+		}
+
+		$amount = wpforms_sanitize_amount( $field['amount'] );
+
+		if ( ! empty( $field['quantity'] ) ) {
+			$amount *= (int) $field['quantity'];
+		}
+
+		$total += $amount;
 	}
 
 	$total = max( 0, $total );

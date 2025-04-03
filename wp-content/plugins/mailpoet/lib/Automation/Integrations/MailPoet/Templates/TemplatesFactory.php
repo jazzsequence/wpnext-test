@@ -17,12 +17,18 @@ class TemplatesFactory {
   /** @var WooCommerce */
   private $woocommerce;
 
+  /** @var EmailFactory */
+  /** @phpstan-ignore-next-line Property is reserved for future use */
+  private $emailFactory;
+
   public function __construct(
     AutomationBuilder $builder,
-    WooCommerce $woocommerce
+    WooCommerce $woocommerce,
+    EmailFactory $emailFactory
   ) {
     $this->builder = $builder;
     $this->woocommerce = $woocommerce;
+    $this->emailFactory = $emailFactory;
   }
 
   public function createTemplates(): array {
@@ -305,7 +311,18 @@ class TemplatesFactory {
       function (): Automation {
         return $this->builder->createFromSequence(
           __('Purchased a product', 'mailpoet'),
-          $this->createPurchasedTemplateBody('woocommerce:order:products')
+          [
+            [
+              'key' => 'woocommerce:buys-a-product',
+            ],
+            [
+              'key' => 'mailpoet:send-email',
+              'args' => [
+                'name' => __('Important information about your order', 'mailpoet'),
+                'subject' => __('Important information about your order', 'mailpoet'),
+              ],
+            ],
+          ]
         );
       },
       [
@@ -327,7 +344,18 @@ class TemplatesFactory {
       function (): Automation {
         return $this->builder->createFromSequence(
           __('Purchased a product with a tag', 'mailpoet'),
-          $this->createPurchasedTemplateBody('woocommerce:order:tags')
+          [
+            [
+              'key' => 'woocommerce:buys-from-a-tag',
+            ],
+            [
+              'key' => 'mailpoet:send-email',
+              'args' => [
+                'name' => __('Important information about your order', 'mailpoet'),
+                'subject' => __('Important information about your order', 'mailpoet'),
+              ],
+            ],
+          ]
         );
       },
       [
@@ -349,7 +377,18 @@ class TemplatesFactory {
       function (): Automation {
         return $this->builder->createFromSequence(
           __('Purchased in a category', 'mailpoet'),
-          $this->createPurchasedTemplateBody('woocommerce:order:categories')
+          [
+            [
+              'key' => 'woocommerce:buys-from-a-category',
+            ],
+            [
+              'key' => 'mailpoet:send-email',
+              'args' => [
+                'name' => __('Important information about your order', 'mailpoet'),
+                'subject' => __('Important information about your order', 'mailpoet'),
+              ],
+            ],
+          ]
         );
       },
       [
@@ -357,31 +396,5 @@ class TemplatesFactory {
       ],
       AutomationTemplate::TYPE_DEFAULT
     );
-  }
-
-  private function createPurchasedTemplateBody(string $filterField): array {
-    return [
-      [
-        'key' => 'woocommerce:order-completed',
-        'filters' => [
-          'operator' => 'and',
-          'groups' => [
-            [
-              'operator' => 'and',
-              'filters' => [
-                ['field' => $filterField, 'condition' => 'matches-any-of', 'value' => null],
-              ],
-            ],
-          ],
-        ],
-      ],
-      [
-        'key' => 'mailpoet:send-email',
-        'args' => [
-          'name' => __('Important information about your order', 'mailpoet'),
-          'subject' => __('Important information about your order', 'mailpoet'),
-        ],
-      ],
-    ];
   }
 }

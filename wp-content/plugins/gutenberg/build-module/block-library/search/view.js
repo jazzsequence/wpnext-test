@@ -23,11 +23,13 @@ import * as __WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__ from "
 /************************************************************************/
 var __webpack_exports__ = {};
 
-;// CONCATENATED MODULE: external "@wordpress/interactivity"
-var x = y => { var x = {}; __webpack_require__.d(x, y); return x; }
-var y = x => () => x
-const interactivity_namespaceObject = x({ ["getContext"]: () => __WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.getContext, ["getElement"]: () => __WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.getElement, ["store"]: () => __WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.store });
-;// CONCATENATED MODULE: ./packages/block-library/build-module/search/view.js
+;// external "@wordpress/interactivity"
+var x = (y) => {
+	var x = {}; __webpack_require__.d(x, y); return x
+} 
+var y = (x) => (() => (x))
+const interactivity_namespaceObject = x({ ["getContext"]: () => (__WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.getContext), ["getElement"]: () => (__WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.getElement), ["store"]: () => (__WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.store), ["withSyncEvent"]: () => (__WEBPACK_EXTERNAL_MODULE__wordpress_interactivity_8e89b257__.withSyncEvent) });
+;// ./packages/block-library/build-module/search/view.js
 /**
  * WordPress dependencies
  */
@@ -65,7 +67,7 @@ const {
     }
   },
   actions: {
-    openSearchInput(event) {
+    openSearchInput: (0,interactivity_namespaceObject.withSyncEvent)(event => {
       const ctx = (0,interactivity_namespaceObject.getContext)();
       const {
         ref
@@ -75,7 +77,7 @@ const {
         ctx.isSearchInputVisible = true;
         ref.parentElement.querySelector('input').focus();
       }
-    },
+    }),
     closeSearchInput() {
       const ctx = (0,interactivity_namespaceObject.getContext)();
       ctx.isSearchInputVisible = false;

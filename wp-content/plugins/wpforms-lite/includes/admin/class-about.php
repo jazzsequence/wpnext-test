@@ -251,8 +251,7 @@ class WPForms_About {
 				<p>
 					<?php
 					printf(
-						wp_kses(
-							/* translators: %1$s - WPBeginner URL, %2$s - OptinMonster URL, %3$s - MonsterInsights URL. */
+						wp_kses( /* translators: %1$s - WPBeginner URL, %2$s - OptinMonster URL, %3$s - MonsterInsights URL. */
 							__( 'WPForms is brought to you by the same team that’s behind the largest WordPress resource site, <a href="%1$s" target="_blank" rel="noopener noreferrer">WPBeginner</a>, the most popular lead-generation software, <a href="%2$s" target="_blank" rel="noopener noreferrer">OptinMonster</a>, the best WordPress analytics plugin, <a href="%3$s" target="_blank" rel="noopener noreferrer">MonsterInsights</a>, and more!', 'wpforms-lite' ),
 							[
 								'a' => [
@@ -275,9 +274,7 @@ class WPForms_About {
 
 			<div class="wpforms-admin-column-40 wpforms-admin-column-last">
 				<figure>
-					<img
-							src="<?php echo esc_url( WPFORMS_PLUGIN_URL . 'assets/images/about/team.jpg' ); ?>"
-							alt="<?php esc_attr_e( 'The WPForms Team photo', 'wpforms-lite' ); ?>">
+					<img src="<?php echo esc_url( WPFORMS_PLUGIN_URL . 'assets/images/about/team.jpg' ); ?>" alt="<?php esc_attr_e( 'The WPForms Team photo', 'wpforms-lite' ); ?>">
 					<figcaption>
 						<?php esc_html_e( 'The WPForms Team', 'wpforms-lite' ); ?><br>
 					</figcaption>
@@ -333,8 +330,7 @@ class WPForms_About {
 								<div class="status">
 									<strong>
 										<?php
-										printf(
-											/* translators: %s - status label. */
+										printf( /* translators: %s - status label. */
 											esc_html__( 'Status: %s', 'wpforms-lite' ),
 											'<span class="status-label ' . esc_attr( $plugin_data['status_class'] ) . '">' . wp_kses_post( $plugin_data['status_text'] ) . '</span>'
 										);
@@ -548,7 +544,7 @@ class WPForms_About {
 									<?php
 									printf( /* translators: %s - number of templates. */
 										esc_html__( '%s customizable form templates', 'wpforms-lite' ),
-										'1800+'
+										'2000+'
 									);
 									?>
 								</li>
@@ -1242,7 +1238,7 @@ class WPForms_About {
 						'<strong>' .
 						sprintf( /* translators: %s - number of templates. */
 							esc_html__( 'All Form Templates including Bonus %s pre-made form templates', 'wpforms-lite' ),
-							'1800+'
+							'2000+'
 						) .
 						'</strong>',
 					],
@@ -1297,14 +1293,44 @@ class WPForms_About {
 					'status' => 'partial',
 					'text'   => [
 						'<strong>' . esc_html__( 'Additional Marketing Integrations', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'Constant Contact, Mailchimp, AWeber, GetResponse, Campaign Monitor, Brevo, Drip, MailerLite, and ConvertKit', 'wpforms-lite' ),
+						wpforms_list_array(
+							[
+								'Constant Contact',
+								'Mailchimp',
+								'AWeber',
+								'GetResponse',
+								'Campaign Monitor',
+								'Brevo',
+								'Drip',
+								'MailerLite',
+								'MailPoet',
+								'Kit',
+								'Slack',
+								'Twilio',
+							]
+						),
 					],
 				],
 				'pro'      => [
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'Additional Marketing Integrations', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'Constant Contact, Mailchimp, AWeber, GetResponse, Campaign Monitor, Brevo, Drip, MailerLite, and ConvertKit', 'wpforms-lite' ),
+						wpforms_list_array(
+							[
+								'Constant Contact',
+								'Mailchimp',
+								'AWeber',
+								'GetResponse',
+								'Campaign Monitor',
+								'Brevo',
+								'Drip',
+								'MailerLite',
+								'MailPoet',
+								'Kit',
+								'Slack',
+								'Twilio',
+							]
+						),
 						'',
 						wp_kses(
 							__( '<strong>Bonus:</strong> 7000+ integrations with Zapier.', 'wpforms-lite' ),
@@ -1318,7 +1344,25 @@ class WPForms_About {
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'All Marketing Integrations', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'ActiveCampaign, Constant Contact, Mailchimp, AWeber, GetResponse, Campaign Monitor, Salesforce, Brevo, HubSpot, Drip, MailerLite, and ConvertKit', 'wpforms-lite' ),
+						wpforms_list_array(
+							[
+								'ActiveCampaign',
+								'Constant Contact',
+								'Mailchimp',
+								'AWeber',
+								'GetResponse',
+								'Campaign Monitor',
+								'Salesforce',
+								'Brevo',
+								'HubSpot',
+								'Drip',
+								'MailerLite',
+								'MailPoet',
+								'Kit',
+								'Slack',
+								'Twilio',
+							]
+						),
 						'',
 						wp_kses(
 							__( '<strong>Bonus:</strong> 7000+ integrations with Zapier.', 'wpforms-lite' ),
@@ -1332,7 +1376,25 @@ class WPForms_About {
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'All Marketing Integrations', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'ActiveCampaign, Constant Contact, Mailchimp, AWeber, GetResponse, Campaign Monitor, Salesforce, Brevo, HubSpot, Drip, MailerLite, and ConvertKit', 'wpforms-lite' ),
+						wpforms_list_array(
+							[
+								'ActiveCampaign',
+								'Constant Contact',
+								'Mailchimp',
+								'AWeber',
+								'GetResponse',
+								'Campaign Monitor',
+								'Salesforce',
+								'Brevo',
+								'HubSpot',
+								'Drip',
+								'MailerLite',
+								'MailPoet',
+								'Kit',
+								'Slack',
+								'Twilio',
+							]
+						),
 						'',
 						wp_kses(
 							__( '<strong>Bonus:</strong> 7000+ integrations with Zapier.', 'wpforms-lite' ),
@@ -1346,7 +1408,25 @@ class WPForms_About {
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'All Marketing Integrations', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'ActiveCampaign, Constant Contact, Mailchimp, AWeber, GetResponse, Campaign Monitor, Salesforce, Brevo, HubSpot, Drip, MailerLite, and ConvertKit', 'wpforms-lite' ),
+						wpforms_list_array(
+							[
+								'ActiveCampaign',
+								'Constant Contact',
+								'Mailchimp',
+								'AWeber',
+								'GetResponse',
+								'Campaign Monitor',
+								'Salesforce',
+								'Brevo',
+								'HubSpot',
+								'Drip',
+								'MailerLite',
+								'MailPoet',
+								'Kit',
+								'Slack',
+								'Twilio',
+							]
+						),
 						'',
 						wp_kses(
 							__( '<strong>Bonus:</strong> 7000+ integrations with Zapier.', 'wpforms-lite' ),
@@ -1486,28 +1566,28 @@ class WPForms_About {
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'Pro Addons Included', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Google Sheets, Coupons, and more (30 total)', 'wpforms-lite' ),
+						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Google Sheets, Coupons, Dropbox, and more (30+ total)', 'wpforms-lite' ),
 					],
 				],
 				'elite'    => [
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'All Addons Included', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Webhooks, Google Sheets, Coupons, and more (30+ total)', 'wpforms-lite' ),
+						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Webhooks, Google Sheets, Coupons, Dropbox, and more (35+ total)', 'wpforms-lite' ),
 					],
 				],
 				'ultimate' => [
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'All Addons Included', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Webhooks, Google Sheets, Coupons, and more (30+ total)', 'wpforms-lite' ),
+						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Webhooks, Google Sheets, Coupons, Dropbox, and more (35+ total)', 'wpforms-lite' ),
 					],
 				],
 				'agency'   => [
 					'status' => 'full',
 					'text'   => [
 						'<strong>' . esc_html__( 'All Addons Included', 'wpforms-lite' ) . '</strong>',
-						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Webhooks, Google Sheets, Coupons, and more (30+ total)', 'wpforms-lite' ),
+						esc_html__( 'Calculations, Form Abandonment, Conversational Forms, Lead Forms, Frontend Post Submission, User Registration, Geolocation, Webhooks, Google Sheets, Coupons, Dropbox, and more (35+ total)', 'wpforms-lite' ),
 					],
 				],
 			],

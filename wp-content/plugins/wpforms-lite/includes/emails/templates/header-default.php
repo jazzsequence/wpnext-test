@@ -240,11 +240,6 @@ $text_direction   = is_rtl() ? 'rtl' : 'ltr';
 			}
 		}
 		/* Rich Text compatibility - image alignment. */
-		.mcnTextContentContainer table tbody,
-		.mcnTextContentContainer table tbody tr,
-		.mcnTextContentContainer table tbody td {
-			display: block;
-		}
 		.mcnTextContentContainer p::after {
 			content: "";
 			clear: both;
@@ -266,6 +261,13 @@ $text_direction   = is_rtl() ? 'rtl' : 'ltr';
 			margin-left: 16px;
 			margin-top: 8px;
 			margin-bottom: 8px;
+		}
+		/* Rich text compatibility - table */
+		.wpforms-iframe table,
+		.wpforms-iframe table th,
+		.wpforms-iframe table td {
+			border: 1px solid currentColor;
+			padding: 5px;
 		}
 		/* styling lists */
 		.mcnTextContentContainer li {
@@ -333,7 +335,8 @@ $text_direction   = is_rtl() ? 'rtl' : 'ltr';
 			border-bottom: none;
 		}
 		.wpforms-order-summary-container table.wpforms-order-summary-preview caption,
-		.wpforms-order-summary-container table.wpforms-order-summary-preview .wpforms-order-summary-placeholder-hidden {
+		.wpforms-order-summary-container table.wpforms-order-summary-preview .wpforms-order-summary-placeholder-hidden,
+		.wpforms-order-summary-container table.wpforms-order-summary-preview .wpforms-order-summary-item-quantity-label-short {
 			display: none;
 		}
 		.wpforms-order-summary-container table.wpforms-order-summary-preview tr.wpforms-order-summary-preview-coupon-total td.wpforms-order-summary-item-price {

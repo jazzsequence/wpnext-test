@@ -21,14 +21,6 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-// Load textdomain.
-add_action(
-	'init',
-	function () {
-		load_plugin_textdomain( 'git-updater-bitbucket' );
-	}
-);
-
 /**
  * Class Bootstrap
  */
@@ -263,6 +255,7 @@ class Bootstrap {
 			$credentials['isset']      = true;
 			$credentials['token']      = isset( $token ) ? $token : null;
 			$credentials['enterprise'] = ! $bitbucket_org;
+			$credentials['slug']       = $slug;
 		}
 
 		return $credentials;
@@ -280,6 +273,7 @@ class Bootstrap {
 		if ( 'bitbucket' === $credentials['type'] ) {
 			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 			$headers['headers']['Authorization'] = 'Basic ' . base64_encode( $credentials['token'] );
+			$headers['headers']['bitbucket']     = $credentials['slug'];
 		}
 
 		return $headers;
@@ -413,6 +407,7 @@ class Bootstrap {
 			$asset->browser_download_url = $response;
 			$asset->download_count       = $asset->downloads;
 			$obj->set_repo_cache( 'release_asset_response', $asset );
+			$obj->set_repo_cache( 'release_asset_download', $response );
 		}
 		if ( 'bbserver' === $git ) {
 			// TODO: make work.

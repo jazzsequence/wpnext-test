@@ -8,6 +8,7 @@
  * @version 3.0.0
  */
 
+use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Utilities\NumberUtil;
 use Automattic\WooCommerce\Utilities\StringUtil;
 
@@ -85,7 +86,7 @@ class WC_Coupon extends WC_Legacy_Coupon {
 	 * Error message.
 	 *
 	 * This property should not be considered public API, and should not be accessed directly.
-	 * It is being added to supress PHP > 8.0 warnings against dynamic property creation, and all access
+	 * It is being added to suppress PHP > 8.0 warnings against dynamic property creation, and all access
 	 * should be through the getter and setter methods, namely `get_error_message()` and `set_error_message()`.
 	 * In the future, the access modifier may be changed back to protected.
 	 *
@@ -927,7 +928,7 @@ class WC_Coupon extends WC_Legacy_Coupon {
 		}
 
 		$valid        = false;
-		$product_cats = wc_get_product_cat_ids( $product->is_type( 'variation' ) ? $product->get_parent_id() : $product->get_id() );
+		$product_cats = wc_get_product_cat_ids( $product->is_type( ProductType::VARIATION ) ? $product->get_parent_id() : $product->get_id() );
 		$product_ids  = array( $product->get_id(), $product->get_parent_id() );
 
 		// Specific products get the discount.

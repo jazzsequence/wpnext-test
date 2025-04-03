@@ -1,10 +1,10 @@
 === Jetpack - WP Security, Backup, Speed, & Growth ===
 Contributors: automattic, adamkheckler, adrianmoldovanwp, aduth, akirk, allendav, alternatekev, andy, annamcphee, annezazu, apeatling, arcangelini, arsihasi, azaozz, barry, batmoo, beaulebens, bindlegirl, biskobe, bjorsch, blobaugh, brbrr, brileyhooper, cainm, cena, cfinke, cgastrell, chaselivingston, chellycat, clickysteve, csonnek, danielbachhuber, daniloercoli, davoraltman, delawski, designsimply, dkmyta, dllh, drawmyface, dsmart, dun2mis, dzver, ebinnion, egregor, eliorivero, enej, eoigal, erania-pinnera, ethitter, fgiannar, gcorne, georgestephanis, gibrown, goldsounds, hew, hugobaeta, hypertextranch, iammattthomas, iandunn, joen, jblz, jeffgolenski, jeherve, jenhooks, jenia, jessefriedman, jgs, jkudish, jmdodd, joanrho, johnjamesjacoby, jshreve, kbrownkd, keoshi, koke, kraftbj, lancewillett, leogermani, lhkowalski, lschuyler, macmanx, martinremy, matt, mattwiebe, matveb, maverick3x6, mcsf, mdawaffe, mdbitz, MichaelArestad, migueluy, miguelxavierpenha, mikeyarce, mkaz, nancythanki, nickmomrik, njweller, nunyvega, obenland, oskosk, pento, professor44, rachelsquirrel, rdcoll, renatoagds, retrofox, richardmtl, richardmuscat, robertbpugh, roccotripaldi, ryancowles, samhotchkiss, samiff, scarstocea, scottsweb, sdixon194, sdquirk, sermitr, simison, stephdau, thehenridev, tmoorewp, tyxla, Viper007Bond, westi, williamvianas, wpkaren, yoavf, zinigor
 Tags: Security, backup, malware, scan, performance
-Stable tag: 13.9
-Requires at least: 6.5
-Requires PHP: 7.0
-Tested up to: 6.6
+Stable tag: 14.5
+Requires at least: 6.6
+Requires PHP: 7.2
+Tested up to: 6.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,7 +58,7 @@ Get blazing fast site speed with Jetpack. Jetpack’s free CDN (content delivery
 = POWERFUL TOOLS FOR GROWTH =
 Create and customize your WordPress site, optimize it for visitors and revenue, and enjoy watching your stats tick up. Build it, share it, and watch it grow.
 
-* Auto publish blog posts and products to social media by simply using our tools to connect to Facebook, Tumblr, Mastodon, and LinkedIn.
+* Auto publish blog posts and products to social media by simply using our tools to connect to Facebook, Bluesky, Threads, Tumblr, Mastodon, LinkedIn, and Nextdoor.
 * Easily share Instagram posts on your pages and blog posts.
 * Collect a payment or donation, sell a product, service, or membership with simple integrations with PayPal and Stripe.
 * Grow traffic with SEO tools for Google, Bing, Facebook, and WordPress.com. XML sitemap created automatically.
@@ -114,7 +114,7 @@ Jetpack is updated monthly to ensure seamless integration with top WordPress plu
 * Built for WooCommerce: Jetpack and WooCommerce are both made by Automattic. Backup, Scan, Anti-spam, integrate perfectly for Woo / eComm stores.
 * Jetpack is fully compatible with v2.0 of the official AMP plugin for WordPress.
 * Better understand your customers and marketing with Google Analytics (GA) integration.
-* Social media platforms: Instagram, Facebook, Tumblr, LinkedIn.
+* Social media platforms: Instagram, Facebook, Tumblr, LinkedIn, Threads, Bluesky, Nextdoor.
 * Simple Blocks to customize your site: Pinterest, Whatsapp, Podcast player, GIFs, maps, tiled gallery, slideshow.
 * Payment processors: easily collect payments or donations and sell products through Stripe and PayPal.
 * Site speed and performance plugins: Works great with WP Super Cache by Automattic and Cloudflare.
@@ -303,7 +303,7 @@ Automattic actively develops [Jetpack Boost](https://wordpress.org/plugins/jetpa
 
 = What version of PHP do I need? =
 
-Sites must be built on PHP 7.0 or greater, but Jetpack always supports the latest version of PHP.
+Sites must be built on PHP 7.2 or greater, but Jetpack always supports the latest version of PHP.
 
 = Can Jetpack help my site comply with GDPR? =
 
@@ -326,38 +326,62 @@ Jetpack Backup can do a full website migration to a new host, migrate theme file
 
 
 == Changelog ==
-### 13.9 - 2024-10-01
-#### Major Enhancements
-- Jetpack plugin: Remove the 'WordPress.com Toolbar' module.
-
+### 14.5 - 2025-04-02
 #### Enhancements
-- Blocks: Transition from an option to a module to improve caching.
-- Jetpack AI: Add AI SEO title optimization.
-- Jetpack Stats: Do not check for capabilities if the user is not signed in when deciding whether to show the admin bar widget.
-- My Jetpack: Visual update to the GlobalNotice component for better mobile presentation.
-- Performance: Set the concatenated CSS to off by default. The era where this was helpful is passing.
-- SSO: Remove legacy codebase in favor of the newer SSO codebase introduced in Jetpack 13.5.
+- Add page view count in the post and page list.
+- Add the Account Protection module toggle.
+- AI Assistant: Add image block extension with alt text and caption generation.
+- AI Assistant: Use base64 on image extension requests.
+- Connection: Add modal for disconnecting owner account in Dashboard.
+- Connection: Allow pre-selected login providers.
+- Feature suggestions: Improve the design of cards to better match WordPress Core's design.
+- Forms: Add Akismet panel to Form Block.
+- Forms: Add block integrations modal with feature flag.
+- Forms: Add quick link in the admin bar for form entries.
+- Forms: Add third-party integration endpoint.
+- Improve the onboarding experience of Jetpack.
+- My Jetpack: Introduce a new onboarding screen to provide clear, step-by-step instructions for new users connecting to Jetpack.
+- Newsletter Dashboard Widget: Remove feature flag and enable widget.
+- Publicize Components: Add a schedule button.
+- Sharing block: Improve the description of the "Native Share" feature.
+- Social: Add "Schedule" functionality to the Share Post modal.
+- Social: Move resharing into the Share Post modal.
 
 #### Improved compatibility
-- Dashboard: Disable portfolio toggle if theme supports portfolio for specific environments.
+- AI Assistant: Improve performance by optimizing state management in the AI feature hook.
+- Carousel: Enable core lightbox on single image blocks.
+- Components: Prevent deprecation notices by adding `__next40pxDefaultSize` to controls.
+- Components: Update controls to prevent more deprecation notices.
+- VideoPress: Add block sidebar notice to transform embed into a block.
 
 #### Bug fixes
-- Ai Assistant: Do not show Jetpack AI excerpt UI outside of correct context.
-- AI Assistant: Fix Write Brief highlight position on spelling mistake following ignored special word.
-- AI Assistant: Remove autofocus on extended blocks while previewing.
-- AI Content Lens: Fix the feature of the AI Content Lens is gone.
-- Blocks: Prevent Memberships blocks from being registered when the site is not connected to Jetpack.
-- Dashboard: Display the yearly Stats plan in the Jetpack dashboard immediately after you've purchased the plan.
-- Help Center: Fix the icon color when previewing color scheme.
-- Hosting Configuration: Make the menu title under the settings the same as the destination.
-- Jetpack REST API: Fix missing requirement in admin-menu endpoint.
-- Shortcode: Fix the YouTube URL embedding failure due to the trailing question mark of the ID.
-- Shortcode: Fix the YouTube URL for the private videos.
-- Shortcode: Fix the YouTube URL for the `/embed` type.
-- Sidebar: Show correct product name for "VaultPress Backup".
-- Social: Fix social previews button sometimes not fitting all the text.
-- Subscriptions: Fix added slashes in the Follow Blog widget.
-- WooCommerce Analytics: Check whether a constant is defined before attempting to use it, for compatibility with WooCommerce <8.4.0.
+- Add a default value for the error param in the `wp_login_failed` action callback.
+- Admin Color Scheme: Fix colors in the Aquatic color scheme.
+- Button: Fix contrast checker for user-specified colors.
+- Fix display name when listing gravatar accounts.
+- Fix error with videos uploaded through the Video block.
+- Fix potential `wp_login_failed` action conflicts.
+- Forms: Add a default label for textarea fields.
+- Forms: Fix core list bullets not showing.
+- Forms: Remove default padding around form block.
+- Forms: Remove Google Drive beta badge.
+- Forms: Remove Salesforce beta badge.
+- Forms: Update the variation previews to match the current structures.
+- Map block: Increase compatibility of components, preventing console warnings.
+- Newsletter: Ensure aria-label attribute on dashboard welcome message section is correctly spelled.
+- Newsletter: Ensure external links are marked as such in the Newsletter widget.
+- Search: Ensure the count of returned results is shown after searching.
+- Site Badge: Update styles of the Coming Soon badge.
+- Site Verification: Fix auto-verification via Google when Social is disabled.
+- Slideshow: Fix misaligned controls in site editor.
+- Social: Resolve connection issues with LinkedIn company pages and Tumblr additional blogs.
+- Stats: Ensure the Stats widget is automatically disabled when the Stats module is disabled.
+- Stats: Fix date processing for "At a Glance" chart.
+- Story block: Avoid PHP warnings when using video files.
+- Twitter Timeline Widget: Prevent broken links when using Twitter's deprecated data-widget-id approach.
+- Video: Fix auto-reload after upload completes.
+- VideoPress Block: Fix broken undo functionality.
+- VideoPress Block: Fix error in the core Video block.
 
 --------
 

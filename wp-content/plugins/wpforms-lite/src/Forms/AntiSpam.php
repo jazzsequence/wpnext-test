@@ -135,6 +135,8 @@ class AntiSpam {
 	 * @since 1.9.0
 	 *
 	 * @param array $form_data Form data.
+	 *
+	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function maybe_insert_honeypot_init_js( array $form_data ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 
@@ -164,11 +166,11 @@ class AntiSpam {
 			esc_attr( implode( ',', $ids ) )
 		);
 
+		// There must be no empty lines inside the script. Otherwise, wpautop adds <p> tags which break script execution.
 		printf(
 			"<script>
 				( function() {
 					const style = document.createElement( 'style' );
-
 					style.appendChild( document.createTextNode( '%s' ) );
 					document.head.appendChild( style );
 					document.currentScript?.remove();
@@ -252,6 +254,16 @@ class AntiSpam {
 
 		$honeypot_fields = array_diff_key( $entry['fields'], $form_data['fields'] );
 		$is_valid        = true;
+
+		// Compatibility with the WPML plugin (WPFML addon).
+		// In case the form contains an Entry Preview field, they add an extra field with ID 0 to the entry.
+		if (
+			isset( $entry['fields'][0] ) &&
+			defined( 'WPML_WP_FORMS_VERSION' ) &&
+			wpforms_has_field_type( 'entry-preview', $form_data )
+		) {
+			unset( $honeypot_fields[0] );
+		}
 
 		foreach ( $honeypot_fields as $key => $honeypot_field ) {
 			// Remove the honeypot field from the entry.
