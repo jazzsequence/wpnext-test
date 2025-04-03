@@ -299,7 +299,7 @@ class Functions {
     return get_post_type($post);
   }
 
-  public function getPosts(array $args = null) {
+  public function getPosts(?array $args = null) {
     return get_posts($args);
   }
 
@@ -532,6 +532,10 @@ class Functions {
     return wp_dequeue_script($handle);
   }
 
+  public function wpDeregisterScript($handle): void {
+    wp_deregister_script($handle);
+  }
+
   public function wpDequeueStyle($handle) {
     return wp_dequeue_style($handle);
   }
@@ -690,7 +694,7 @@ class Functions {
   }
 
   /**
-   * @param 'hot_categories'|'hot_tags'|'plugin_information'|'query_plugins' $action
+   * @param 'hot_tags'|'plugin_information'|'query_plugins' $action
    * @param array|object $args
    * @return object|array|WP_Error
    */
@@ -815,6 +819,10 @@ class Functions {
     return wp_kses($string, $allowedHtml, $allowedProtocols);
   }
 
+  public function wpKsesPost(string $string): string {
+    return wp_kses_post($string);
+  }
+
   public function deprecatedHook(string $hook_name, string $version, string $replacement, string $message) {
     _deprecated_hook(
       esc_html($hook_name),
@@ -856,7 +864,7 @@ class Functions {
   }
 
   /** @param string[]|null $protocols */
-  public function escUrlRaw(string $url, array $protocols = null): string {
+  public function escUrlRaw(string $url, ?array $protocols = null): string {
     return esc_url_raw($url, $protocols);
   }
 
@@ -1001,5 +1009,9 @@ class Functions {
 
   public function nocacheHeaders(): void {
     nocache_headers();
+  }
+
+  public function wpUniqueId($prefix = ''): string {
+    return wp_unique_id($prefix);
   }
 }

@@ -23,7 +23,7 @@ class Registry {
   private $templates;
 
   /** @var array<string, AutomationTemplateCategory> */
-  private $templateCategories;
+  private $templateCategories = [];
 
   /** @var array<string, Step> */
   private $steps = [];
@@ -58,7 +58,9 @@ class Registry {
   ) {
     $this->wordPress = $wordPress;
     $this->steps[$rootStep->getKey()] = $rootStep;
+  }
 
+  public function setupTemplateCategories(): void {
     $this->templateCategories = [
       'welcome' => new AutomationTemplateCategory('welcome', __('Welcome', 'mailpoet')),
       'abandoned-cart' => new AutomationTemplateCategory('abandoned-cart', __('Abandoned Cart', 'mailpoet')),
@@ -69,7 +71,9 @@ class Registry {
 
   public function addTemplate(AutomationTemplate $template): void {
     $category = $template->getCategory();
-    if (!isset($this->templateCategories[$category])) {
+    $templateCategories = $this->getTemplateCategories();
+
+    if (!isset($templateCategories[$category])) {
       throw InvalidStateException::create()->withMessage(
         sprintf("Category '%s' was not registered", $category)
       );
@@ -97,7 +101,7 @@ class Registry {
   }
 
   /** @return array<string, AutomationTemplate> */
-  public function getTemplates(string $category = null): array {
+  public function getTemplates(?string $category = null): array {
     return $category
       ? array_filter(
         $this->templates,
@@ -114,6 +118,9 @@ class Registry {
 
   /** @return array<string, AutomationTemplateCategory> */
   public function getTemplateCategories(): array {
+    if (empty($this->templateCategories)) {
+      $this->setupTemplateCategories();
+    }
     return $this->templateCategories;
   }
 
@@ -250,7 +257,7 @@ class Registry {
     $this->wordPress->addAction(Hooks::AUTOMATION_BEFORE_SAVE, $callback, $priority);
   }
 
-  public function onBeforeAutomationStepSave(callable $callback, string $key = null, int $priority = 10): void {
+  public function onBeforeAutomationStepSave(callable $callback, ?string $key = null, int $priority = 10): void {
     $keyPart = $key ? "/key=$key" : '';
     $this->wordPress->addAction(Hooks::AUTOMATION_STEP_BEFORE_SAVE . $keyPart, $callback, $priority, 2);
   }

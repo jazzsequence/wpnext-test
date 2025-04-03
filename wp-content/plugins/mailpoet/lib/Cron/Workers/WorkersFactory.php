@@ -34,6 +34,7 @@ class WorkersFactory {
     StatsNotificationsWorker::TASK_TYPE,
     BackfillEngagementData::TASK_TYPE,
     Mixpanel::TASK_TYPE,
+    AbandonedCartWorker::TASK_TYPE,
   ];
 
   /** @var ContainerWrapper */
@@ -88,11 +89,6 @@ class WorkersFactory {
   /** @return ExportFilesCleanup */
   public function createExportFilesCleanupWorker() {
     return $this->container->get(ExportFilesCleanup::class);
-  }
-
-  /** @return Beamer */
-  public function createBeamerkWorker() {
-    return $this->container->get(Beamer::class);
   }
 
   /** @return InactiveSubscribers */

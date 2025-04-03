@@ -1,7 +1,7 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 3159:
+/***/ 5033:
 /***/ ((module, exports, __webpack_require__) => {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;(function (factory) {
@@ -289,7 +289,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
 (() => {
 "use strict";
 // ESM COMPAT FLAG
@@ -301,8 +301,8 @@ __webpack_require__.d(__webpack_exports__, {
 });
 
 // EXTERNAL MODULE: ./node_modules/requestidlecallback/index.js
-var requestidlecallback = __webpack_require__(3159);
-;// CONCATENATED MODULE: ./packages/priority-queue/build-module/request-idle-callback.js
+var requestidlecallback = __webpack_require__(5033);
+;// ./packages/priority-queue/build-module/request-idle-callback.js
 /**
  * External dependencies
  */
@@ -325,7 +325,7 @@ function createRequestIdleCallback() {
 }
 /* harmony default export */ const request_idle_callback = (createRequestIdleCallback());
 
-;// CONCATENATED MODULE: ./packages/priority-queue/build-module/index.js
+;// ./packages/priority-queue/build-module/index.js
 /**
  * Internal dependencies
  */

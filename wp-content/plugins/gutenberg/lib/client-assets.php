@@ -320,14 +320,13 @@ function gutenberg_register_packages_styles( $styles ) {
 	);
 	$styles->add_data( 'wp-format-library', 'rtl', 'replace' );
 
+	// Only add CONTENT styles here that should be enqueued in the iframe!
 	$wp_edit_blocks_dependencies = array(
 		'wp-components',
 		// This need to be added before the block library styles,
 		// The block library styles override the "reset" styles.
 		'wp-reset-editor-styles',
 		'wp-block-library',
-		'wp-patterns',
-		'wp-reusable-blocks',
 		// Until #37466, we can't specifically add them as editor styles yet,
 		// so we must hard-code it here as a dependency.
 		'wp-block-editor-content',
@@ -361,6 +360,15 @@ function gutenberg_register_packages_styles( $styles ) {
 		$version
 	);
 	$styles->add_data( 'wp-editor-classic-layout-styles', 'rtl', 'replace' );
+
+	gutenberg_override_style(
+		$styles,
+		'wp-block-library-editor',
+		gutenberg_url( 'build/block-library/editor.css' ),
+		array(),
+		$version
+	);
+	$styles->add_data( 'wp-block-library-editor', 'rtl', 'replace' );
 
 	gutenberg_override_style(
 		$styles,
@@ -411,7 +419,7 @@ function gutenberg_register_packages_styles( $styles ) {
 		$styles,
 		'wp-edit-site',
 		gutenberg_url( 'build/edit-site/style.css' ),
-		array( 'wp-components', 'wp-block-editor', 'wp-editor', 'wp-edit-blocks', 'wp-commands', 'wp-preferences' ),
+		array( 'wp-components', 'wp-block-editor', 'wp-editor', 'wp-block-library-editor', 'common', 'forms', 'wp-commands', 'wp-preferences' ),
 		$version
 	);
 	$styles->add_data( 'wp-edit-site', 'rtl', 'replace' );
@@ -420,7 +428,7 @@ function gutenberg_register_packages_styles( $styles ) {
 		$styles,
 		'wp-edit-widgets',
 		gutenberg_url( 'build/edit-widgets/style.css' ),
-		array( 'wp-components', 'wp-block-editor', 'wp-editor', 'wp-edit-blocks', 'wp-patterns', 'wp-reusable-blocks', 'wp-widgets', 'wp-preferences' ),
+		array( 'wp-components', 'wp-block-editor', 'wp-editor', 'wp-edit-blocks', 'wp-patterns', 'wp-widgets', 'wp-preferences' ),
 		$version
 	);
 	$styles->add_data( 'wp-edit-widgets', 'rtl', 'replace' );
@@ -531,7 +539,7 @@ function gutenberg_enqueue_stored_styles( $options = array() ) {
 
 	// Combines Core styles.
 	if ( ! empty( $compiled_core_stylesheet ) ) {
-		wp_register_style( $style_tag_id, false, array(), true, true );
+		wp_register_style( $style_tag_id, false, array(), true );
 		wp_add_inline_style( $style_tag_id, $compiled_core_stylesheet );
 		wp_enqueue_style( $style_tag_id );
 	}
@@ -554,7 +562,7 @@ function gutenberg_enqueue_stored_styles( $options = array() ) {
 		$styles = gutenberg_style_engine_get_stylesheet_from_context( $store_name, $options );
 		if ( ! empty( $styles ) ) {
 			$key = "wp-style-engine-$store_name";
-			wp_register_style( $key, false, array(), true, true );
+			wp_register_style( $key, false, array(), true );
 			wp_add_inline_style( $key, $styles );
 			wp_enqueue_style( $key );
 		}
@@ -630,7 +638,7 @@ function gutenberg_default_script_modules() {
 		switch ( $script_module_id ) {
 			/*
 			 * Interactivity exposes two entrypoints, "/index" and "/debug".
-			 * "/debug" should replalce "/index" in devlopment.
+			 * "/debug" should replace "/index" in development.
 			 */
 			case '@wordpress/interactivity/debug':
 				if ( ! SCRIPT_DEBUG ) {

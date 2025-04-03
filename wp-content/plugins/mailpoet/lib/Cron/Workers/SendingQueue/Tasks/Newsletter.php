@@ -9,6 +9,7 @@ use MailPoet\Cron\Workers\SendingQueue\Tasks\Links as LinksTask;
 use MailPoet\Cron\Workers\SendingQueue\Tasks\Posts as PostsTask;
 use MailPoet\Cron\Workers\SendingQueue\Tasks\Shortcodes as ShortcodesTask;
 use MailPoet\DI\ContainerWrapper;
+use MailPoet\EmailEditor\Engine\Personalizer;
 use MailPoet\Entities\NewsletterEntity;
 use MailPoet\Entities\ScheduledTaskEntity;
 use MailPoet\Entities\SegmentEntity;
@@ -77,11 +78,14 @@ class Newsletter {
   /** @var ScheduledTasksRepository */
   private $scheduledTasksRepository;
 
+  /** @var Personalizer */
+  private $personalizer;
+
   public function __construct(
-    WPFunctions $wp = null,
-    PostsTask $postsTask = null,
-    GATracking $gaTracking = null,
-    Emoji $emoji = null
+    ?WPFunctions $wp = null,
+    ?PostsTask $postsTask = null,
+    ?GATracking $gaTracking = null,
+    ?Emoji $emoji = null
   ) {
     $trackingConfig = ContainerWrapper::getInstance()->get(TrackingConfig::class);
     $this->trackingEnabled = $trackingConfig->isEmailTrackingEnabled();
@@ -110,6 +114,7 @@ class Newsletter {
     $this->sendingQueuesRepository = ContainerWrapper::getInstance()->get(SendingQueuesRepository::class);
     $this->segmentsRepository = ContainerWrapper::getInstance()->get(SegmentsRepository::class);
     $this->scheduledTasksRepository = ContainerWrapper::getInstance()->get(ScheduledTasksRepository::class);
+    $this->personalizer = ContainerWrapper::getInstance()->get(Personalizer::class);
   }
 
   public function getNewsletterFromQueue(ScheduledTaskEntity $task): ?NewsletterEntity {
@@ -286,6 +291,16 @@ class Newsletter {
       );
     }
     $preparedNewsletter = Helpers::splitObject($preparedNewsletter);
+    if ($newsletter->getWpPostId() !== null) {
+      $this->personalizer->set_context([
+        'recipient_email' => $subscriber->getEmail(),
+        'newsletter_id' => $newsletter->getId(),
+        'queue_id' => $queue->getId(),
+      ]);
+      foreach ($preparedNewsletter as $key => $content) {
+        $preparedNewsletter[$key] = $this->personalizer->personalize_content($content);
+      }
+    }
     return [
       'id' => $newsletter->getId(),
       'subject' => $preparedNewsletter[0],
