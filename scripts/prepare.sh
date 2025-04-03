@@ -8,15 +8,12 @@
 
 set -ex
 
+source scripts/helpers.sh
+
 if [ -z "$TERMINUS_SITE" ] || [ -z "$TERMINUS_ENV" ]; then
 	echo "TERMINUS_SITE and TERMINUS_ENV environment variables must be set"
 	exit 1
 fi
-
-###
-# Switch to SFTP mode so the site can install plugins and themes
-###
-terminus connection:set -n $SITE_ENV sftp
 
 # Only run multidev creation if the TERMINUS_ENV is 'behat'.
 if [ "$TERMINUS_ENV" == 'behat' ]; then
@@ -27,7 +24,9 @@ else
 	env_exists=$(terminus env:info $SITE_ENV)
 	if [ -z "$env_exists" ]; then
 		echo "Environment $TERMINUS_ENV does not exist."
-		exit 1
+
+		# Create a new environment for this particular test run.
+		terminus env:create $TERMINUS_SITE.test-base $TERMINUS_ENV
 	fi
 
 	# Never run this directly on dev.
@@ -36,10 +35,22 @@ else
 		exit 1
 	fi
 
+	###
+	# Switch to SFTP mode so the site can install plugins and themes
+	###
+	terminus connection:set -n $SITE_ENV sftp
+
 	# If it does exist, make sure there are no plugins that the tests don't expect.
 	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 	terminus wp $SITE_ENV -- plugin delete --all
 	terminus wp $SITE_ENV -- plugin install akismet hello-dolly
+
+	wp_version=$(get_latest_wp_release)
+
+	echo "Updating WordPress core to $wp_version..."
+	terminus wp -- wp59-test.dev core update --version=$wp_version --force
+	terminus env:commit $SITE_ENV --message="WordPress core update $wp_version"
+	terminus build:workflow:wait $SITE_ENV --max=30
 fi
 
 terminus env:wipe $SITE_ENV --yes
