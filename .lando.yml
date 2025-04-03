@@ -6,3 +6,15 @@ config:
   id: 61d28a5a-e18a-4d10-8232-6b7d0034d9a5
 env_file:
   - .env.lando
+services:
+  appserver:
+    overrides:
+      volumes:
+        # Copy the individual PEM instead of full bundle
+        - /Users/chris.reynolds/Certs/cloudflare-gateway.pem:/usr/local/share/ca-certificates/cloudflare.crt:ro
+    build_as_root:
+      - update-ca-certificates
+      - curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+      - chmod +x wp-cli.phar
+      - mv wp-cli.phar /usr/local/bin/wp
+      - wp --info
