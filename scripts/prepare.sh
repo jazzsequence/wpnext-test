@@ -15,6 +15,14 @@ if [ -z "$TERMINUS_SITE" ] || [ -z "$TERMINUS_ENV" ]; then
 	exit 1
 fi
 
+# Set up test-base.
+wp_version=$(get_latest_wp_release)
+
+echo "Updating WordPress core to $wp_version..."
+terminus wp -- wp59-test.test-base core update --version=$wp_version --force
+terminus env:commit $SITE_ENV --message="WordPress core update $wp_version"
+terminus build:workflow:wait $SITE_ENV --max=30
+
 # Only run multidev creation if the TERMINUS_ENV is 'behat'.
 if [ "$TERMINUS_ENV" == 'behat' ]; then
 	# Create a new environment for this particular test run.
@@ -44,13 +52,6 @@ else
 	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 	terminus wp $SITE_ENV -- plugin delete --all
 	terminus wp $SITE_ENV -- plugin install akismet hello-dolly
-
-	wp_version=$(get_latest_wp_release)
-
-	echo "Updating WordPress core to $wp_version..."
-	terminus wp -- wp59-test.dev core update --version=$wp_version --force
-	terminus env:commit $SITE_ENV --message="WordPress core update $wp_version"
-	terminus build:workflow:wait $SITE_ENV --max=30
 fi
 
 terminus env:wipe $SITE_ENV --yes
