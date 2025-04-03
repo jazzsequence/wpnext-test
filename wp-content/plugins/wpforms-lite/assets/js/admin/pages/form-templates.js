@@ -1,31 +1,33 @@
-/* global wpforms_admin, WPFormsFormTemplates, wpforms_admin_form_templates */
+/* global wpforms_admin, WPFormsFormTemplates, wpforms_admin_form_templates, wpf */
+
+// noinspection ES6ConvertVarToLetConst
 
 /**
- * Admin Sub-page Form Templates function.
+ * @param wpforms_admin_form_templates.openAIFormUrl
+ */
+/**
+ * Admin Subpage Form Templates function.
  *
  * @since 1.7.7
  */
 
-'use strict';
-
+// eslint-disable-next-line no-var
 var WPFormsAdminFormTemplates = window.WPFormsAdminFormTemplates || ( function( document, window, $ ) {
-
 	/**
 	 * Public functions and properties.
 	 *
 	 * @since 1.7.7
 	 *
-	 * @type {object}
+	 * @type {Object}
 	 */
-	let app = {
+	const app = {
 
 		/**
 		 * Start the engine.
 		 *
 		 * @since 1.7.7
 		 */
-		init: function() {
-
+		init() {
 			$( app.ready );
 		},
 
@@ -34,9 +36,10 @@ var WPFormsAdminFormTemplates = window.WPFormsAdminFormTemplates || ( function( 
 		 *
 		 * @since 1.7.7
 		 */
-		ready: function() {
-
+		ready() {
+			WPFormsFormTemplates.setup();
 			app.events();
+			wpf.initTooltips();
 		},
 
 		/**
@@ -44,15 +47,35 @@ var WPFormsAdminFormTemplates = window.WPFormsAdminFormTemplates || ( function( 
 		 *
 		 * @since 1.7.7
 		 */
-		events: function() {
-
+		events() {
 			$( '.wpforms-form-setup-content' )
 				.on( 'keyup', '#wpforms-setup-template-search', _.debounce( WPFormsFormTemplates.searchTemplate, 200 ) )
 				.on( 'click', '.wpforms-setup-templates-categories li div', WPFormsFormTemplates.selectCategory )
 				.on( 'click', '.wpforms-setup-templates-categories li .chevron', WPFormsFormTemplates.toggleSubcategoriesList )
 				.on( 'click', '.wpforms-setup-templates-subcategories li', WPFormsFormTemplates.selectSubCategory )
 				.on( 'click', '.wpforms-template-select', app.selectTemplate )
-				.on( 'click', '.wpforms-trigger-blank', app.selectBlankTemplate );
+				.on( 'click', '.wpforms-trigger-blank', app.selectBlankTemplate )
+				.on( 'click', '.wpforms-template-generate', app.openAIFormGenerator );
+		},
+
+		/**
+		 * Open the AI Form Generator.
+		 *
+		 * @since 1.9.4
+		 *
+		 * @param {Object} e Event object.
+		 */
+		openAIFormGenerator( e ) {
+			e.preventDefault();
+
+			const $button = $( this );
+
+			// Don't do anything for inactive button.
+			if ( $button.hasClass( 'wpforms-inactive wpforms-help-tooltip' ) ) {
+				return;
+			}
+
+			window.location = wpforms_admin_form_templates.openAIFormUrl;
 		},
 
 		/**
@@ -82,7 +105,7 @@ var WPFormsAdminFormTemplates = window.WPFormsAdminFormTemplates || ( function( 
 			$( '.wpforms-form-setup-content' ).find( '.wpforms-template' ).removeClass( 'active' );
 			$button.closest( '.wpforms-template' ).addClass( 'active' );
 
-			// Save original label.
+			// Save the original label.
 			$button.data( 'labelOriginal', $button.html() );
 
 			// Display loading indicator.
@@ -96,10 +119,9 @@ var WPFormsAdminFormTemplates = window.WPFormsAdminFormTemplates || ( function( 
 		 *
 		 * @since 1.7.7
 		 *
-		 * @param {object} e Event object.
+		 * @param {Object} e Event object.
 		 */
-		selectBlankTemplate: function( e ) {
-
+		selectBlankTemplate( e ) {
 			e.preventDefault();
 
 			app.selectTemplateProcessAjax( 'Blank Form', 'blank' );
@@ -219,7 +241,6 @@ var WPFormsAdminFormTemplates = window.WPFormsAdminFormTemplates || ( function( 
 
 	// Provide access to public functions/properties.
 	return app;
-
 }( document, window, jQuery ) );
 
 // Initialize.

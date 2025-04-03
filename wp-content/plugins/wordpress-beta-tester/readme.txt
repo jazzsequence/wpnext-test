@@ -6,8 +6,8 @@ License: GPLv2
 License URI: https://www.opensource.org/licenses/GPL-2.0
 Requires at least: 3.1
 Requires PHP: 5.6
-Tested up to: 6.7
-Stable Tag: 3.6.0
+Tested up to: 6.8
+Stable Tag: 3.6.3
 
 Allows you to easily upgrade for testing the next versions of WordPress.
 
@@ -31,6 +31,16 @@ There is a setting to **Skip successful autoupdate emails**.  It functions to di
 PRs are welcome on [GitHub](https://github.com/afragen/wordpress-beta-tester).
 
 ## Changelog
+
+#### 3.6.3 / 2025-03-25
+* update workflow
+* add extra setting to remove auto-installed plugin(s)
+
+#### 3.6.2 / 2024-12-02
+* Plugin Check and i18n updates
+
+#### 3.6.1 / 2024-10-23
+* fix if `get_preferred_from_update_core()` continues to return less than a complete response
 
 #### 3.6.0 / 2024-10-09
 * remove Report a Bug in favor of using the standalone Test Reports plugin

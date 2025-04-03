@@ -78,6 +78,14 @@ $wpdb->query( 'DROP TABLE IF EXISTS ' . TasksMeta::get_table_name() );
 // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 $wpdb->query( 'DROP TABLE IF EXISTS ' . Repository::get_table_name() );
 
+// Delete file restrictions table.
+// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'wpforms_file_restrictions' );
+
+// Delete protected files table.
+// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+$wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . 'wpforms_protected_files' );
+
 /**
  * Delete tables that might be created by "Add-ons".
  *

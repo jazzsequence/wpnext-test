@@ -90,6 +90,9 @@
 			// Init fancy selects via choices.js.
 			WPFormsAdmin.initChoicesJS();
 
+			// Reinit ChoicesJS after htmx swap.
+			$( document ).on( 'htmx:afterSwap', WPFormsAdmin.initChoicesJS );
+
 			// Init checkbox multi selects columns.
 			WPFormsAdmin.initCheckboxMultiselectColumns();
 
@@ -219,9 +222,6 @@
 				if ( $this.data( 'choices-position' ) ) {
 					args.position = $this.data( 'choices-position' );
 				}
-
-				// Remove "Press to select" text.
-				args.itemSelectText = '';
 
 				// Render HTML in Choices.js.
 				args.allowHTML = true;
@@ -961,6 +961,7 @@
 				activate: 'wpforms_activate_addon',
 				install: 'wpforms_install_addon',
 				deactivate: 'wpforms_deactivate_addon',
+				incompatible: 'wpforms_activate_addon',
 			};
 			const action = actions[ state ];
 
@@ -995,6 +996,7 @@
 			const classes = {
 				active: 'wpforms-addons-list-item-footer-active',
 				activating: 'wpforms-addons-list-item-footer-activating',
+				incompatible: 'wpforms-addons-list-item-footer-incompatible',
 				installed: 'wpforms-addons-list-item-footer-installed',
 				missing: 'wpforms-addons-list-item-footer-missing',
 				goToUrl: 'wpforms-addons-list-item-footer-go-to-url',
@@ -1069,7 +1071,7 @@
 					checked = false;
 				}
 
-				$footer.removeClass( classes.active + ' ' + classes.installed + ' ' + classes.missing ).addClass( cssClass );
+				$footer.removeClass( classes.active + ' ' + classes.incompatible + ' ' + classes.installed + ' ' + classes.missing ).addClass( cssClass );
 			}
 
 			WPFormsAdmin.setAddonState( plugin, state, pluginType, function( res ) {
@@ -1127,18 +1129,20 @@
 		 * @return {string} State.
 		 */
 		getAddonState( $footer, classes, $button ) {
-			let state;
-
-			if ( $footer.hasClass( classes.active ) ) {
-				state = 'deactivate';
-			} else if ( $footer.hasClass( classes.installed ) ) {
-				state = 'activate';
-			} else if ( $footer.hasClass( classes.missing ) ) {
-				WPFormsAdmin.addSpinnerToButton( $button );
-				state = 'install';
+			if ( $footer.hasClass( classes.active ) || $footer.hasClass( classes.incompatible ) ) {
+				return 'deactivate';
 			}
 
-			return state;
+			if ( $footer.hasClass( classes.installed ) ) {
+				return 'activate';
+			}
+
+			if ( $footer.hasClass( classes.missing ) ) {
+				WPFormsAdmin.addSpinnerToButton( $button );
+				return 'install';
+			}
+
+			return '';
 		},
 
 		/**

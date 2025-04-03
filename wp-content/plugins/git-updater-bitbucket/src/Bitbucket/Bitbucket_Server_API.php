@@ -62,7 +62,7 @@ class Bitbucket_Server_API extends Bitbucket_API {
 	 * @return bool
 	 */
 	public function get_repo_meta() {
-		return $this->get_remote_api_repo_meta( '/1.0/projects/:owner/repos/:repo' );
+		return $this->get_remote_api_repo_meta( 'bbserver', '/1.0/projects/:owner/repos/:repo' );
 	}
 
 	/**
@@ -73,7 +73,7 @@ class Bitbucket_Server_API extends Bitbucket_API {
 	 * @return bool
 	 */
 	public function get_remote_tag() {
-		return $this->get_remote_api_tag( '/1.0/projects/:owner/repos/:repo/tags' );
+		return $this->get_remote_api_tag( 'bbserver', '/1.0/projects/:owner/repos/:repo/tags' );
 	}
 
 	/**
@@ -82,18 +82,18 @@ class Bitbucket_Server_API extends Bitbucket_API {
 	 * @return bool
 	 */
 	public function get_remote_readme() {
-		return $this->get_remote_api_readme( 'bbserver', '/1.0/projects/:owner/repos/:repo/raw/readme.txt' );
+		return $this->get_remote_api_readme( 'bbserver', '/1.0/projects/:owner/repos/:repo/raw/:readme' );
 	}
 
 	/**
 	 * Read the remote CHANGES.md file
 	 *
-	 * @param string $changes Changelog filename.
+	 * @param string $changes Changelog filename - (deprecated).
 	 *
 	 * @return bool
 	 */
 	public function get_remote_changes( $changes ) {
-		return $this->get_remote_api_changes( 'bbserver', $changes, "/1.0/projects/:owner/repos/:repo/raw/{$changes}" );
+		return $this->get_remote_api_changes( 'bbserver', $changes, '/1.0/projects/:owner/repos/:repo/raw/:changelog' );
 	}
 
 	/**
@@ -248,7 +248,8 @@ class Bitbucket_Server_API extends Bitbucket_API {
 			$response,
 			function ( $e ) use ( &$arr ) {
 				$arr['private']      = ! $e->public;
-				$arr['last_updated'] = null;
+				$arr['last_updated'] = '';
+				$arr['added']        = '';
 				$arr['watchers']     = 0;
 				$arr['forks']        = 0;
 				$arr['open_issues']  = 0;
@@ -490,13 +491,6 @@ class Bitbucket_Server_API extends Bitbucket_API {
 			*/
 			if ( ! empty( $install['bitbucket_access_token'] ) ) {
 				$install['options'][ $install['repo'] ] = $install['bitbucket_access_token'];
-				if ( ! $bitbucket_org ) {
-					$install['options']['bitbucket_access_token'] = $install['bitbucket_access_token'];
-				}
-			}
-
-			if ( ! empty( static::$options['bbserver_access_token'] ) ) {
-				unset( $install['options']['bitbucket_access_token'] );
 			}
 		}
 

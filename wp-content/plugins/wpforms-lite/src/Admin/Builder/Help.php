@@ -232,17 +232,21 @@ class Help {
 			'providers/activecampaign'                => 'activecampaign',
 			'providers/campaign_monitor'              => 'campaign monitor',
 			'providers/constant_contact'              => 'constant contact',
-			'providers/convertkit'                    => 'convertkit',
+			'providers/convertkit'                    => 'kit',
 			'providers/drip'                          => 'drip',
+			'providers/dropbox'                       => 'dropbox',
 			'providers/getresponse'                   => 'getresponse',
 			'providers/getresponse_v3'                => 'getresponse',
 			'providers/mailchimp'                     => 'mailchimp',
 			'providers/mailchimpv3'                   => 'mailchimp',
 			'providers/mailerlite'                    => 'mailerlite',
+			'providers/mailpoet'                      => 'mailpoet',
 			'providers/zapier'                        => 'zapier',
 			'providers/salesforce'                    => 'salesforce',
-			'providers/sendinblue'                    => 'sendinblue',
+			'providers/sendinblue'                    => 'brevo',
+			'providers/slack'                         => 'slack',
 			'providers/hubspot'                       => 'hubspot',
+			'providers/twilio'                        => 'twilio',
 			'payments'                                => '',
 			'payments/paypal_commerce'                => 'paypal commerce',
 			'payments/paypal_standard'                => 'paypal standard',
@@ -267,19 +271,23 @@ class Help {
 				'/docs/creating-first-form/',
 				'/docs/how-to-choose-the-right-form-field-for-your-forms/',
 				'/docs/how-to-customize-the-submit-button/',
+				'/docs/generating-forms-with-wpforms-ai/',
 			],
 			'new form'                  => [
 				'/docs/creating-first-form/',
 				'/docs/how-to-choose-the-right-form-field-for-your-forms/',
 				'/docs/how-to-customize-the-submit-button/',
+				'/docs/generating-forms-with-wpforms-ai/',
 			],
 			'create form'               => [
 				'/docs/creating-first-form/',
 				'/docs/how-to-choose-the-right-form-field-for-your-forms/',
 				'/docs/how-to-customize-the-submit-button/',
+				'/docs/generating-forms-with-wpforms-ai/',
 			],
 			'form template'             => [
 				'/docs/how-to-create-a-custom-form-template/',
+				'/docs/generating-forms-with-wpforms-ai/',
 			],
 			'add fields'                => [
 				'/docs/how-to-choose-the-right-form-field-for-your-forms/',
@@ -1182,6 +1190,9 @@ class Help {
 			'drip'                      => [
 				'/docs/how-to-install-and-use-the-drip-addon-in-wpforms/',
 			],
+			'dropbox'                   => [
+				'/docs/dropbox-addon/',
+			],
 			'getresponse'               => [
 				'/docs/how-to-install-and-use-getresponse-addon-with-wpforms/',
 			],
@@ -1195,6 +1206,9 @@ class Help {
 			'mailerlite'                => [
 				'/docs/install-use-mailerlite-addon-wpforms/',
 			],
+			'mailpoet'                  => [
+				'/docs/mailpoet-addon/',
+			],
 			'zapier'                    => [
 				'/docs/how-to-install-and-use-zapier-addon-with-wpforms/',
 			],
@@ -1204,8 +1218,14 @@ class Help {
 			'sendinblue'                => [
 				'/docs/how-to-install-and-use-the-sendinblue-addon-with-wpforms/',
 			],
+			'slack'                     => [
+				'/docs/slack-addon/',
+			],
 			'hubspot'                   => [
 				'/docs/how-to-install-and-use-the-hubspot-addon-in-wpforms/',
+			],
+			'twilio'                    => [
+				'/docs/twilio-addon/',
 			],
 			'integrate'                 => [
 				'/docs/how-to-install-and-use-zapier-addon-with-wpforms/',
@@ -1255,6 +1275,7 @@ class Help {
 			],
 			'ai'                        => [
 				'/docs/generating-form-choices-with-wpforms-ai/',
+				'/docs/generating-forms-with-wpforms-ai/',
 			],
 		];
 	}

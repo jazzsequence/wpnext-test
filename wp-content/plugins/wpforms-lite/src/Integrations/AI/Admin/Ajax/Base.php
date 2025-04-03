@@ -99,8 +99,15 @@ abstract class Base {
 				$value = filter_input( INPUT_POST, $key, FILTER_VALIDATE_BOOLEAN ) ?? false;
 				break;
 
+			case 'json':
+				$value = json_decode( filter_input( INPUT_POST, $key ), true );
+				break;
+
 			default:
-				$value = filter_input( INPUT_POST, $key, FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ?? '';
+				// We should use this alternative to FILTER_SANITIZE_FULL_SPECIAL_CHARS filter,
+				// because htmlspecialchars() function does double encoding of special characters,
+				// which is necessary to properly handle the encoded HTML in chat questions.
+				$value = htmlspecialchars( filter_input( INPUT_POST, $key ) ?? '' );
 				break;
 		}
 
@@ -120,7 +127,8 @@ abstract class Base {
 	 */
 	protected function is_empty_prompt( string $prompt ): bool {
 
-		$prompt = preg_replace( '/[^A-Za-z]/', '', $prompt );
+		$special_chars = [ '@', '!', '#', '$', '%', '^', '&', '*', '(', ')', '-', '+', '=', '{', '}', '[', ']', '|', '\\', ':', ';', '"', "'", '<', '>', ',', '.', '?', '/' ];
+		$prompt        = str_replace( $special_chars, '', $prompt );
 
 		return empty( $prompt );
 	}

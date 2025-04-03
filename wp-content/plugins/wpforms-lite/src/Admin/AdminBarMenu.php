@@ -41,13 +41,13 @@ class AdminBarMenu {
 	}
 
 	/**
-	 * Determine whether the current user has access to see admin bar menu.
+	 * Determine whether the current user has access to see the admin bar menu.
 	 *
 	 * @since 1.6.0
 	 *
 	 * @return bool
 	 */
-	public function has_access() {
+	public function has_access(): bool {
 
 		$access = false;
 
@@ -59,7 +59,14 @@ class AdminBarMenu {
 			$access = true;
 		}
 
-		return (bool) apply_filters( 'wpforms_admin_adminbarmenu_has_access', $access );
+		/**
+		 * Filters whether the current user has access to see the admin bar menu.
+		 *
+		 * @since 1.6.0
+		 *
+		 * @param bool $access Whether the current user has access to see the admin bar menu.
+		 */
+		return (bool) apply_filters( 'wpforms_admin_adminbarmenu_has_access', $access ); // phpcs:ignore WPForms.PHP.ValidateHooks.InvalidHookName
 	}
 
 	/**
@@ -159,6 +166,8 @@ class AdminBarMenu {
 				'all_forms_menu',
 				'all_payments_menu',
 				'add_new_menu',
+				'settings_menu',
+				'tools_menu',
 				'community_menu',
 				'support_menu',
 			],
@@ -170,6 +179,231 @@ class AdminBarMenu {
 			$this->{ $item }( $wp_admin_bar );
 
 			do_action( "wpforms_admin_adminbarmenu_register_{$item}_after", $wp_admin_bar );
+		}
+
+		$this->register_settings_submenu( $wp_admin_bar );
+		$this->register_tools_submenu( $wp_admin_bar );
+	}
+
+	/**
+	 * Register Settings submenu.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 */
+	private function register_settings_submenu( WP_Admin_Bar $wp_admin_bar ) {
+
+		/**
+		 * Filters the Settings submenu items.
+		 *
+		 * @since 1.9.2
+		 *
+		 * @param array        $items        Array of submenu items.
+		 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+		 */
+		$items = (array) apply_filters(
+			'wpforms_admin_bar_menu_register_settings_submenu',
+			[
+				'wpforms-general-settings'      => [
+					'title' => __( 'General', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=general',
+				],
+				'wpforms-email-settings'        => [
+					'title' => __( 'Email', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=email',
+				],
+				'wpforms-captcha-settings'      => [
+					'title' => __( 'CAPTCHA', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=captcha',
+				],
+				'wpforms-validation-settings'   => [
+					'title' => __( 'Validation', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=validation',
+				],
+				'wpforms-payments-settings'     => [
+					'title' => __( 'Payments', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=payments',
+				],
+				'wpforms-integrations-settings' => [
+					'title' => __( 'Integrations', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=integrations',
+				],
+				'wpforms-geolocation-settings'  => [
+					'title' => __( 'Geolocation', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=geolocation',
+				],
+				'wpforms-access-settings'       => [
+					'title' => __( 'Access Control', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=access',
+				],
+				'wpforms-misc-settings'         => [
+					'title' => __( 'Misc', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-settings&view=misc',
+				],
+			],
+			$wp_admin_bar
+		);
+
+		foreach ( $items as $item_id => $args ) {
+
+			$wp_admin_bar->add_menu(
+				[
+					'parent' => 'wpforms-settings',
+					'id'     => sanitize_key( $item_id ),
+					'title'  => esc_html( $args['title'] ),
+					'href'   => admin_url( $args['path'] ),
+				]
+			);
+
+			/**
+			 * Fires after the Settings submenu item is registered.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+			 */
+			do_action( "wpforms_admin_bar_menu_register_settings_submenu_{$item_id}_after", $wp_admin_bar );
+		}
+	}
+
+	/**
+	 * Register Tools submenu.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 */
+	private function register_tools_submenu( WP_Admin_Bar $wp_admin_bar ) {
+
+		/**
+		 * Filters the Tools submenu items.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param array        $items        Array of submenu items.
+		 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+		 *
+		 * @return array
+		 */
+		$items = (array) apply_filters(
+			'wpforms_admin_bar_menu_register_tools_submenu',
+			[
+				'wpforms-tools-import'           => [
+					'title' => esc_html__( 'Import', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=import',
+				],
+				'wpforms-tools-export'           => [
+					'title' => esc_html__( 'Export', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=export',
+				],
+				'wpforms-tools-system'           => [
+					'title' => esc_html__( 'System Info', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=system',
+				],
+				'wpforms-tools-action-scheduler' => [
+					'title' => esc_html__( 'Scheduled Actions', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=action-scheduler&s=wpforms',
+				],
+				'wpforms-tools-logs'             => [
+					'title' => esc_html__( 'Logs', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=logs',
+				],
+				'wpforms-tools-wpcode'           => [
+					'title' => esc_html__( 'Code Snippets', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=wpcode',
+				],
+			],
+			$wp_admin_bar
+		);
+
+		foreach ( $items as $item_id => $args ) {
+			$wp_admin_bar->add_menu(
+				[
+					'parent' => 'wpforms-tools',
+					'id'     => sanitize_key( $item_id ),
+					'title'  => esc_html( $args['title'] ),
+					'href'   => admin_url( $args['path'] ),
+				]
+			);
+
+			/**
+			 * Fires after the Tools submenu item is registered.
+			 *
+			 * @since 1.9.2
+			 *
+			 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+			 */
+			do_action( "wpforms_admin_bar_menu_register_tools_submenu_{$item_id}_after", $wp_admin_bar );
+		}
+
+		$this->register_action_scheduler_submenu( $wp_admin_bar );
+	}
+
+	/**
+	 * Register Action Scheduler submenu.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 */
+	private function register_action_scheduler_submenu( WP_Admin_Bar $wp_admin_bar ) {
+
+		/**
+		 * Filters the Action Scheduler submenu items.
+		 *
+		 * @since 1.9.3
+		 *
+		 * @param array        $items        Array of submenu items.
+		 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+		 *
+		 * @return array
+		 */
+		$items = apply_filters(
+			'wpforms_admin_bar_menu_register_action_scheduler_submenu',
+			[
+				'wpforms-tools-action-scheduler-all'      => [
+					'title' => esc_html__( 'View All', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=action-scheduler&s=wpforms&orderby=hook&order=desc',
+				],
+				'wpforms-tools-action-scheduler-complete' => [
+					'title' => esc_html__( 'Completed Actions', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=action-scheduler&s=wpforms&status=complete&orderby=hook&order=desc',
+				],
+				'wpforms-tools-action-scheduler-failed'   => [
+					'title' => esc_html__( 'Failed Actions', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=action-scheduler&s=wpforms&status=failed&orderby=hook&order=desc',
+				],
+				'wpforms-tools-action-scheduler-pending'  => [
+					'title' => esc_html__( 'Pending Actions', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=action-scheduler&s=wpforms&status=pending&orderby=hook&order=desc',
+				],
+				'wpforms-tools-action-scheduler-past-due' => [
+					'title' => esc_html__( 'Past Due Actions', 'wpforms-lite' ),
+					'path'  => 'admin.php?page=wpforms-tools&view=action-scheduler&s=wpforms&status=past-due&orderby=hook&order=desc',
+				],
+			],
+			$wp_admin_bar
+		);
+
+		foreach ( $items as $item_id => $args ) {
+			$wp_admin_bar->add_menu(
+				[
+					'parent' => 'wpforms-tools-action-scheduler',
+					'id'     => sanitize_key( $item_id ),
+					'title'  => esc_html( $args['title'] ),
+					'href'   => admin_url( $args['path'] ),
+				]
+			);
+
+			/**
+			 * Fires after the Action Scheduler submenu item is registered.
+			 *
+			 * @since 1.9.3
+			 *
+			 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+			 */
+			do_action( "wpforms_admin_bar_menu_register_action_scheduler_submenu_{$item_id}_after", $wp_admin_bar );
 		}
 	}
 
@@ -280,6 +514,44 @@ class AdminBarMenu {
 				'id'     => 'wpforms-add-new',
 				'title'  => esc_html__( 'Add New', 'wpforms-lite' ),
 				'href'   => admin_url( 'admin.php?page=wpforms-builder' ),
+			]
+		);
+	}
+
+	/**
+	 * Render Settings admin bar menu item.
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 */
+	public function settings_menu( WP_Admin_Bar $wp_admin_bar ) {
+
+		$wp_admin_bar->add_menu(
+			[
+				'parent' => 'wpforms-menu',
+				'id'     => 'wpforms-settings',
+				'title'  => esc_html__( 'Settings', 'wpforms-lite' ),
+				'href'   => admin_url( 'admin.php?page=wpforms-settings' ),
+			]
+		);
+	}
+
+	/**
+	 * Add Tools menu to the admin bar.
+	 *
+	 * @since 1.9.3
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar The admin bar object.
+	 */
+	public function tools_menu( WP_Admin_Bar $wp_admin_bar ) {
+
+		$wp_admin_bar->add_menu(
+			[
+				'parent' => 'wpforms-menu',
+				'id'     => 'wpforms-tools',
+				'title'  => esc_html__( 'Tools', 'wpforms-lite' ),
+				'href'   => admin_url( 'admin.php?page=wpforms-tools' ),
 			]
 		);
 	}

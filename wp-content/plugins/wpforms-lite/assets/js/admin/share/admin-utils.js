@@ -55,22 +55,24 @@ const wpf = {
 	 */
 	bindUIActions() {
 		// The following items should all trigger the fieldUpdate trigger.
-		jQuery( document ).on( 'wpformsFieldAdd', wpf.setFieldOrders );
-		jQuery( document ).on( 'wpformsFieldDelete', wpf.setFieldOrders );
-		jQuery( document ).on( 'wpformsFieldMove', wpf.setFieldOrders );
-		jQuery( document ).on( 'wpformsFieldAdd', wpf.setChoicesOrders );
-		jQuery( document ).on( 'wpformsFieldChoiceAdd', wpf.setChoicesOrders );
-		jQuery( document ).on( 'wpformsFieldChoiceDelete', wpf.setChoicesOrders );
-		jQuery( document ).on( 'wpformsFieldChoiceMove', wpf.setChoicesOrders );
-		jQuery( document ).on( 'wpformsFieldAdd', wpf.fieldUpdate );
-		jQuery( document ).on( 'wpformsFieldDelete', wpf.fieldUpdate );
-		jQuery( document ).on( 'wpformsFieldMove', wpf.fieldUpdate );
-		jQuery( document ).on( 'focusout', '.wpforms-field-option-row-label input', wpf.fieldUpdate );
-		jQuery( document ).on( 'wpformsFieldChoiceAdd', wpf.fieldUpdate );
-		jQuery( document ).on( 'wpformsFieldChoiceDelete', wpf.fieldUpdate );
-		jQuery( document ).on( 'wpformsFieldChoiceMove', wpf.fieldUpdate );
-		jQuery( document ).on( 'wpformsFieldDynamicChoiceToggle', wpf.fieldUpdate );
-		jQuery( document ).on( 'focusout', '.wpforms-field-option-row-choices input.label', wpf.fieldUpdate );
+		jQuery( document )
+			.on( 'wpformsFieldAdd', wpf.setFieldOrders )
+			.on( 'wpformsFieldDuplicated', wpf.setFieldOrders )
+			.on( 'wpformsFieldDelete', wpf.setFieldOrders )
+			.on( 'wpformsFieldMove', wpf.setFieldOrders )
+			.on( 'wpformsFieldAdd', wpf.setChoicesOrders )
+			.on( 'wpformsFieldChoiceAdd', wpf.setChoicesOrders )
+			.on( 'wpformsFieldChoiceDelete', wpf.setChoicesOrders )
+			.on( 'wpformsFieldChoiceMove', wpf.setChoicesOrders )
+			.on( 'wpformsFieldAdd', wpf.fieldUpdate )
+			.on( 'wpformsFieldDelete', wpf.fieldUpdate )
+			.on( 'wpformsFieldMove', wpf.fieldUpdate )
+			.on( 'wpformsFieldChoiceAdd', wpf.fieldUpdate )
+			.on( 'wpformsFieldChoiceDelete', wpf.fieldUpdate )
+			.on( 'wpformsFieldChoiceMove', wpf.fieldUpdate )
+			.on( 'wpformsFieldDynamicChoiceToggle', wpf.fieldUpdate )
+			.on( 'focusout', '.wpforms-field-option-row-label input', wpf.fieldUpdate )
+			.on( 'focusout', '.wpforms-field-option-row-choices input.label', wpf.fieldUpdate );
 	},
 
 	/**
@@ -356,8 +358,10 @@ const wpf = {
 				// Get the name format and split it into an array.
 				const nameFormat = fields[ key ].format;
 
-				// Add the name fields to the fields object
-				fields[ key ].additional = nameFormat.split( '-' );
+				if ( nameFormat ) {
+					// Add the name fields to the field object
+					fields[ key ].additional = nameFormat.split( '-' );
+				}
 			}
 
 			if ( fields[ key ]?.type === 'address' ) {
@@ -404,7 +408,7 @@ const wpf = {
 	 * @param {string|Element} option jQuery object, or DOM element selector.
 	 * @param {boolean}        unload True if you need to unload spinner, and vice versa.
 	 */
-	fieldOptionLoading( option, unload ) {
+	fieldOptionLoading( option, unload = undefined ) {
 		const $option = jQuery( option ),
 			$label = $option.find( 'label' ),
 			spinner = '<i class="wpforms-loading-spinner wpforms-loading-inline"></i>';
@@ -738,7 +742,7 @@ const wpf = {
 	 * @return {boolean} True if debug mode is enabled.
 	 */
 	isDebug() {
-		return ( ( window.location.hash && '#wpformsdebug' === window.location.hash ) || wpforms_builder.debug );
+		return ( ( window.location.hash && '#wpformsdebug' === window.location.hash ) || window.wpforms_builder?.debug );
 	},
 
 	/**
@@ -844,8 +848,11 @@ const wpf = {
 	 * Initialize WPForms admin area tooltips.
 	 *
 	 * @since 1.4.8
+	 * @since 1.6.5 Introduced optional $scope parameter.
+	 *
+	 * @param {jQuery|HTMLElement|null} $scope Searching scope.
 	 */
-	initTooltips() {
+	initTooltips( $scope = null ) {
 		if ( typeof jQuery.fn.tooltipster === 'undefined' ) {
 			return;
 		}
@@ -853,7 +860,9 @@ const wpf = {
 		const isRTL = jQuery( 'body' ).hasClass( 'rtl' );
 		const position = isRTL ? 'left' : 'right';
 
-		jQuery( '.wpforms-help-tooltip' ).each( function() {
+		const $tooltips = ! $scope ? jQuery( '.wpforms-help-tooltip' ) : jQuery( $scope ).find( '.wpforms-help-tooltip' );
+
+		$tooltips.each( function() {
 			const $this = jQuery( this );
 
 			$this.tooltipster( {

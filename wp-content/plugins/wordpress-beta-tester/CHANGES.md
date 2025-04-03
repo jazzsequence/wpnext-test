@@ -1,5 +1,15 @@
 [unreleased]
 
+#### 3.6.3 / 2025-03-25
+* update workflow
+* add extra setting to remove auto-installed plugin(s)
+
+#### 3.6.2 / 2024-12-02
+* Plugin Check and i18n updates
+
+#### 3.6.1 / 2024-10-23
+* fix if `get_preferred_from_update_core()` continues to return less than a complete response
+
 #### 3.6.0 / 2024-10-09
 * remove Report a Bug in favor of using the standalone Test Reports plugin
 

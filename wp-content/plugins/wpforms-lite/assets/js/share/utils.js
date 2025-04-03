@@ -1,14 +1,13 @@
-'use strict';
 
-// eslint-disable-next-line no-unused-vars
-const WPFormsUtils = window.WPFormsUtils || ( function( document, window, $ ) {
-
+// noinspection ES6ConvertVarToLetConst
+// eslint-disable-next-line no-var, no-unused-vars
+var WPFormsUtils = window.WPFormsUtils || ( function( document, window, $ ) {
 	/**
 	 * Public functions and properties.
 	 *
 	 * @since 1.7.6
 	 *
-	 * @type {object}
+	 * @type {Object}
 	 */
 	const app = {
 
@@ -21,11 +20,10 @@ const WPFormsUtils = window.WPFormsUtils || ( function( document, window, $ ) {
 		 * @param {string} eventName Event name to trigger (custom or native).
 		 * @param {Array}  args      Trigger arguments.
 		 *
-		 * @returns {Event} Event object.
+		 * @return {Event} Event object.
 		 */
-		triggerEvent: function( $element, eventName, args = [] ) {
-
-			let eventObject = new $.Event( eventName );
+		triggerEvent( $element, eventName, args = [] ) {
+			const eventObject = new $.Event( eventName );
 
 			$element.trigger( eventObject, args );
 
@@ -46,21 +44,18 @@ const WPFormsUtils = window.WPFormsUtils || ( function( document, window, $ ) {
 		 * Debouncing prevents extra activations or slow functions from triggering too often.
 		 *
 		 * @param {Function} func      The function to be debounced.
-		 * @param {int}      wait      The amount of time to delay calling func.
-		 * @param {bool}     immediate Whether or not to trigger the function on the leading edge.
+		 * @param {number}   wait      The amount of time to delay calling func.
+		 * @param {boolean}  immediate Whether or not to trigger the function on the leading edge.
 		 *
-		 * @returns {Function} Returns a function that, as long as it continues to be invoked, will not be triggered.
+		 * @return {Function} Returns a function that, as long as it continues to be invoked, will not be triggered.
 		 */
-		debounce: function( func, wait, immediate ) {
-
-			var timeout;
+		debounce( func, wait, immediate ) {
+			let timeout;
 
 			return function() {
-
-				var context = this,
+				const context = this,
 					args = arguments;
-				var later = function() {
-
+				const later = function() {
 					timeout = null;
 
 					if ( ! immediate ) {
@@ -68,7 +63,7 @@ const WPFormsUtils = window.WPFormsUtils || ( function( document, window, $ ) {
 					}
 				};
 
-				var callNow = immediate && ! timeout;
+				const callNow = immediate && ! timeout;
 
 				clearTimeout( timeout );
 
@@ -211,10 +206,48 @@ const WPFormsUtils = window.WPFormsUtils || ( function( document, window, $ ) {
 				// Combine and return the RGBA color.
 				return `rgba(${ rgbArray[ 0 ] },${ rgbArray[ 1 ] },${ rgbArray[ 2 ] },${ newAlpha })`.replace( /\s+/g, '' );
 			},
+
+			/**
+			 * Convert an RGBA color string to HEX format.
+			 *
+			 * @since 1.9.4
+			 *
+			 * @param {string} color Color in "rgba(r, g, b, a)" or "rgb(r, g, b)" format.
+			 *
+			 * @return {false|string} HEX color.
+			 */
+			rgbaToHex( color ) {
+				if ( ! /^rgb/.test( color ) ) {
+					return color;
+				}
+
+				const rgbArray = app.cssColorsUtils.getColorAsRGBArray( color );
+
+				if ( ! rgbArray ) {
+					return false;
+				}
+
+				const red = Number( rgbArray[ 0 ] );
+				const green = Number( rgbArray[ 1 ] );
+				const blue = Number( rgbArray[ 2 ] );
+				const alpha = rgbArray[ 3 ] ? Math.round( Number( rgbArray[ 3 ] ) * 255 ) : 255;
+
+				// Ensure numbers are converted to valid two-character hexadecimal strings.
+				const colorToHex = ( value ) => value.toString( 16 ).padStart( 2, '0' );
+
+				// Convert to hex and return as a single string.
+				const hex = `#${ [
+					colorToHex( red ),
+					colorToHex( green ),
+					colorToHex( blue ),
+					alpha < 255 ? colorToHex( alpha ) : '',
+				].join( '' ) }`;
+
+				return hex.toLowerCase();
+			},
 		},
 	};
 
 	// Provide access to public functions/properties.
 	return app;
-
 }( document, window, jQuery ) );
