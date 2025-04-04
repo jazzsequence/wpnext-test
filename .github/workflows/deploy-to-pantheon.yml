@@ -19,7 +19,9 @@ jobs:
           fetch-depth: 0
       - name: Get commit message
         id: get_commit
-        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT      
       - name: Install dependencies
         run: composer install
       - name: Deploy to Pantheon
