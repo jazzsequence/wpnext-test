@@ -20,17 +20,7 @@ wp_version=$(get_latest_wp_release)
 
 # Set FTP mode.
 terminus connection:set $TERMINUS_SITE.test-base sftp -y
-
-# Check if the test-base environment exists and that WP is installed.
-if terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force; then
-	echo "Updated WordPress core to $wp_version on test-base..."
-else
-	echo "Installing WordPress on test-base..."
-	terminus wp -- $TERMINUS_SITE.test-base core install
-	echo "Updated WordPress core to $wp_version on test-base..."
-	terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force
-fi
-
+terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force
 terminus env:commit $TERMINUS_SITE.test-base --message="WordPress core update $wp_version"
 terminus build:workflow:wait $TERMINUS_SITE.test-base --max=30
 
@@ -49,21 +39,16 @@ else
 	fi
 
 	# Never run this directly on dev.
-	if [ "$TERMINUS_ENV" == 'dev' || "$TERMINUS_ENV" == 'master' ]; then
+	if [ "$TERMINUS_ENV" == 'dev' ] || [ "$TERMINUS_ENV" == 'master' ]; then
 		echo "You cannot run this script on the dev environment."
 		exit 1
 	fi
-
-	###
-	# Switch to SFTP mode so the site can install plugins and themes
-	###
-	terminus connection:set -n $SITE_ENV sftp
-
-	# If it does exist, make sure there are no plugins that the tests don't expect.
-	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
-	terminus wp $SITE_ENV -- plugin delete --all
-	terminus wp $SITE_ENV -- plugin install akismet hello-dolly
 fi
+
+# If it does exist, make sure there are no plugins that the tests don't expect.
+echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
+terminus wp $SITE_ENV -- plugin delete --all
+terminus wp $SITE_ENV -- plugin install akismet hello-dolly
 
 terminus env:wipe $SITE_ENV --yes
 
