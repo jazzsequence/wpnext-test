@@ -36,7 +36,7 @@ jobs:
           composer install
           git add .
           git commit -m "Install composer dependencies"
-          git push --set-upstream pantheon master
+          git push --set-upstream pantheon master --force
       - name: Deploy to Pantheon
         uses: stevector-streaming/dtp@0.2.1
         with:
