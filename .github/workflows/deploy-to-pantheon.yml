@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           git fetch pantheon
-          git checkout -B master pantheon/master
+          git checkout -B master pantheon/master --allow-unrelated-histories
           composer install
           git add .
           git commit -m "Install composer dependencies"
