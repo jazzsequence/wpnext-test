@@ -10,7 +10,7 @@ if [ -n "$MULTIDEV_ARG" ]; then
     echo "Running tests on multidev $MULTIDEV_ARG. Skipping multidev creation and deletion."
 fi
 
-export SKIP_CLEANUP=1 # Change this to 0 to delete the multidev to test.
+export SKIP_CLEANUP=0 # Change this to 0 to delete the multidev to test.
 export TERMINUS_SITE="wpnext-test"
 export TERMINUS_ENV=${MULTIDEV_ARG:-behat}  # Use the provided multidev or default to 'behat'
 export SITE_ENV="${TERMINUS_SITE}.${TERMINUS_ENV}"
