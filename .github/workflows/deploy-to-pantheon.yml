@@ -1,0 +1,35 @@
+name: Deploy to WPNext-Test
+
+on:
+ push:
+  branches:
+    - main
+
+permissions:
+  contents: read
+  deployments: write
+  statuses: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure Git
+        run: |
+          git config --global user.name "Pantheon Robot"
+          git config --global user.email "bot@getpantheon.com"
+          git remote add pantheon ${{ secrets.GIT_REPO }}
+      - name: Install dependencies
+        run: |
+          composer install
+          git add .
+          git commit -m "Install composer dependencies"
+          git push pantheon master
+      - name: Deploy to Pantheon
+        uses: stevector-streaming/dtp@0.2.1
+        with:
+          ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          site: wpnext-test
+          machine_token: ${{ secrets.TERMINUS_TOKEN }}
+ 
