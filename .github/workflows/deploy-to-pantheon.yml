@@ -40,6 +40,7 @@ jobs:
 
       - name: Commit build artifacts
         run: |
+          git checkout -b master
           git add -A
           git commit -m "${{ steps.get_commit.outputs.message }}" || echo "Nothing to commit"
 
