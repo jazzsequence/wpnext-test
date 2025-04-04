@@ -48,6 +48,9 @@ if (file_exists(dirname(__FILE__) . '/wp-config-pantheon.php') && isset($_ENV['P
 	define('NONCE_SALT',       'put your unique phrase here');
 }
 
+if ( getenv( 'BEHAT_RUNNING' ) === '1' && ! defined( 'WP_INITIAL_INSTALL' ) ) {
+	define( 'WP_INITIAL_INSTALL', true );
+}
 
 /** Standard wp-config.php stuff from here on down. **/
 
