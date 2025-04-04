@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Get the multidev argument (if provided)
 MULTIDEV_ARG=$1
