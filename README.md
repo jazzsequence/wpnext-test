@@ -1,32 +1,83 @@
-# WordPress
+# WordPress Release Tester
 
-This is a WordPress repository configured to run on the [Pantheon platform](https://pantheon.io).
+This is an [empty WordPress upstream](https://github.com/pantheon-systems/empty-wp)-based site with the [Beta Tester](https://wordpress.org/plugins/wordpress-beta-tester/) plugin to facilitate tests for upcoming (alpha, beta, RC) releases of WordPress.
 
-Pantheon is website platform optimized and configured to run high performance sites with an amazing developer workflow. There is built-in support for features such as Varnish, Redis, Apache Solr, New Relic, Nginx, PHP-FPM, MySQL, PhantomJS and more. 
+The site includes various plugins to test new functionality or compatibility and scripts to assist in managing updates.
 
 ## Getting Started
 
-### 1. Spin-up a site
+**Site ID:** `wpnext-test`
 
-If you do not yet have a Pantheon account, you can create one for free. Once you've verified your email address, you will be able to add sites from your dashboard. Choose "WordPress" to use this distribution.
+### 1. Clone the site repository locally
 
-### 2. Load up the site
+```bash
+terminus local:clone wpnext-test && cd ~/pantheon-local-copies/wpnext-test
+```
 
-When the spin-up process is complete, you will be redirected to the site's dashboard. Click on the link under the site's name to access the Dev environment.
+### 2. Run Composer install
 
-![alt](http://i.imgur.com/2wjCj9j.png?1, '')
+Many of the dependencies use Composer. It's assumed you have Composer installed locally, if not, you will need to [install that first](https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos).
 
-### 3. Run the WordPress installer
+```bash
+composer install
+```
 
-How about the WordPress database config screen? No need to worry about database connection information as that is taken care of in the background. The only step that you need to complete is the site information and the installation process will be complete.
+### 3. Start Lando (optional)
 
-We will post more information about how this works but we recommend developers take a look at `wp-config.php` to get an understanding.
+The project includes a `.lando.example-yml` file as well for local development using Lando. Your mileage may vary with your specific Lando configuration. However, if your Terminus account has access to the site, you should be able to run `lando start` (assuming [Lando is installed](https://lando.dev/download/)) to get a local environment, and then `lando pull -c none -f dev -d dev` to pull files and database from Pantheon.
 
-![alt](http://i.imgur.com/4EOcqYN.png, '')
+## Using the built-in tools
 
-If you would like to keep a separate set of configuration for local development, you can use a file called `wp-config-local.php`, which is already in our .gitignore file.
+There are four main commands that are added to the Composer config to help with tests.
 
-### 4. Enjoy!
+### `check-latest-wp`
 
-![alt](http://i.imgur.com/fzIeQBP.png, '')
+This command will check the latest version of WordPress, including beta and RC versions. It's used by `wordpress-update` to determine which version of WordPress is available. It does not look for nightly releases.
 
+#### Usage
+```bash
+composer check-latest-wp
+```
+
+#### Example return output
+```
+> source ./scripts/helpers.sh && get_latest_wp_release
+6.8-RC1
+```
+
+### `deploy`
+
+Runs the `scripts/deploy.sh` script. This is a shortcut for deploying the latest changes on the Dev environment to Test and Live.
+
+#### Usage
+```bash
+composer deploy
+```
+
+### `wordpress-update`
+
+This command will update WordPress core, plugins or themes to to the latest version. This can be run either by using Terminus or locally with Lando and a prompt will appear to ask for your method of updating when you run the command.
+
+#### Updating via Lando
+
+If updating with Lando, you can update plugins, themes, or WordPress core to the latest alpha, beta or RC version (or all three) by specifying at the next prompt. It will use `lando wp` commands to pull down the changes and then automatically commit those changes to your local environment and push them to the Dev environment.
+
+#### Updating via Terminus
+
+If updating with Terminus, the behavior is mostly the same. Rather than installing the changes locally first, the script will run `terminus wp` commands to update the plugin, theme or latest alpha, beta or RC version of WordPress core. One notable difference with the Terminus option is that there is not (currently) support for running updates on all three things in one command -- plugins, themes and core updates are handled separately. Once the updates are applied on the Dev environment, the script will commit the updates and pull the changes down locally.
+
+#### Usage
+```bash
+composer wordpress-update
+```
+
+### `test`
+
+Prepares and runs the [`pantheon-systems/pantheon-wordpress-upstream-tests](https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests) Behat test suite against a new `behat` multidev that is branched from a barebones `test-base` multidev environment. The `test-base` and `behat` environments have been tuned to remove the custom plugins added to the base Dev environment and the database is wiped when the tests are initialized.
+
+A WordPress update is run to the latest alpha, beta or RC version of WordPress if the current version does not match the latest.
+
+#### Usage
+```bash
+composer test
+```
