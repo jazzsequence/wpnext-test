@@ -32,6 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           git checkout -b master
+          git pull pantheon master
           composer install
           git add .
           git commit -m "Install composer dependencies"
