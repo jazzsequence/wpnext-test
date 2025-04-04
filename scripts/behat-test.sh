@@ -15,7 +15,7 @@ if [ -z "$WORDPRESS_ADMIN_USERNAME" ] || [ -z "$WORDPRESS_ADMIN_PASSWORD" ]; the
 	echo "WORDPRESS_ADMIN_USERNAME and WORDPRESS_ADMIN_PASSWORD environment variables must be set"
 	exit 1
 fi
-
+echo "Running tests..."
 export BEHAT_PARAMS='{"extensions" : {"Behat\\MinkExtension" : {"base_url" : "http://'$TERMINUS_ENV'-'$TERMINUS_SITE'.pantheonsite.io", "sessions": {"default": {"goutte": null}}}}}'
 
 ./vendor/bin/behat -c ./vendor/pantheon-systems/pantheon-wordpress-upstream-tests/behat.yml $*
