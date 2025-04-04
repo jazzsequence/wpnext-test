@@ -18,13 +18,21 @@ fi
 # Set up test-base.
 wp_version=$(get_latest_wp_release)
 
+# Set FTP mode.
+terminus connection:set $TERMINUS_SITE.test-base sftp -y
 
+# Check if the test-base environment exists and that WP is installed.
 if terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force; then
 	echo "Updated WordPress core to $wp_version on test-base..."
 else
+	echo "Installing WordPress on test-base..."
 	terminus wp -- $TERMINUS_SITE.test-base core install
-terminus env:commit $SITE_ENV --message="WordPress core update $wp_version"
-terminus build:workflow:wait $SITE_ENV --max=30
+	echo "Updated WordPress core to $wp_version on test-base..."
+	terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force
+fi
+
+terminus env:commit $TERMINUS_SITE.test-base --message="WordPress core update $wp_version"
+terminus build:workflow:wait $TERMINUS_SITE.test-base --max=30
 
 # Only run multidev creation if the TERMINUS_ENV is 'behat'.
 if [ "$TERMINUS_ENV" == 'behat' ]; then
@@ -65,4 +73,4 @@ terminus env:wipe $SITE_ENV --yes
 PANTHEON_GIT_URL=$(terminus connection:info $SITE_ENV --field=git_url)
 PANTHEON_SITE_URL="$TERMINUS_ENV-$TERMINUS_SITE.pantheonsite.io"
 PREPARE_DIR="/tmp/$TERMINUS_ENV-$TERMINUS_SITE"
-BASH_DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASH_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
