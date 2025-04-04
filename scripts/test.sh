@@ -13,7 +13,7 @@ export TERMINUS_SITE="wpnext-test"
 export TERMINUS_ENV=${MULTIDEV_ARG:-behat}  # Use the provided multidev or default to 'behat'
 export SITE_ENV="${TERMINUS_SITE}.${TERMINUS_ENV}"
 export WORDPRESS_ADMIN_USERNAME=testuser
-export WORDPRESS_ADMIN_PASSWORD=$(terminus secret:site:list wpnext-test --format=json | jq -r '.testpass.value')
+export WORDPRESS_ADMIN_PASSWORD=$(terminus secret:site:list $TERMINUS_SITE --format=json | jq -r '.testpass.value')
 
 # Don't delete anything if a specific multidev was passed.
 if [ -z "$MULTIDEV_ARG" ]; then
