@@ -45,6 +45,7 @@ else
 	fi
 fi
 
+terminus connection:set $SITE_ENV sftp
 # If it does exist, make sure there are no plugins that the tests don't expect.
 echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 terminus wp $SITE_ENV -- plugin delete --all
