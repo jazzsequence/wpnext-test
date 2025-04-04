@@ -28,7 +28,7 @@ jobs:
         run: |
           git config --global user.name "Pantheon Robot"
           git config --global user.email "bot@getpantheon.com"
-          git add .
+          git add -A
           git commit -m "Build: commit composer dependencies" || echo "Nothing to commit"      
       - name: Deploy to Pantheon
         uses: stevector-streaming/dtp@0.2.1
