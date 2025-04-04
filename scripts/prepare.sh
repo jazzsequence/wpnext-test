@@ -33,11 +33,14 @@ fi
 
 # Only run multidev creation if the TERMINUS_ENV is 'behat'.
 if [ "$TERMINUS_ENV" == 'behat' ]; then
-	# Create a new environment for this particular test run.
-	terminus env:create $TERMINUS_SITE.test-base $TERMINUS_ENV
+	if [ -z "$env_exists" ]; then
+		echo "Environment $TERMINUS_ENV does not exist."
+
+		# Create a new environment for this particular test run.
+		terminus env:create $TERMINUS_SITE.test-base $TERMINUS_ENV
+	fi
 else
 	# If the environment was specified, make sure it exists.
-	env_exists=$(terminus env:info $SITE_ENV)
 	if [ -z "$env_exists" ]; then
 		echo "Environment $TERMINUS_ENV does not exist."
 
