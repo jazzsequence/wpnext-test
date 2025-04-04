@@ -45,4 +45,4 @@ jobs:
           git commit -m "${{ steps.get_commit.outputs.message }}" || echo "Nothing to commit"
 
       - name: Push to Pantheon
-        run: git push pantheon master --force
+        run: git push --set-upstream pantheon master --force
