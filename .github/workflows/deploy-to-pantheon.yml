@@ -20,10 +20,16 @@ jobs:
       - name: Get commit message
         id: get_commit
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B | sed ':a;N;$!ba;s/\n/%0A/g')
-          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT      
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
       - name: Install dependencies
         run: composer install
+      - name: Commit build artifacts
+        run: |
+          git config --global user.name "Pantheon Robot"
+          git config --global user.email "bot@getpantheon.com"
+          git add .
+          git commit -m "Build: commit composer dependencies" || echo "Nothing to commit"      
       - name: Deploy to Pantheon
         uses: stevector-streaming/dtp@0.2.1
         with:
