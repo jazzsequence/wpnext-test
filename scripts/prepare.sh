@@ -17,12 +17,17 @@ fi
 
 # Set up test-base.
 wp_version=$(get_latest_wp_release)
+remote_wp_version=$(terminus wp -- $TERMINUS_SITE.test-base core version)
 
 # Set FTP mode.
 terminus connection:set $TERMINUS_SITE.test-base sftp -y
-terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force
-terminus env:commit $TERMINUS_SITE.test-base --message="WordPress core update $wp_version"
-terminus build:workflow:wait $TERMINUS_SITE.test-base --max=30
+
+# Only update to the latest release if we're not already on the latest version
+if [ "$wp_version" != "$remote_wp_version" ]; then
+	terminus wp -- $TERMINUS_SITE.test-base core update --version=$wp_version --force
+	terminus env:commit $TERMINUS_SITE.test-base --message="WordPress core update $wp_version"
+	terminus build:workflow:wait $TERMINUS_SITE.test-base --max=30
+fi
 
 # Only run multidev creation if the TERMINUS_ENV is 'behat'.
 if [ "$TERMINUS_ENV" == 'behat' ]; then
