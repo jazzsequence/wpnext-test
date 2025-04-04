@@ -8,3 +8,5 @@
  * License: MIT
  */
 add_filter( 'rest_menu_read_access', '__return_true' );
+
+add_filter( 'wp_prevent_unsupported_mime_type_uploads', '__return_false' );
