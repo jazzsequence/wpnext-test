@@ -37,7 +37,7 @@ echo "Preparing tests..."
 ./scripts/behat-test.sh
 
 # Cleanup the tests
-if [ -z "$MULTIDEV_ARG" ]; then
+if [ -z "$MULTIDEV_ARG" ] && [ $SKIP_CLEANUP != '1' ]; then
     echo "Cleaning up tests..."
     "$BEHAT_PATH/cleanup.sh"
 else
