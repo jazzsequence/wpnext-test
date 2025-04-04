@@ -8,10 +8,6 @@ env_file:
   - .env.lando
 services:
   appserver:
-    overrides:
-      volumes:
-        # Copy the individual PEM instead of full bundle
-        - /Users/chris.reynolds/Certs/cloudflare-gateway.pem:/usr/local/share/ca-certificates/cloudflare.crt:ro
     build_as_root:
       - update-ca-certificates
       - curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar

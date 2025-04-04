@@ -1,5 +1,6 @@
 .env.lando
 .htaccess
+.lando.yml
 
 # WordPress #
 ############
