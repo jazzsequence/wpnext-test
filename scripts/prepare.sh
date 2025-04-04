@@ -6,7 +6,7 @@
 # such that it can be run a second time if a step fails.
 ###
 
-set -ex
+set -e
 
 source scripts/helpers.sh
 
