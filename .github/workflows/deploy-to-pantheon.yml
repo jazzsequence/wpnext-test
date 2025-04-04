@@ -38,6 +38,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Configure Pantheon Host Key
+        run: |
+          echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
+          echo "Host *.drush.in PubkeyAcceptedKeyTypes +ssh-rsa" >> ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+
       - name: Configure Git
         run: |
           git config --global user.name "Pantheon Robot"
@@ -55,7 +61,7 @@ jobs:
 
       - name: Push to Pantheon
         run: git push --set-upstream pantheon master --force
-        
+
       - name: Update deployment status
         uses: bobheadxi/deployments@v1
         if: always()
