@@ -31,8 +31,8 @@ jobs:
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
       - name: Install dependencies
         run: |
-          git checkout -b master
-          git pull pantheon master
+          git fetch pantheon
+          git checkout -B master pantheon/master
           composer install
           git add .
           git commit -m "Install composer dependencies"
