@@ -17,31 +17,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Configure Git
-        run: |
-          git config --global user.name "Pantheon Robot"
-          git config --global user.email "bot@getpantheon.com"
-          git remote add pantheon ${{ secrets.GIT_REPO }}
-      - name: Install SSH keys
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: Configure Pantheon Host Key
-        run: |
-          echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
-          echo "Host *.drush.in PubkeyAcceptedKeyTypes +ssh-rsa" >> ~/.ssh/config
-          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+      - name: Get commit message
+        id: get_commit
+        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
       - name: Install dependencies
-        run: |
-          git checkout -B master
-          composer install
-          git add .
-          git commit -m "Install composer dependencies" || echo "Nothing to commit"
-          git push --set-upstream pantheon master --force
+        run: composer install
       - name: Deploy to Pantheon
         uses: stevector-streaming/dtp@0.2.1
         with:
           ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
           site: wpnext-test
           machine_token: ${{ secrets.TERMINUS_TOKEN }}
+          git_commit_message: ${{ steps.get_commit.outputs.message }}
  
