@@ -21,7 +21,11 @@ if [ -z "$MULTIDEV_ARG" ]; then
     PANTHEON_MULTIDEV_JSON=$(terminus multidev:list -n ${TERMINUS_SITE} --format=json)
     if echo "${PANTHEON_MULTIDEV_JSON}" | jq -e --arg TERMINUS_ENV "$TERMINUS_ENV" 'has($TERMINUS_ENV)' > /dev/null; then
         echo "Multidev environment $TERMINUS_ENV exists."
-        terminus multidev:delete -y --delete-branch -- $SITE_ENV
+        if [ $SKIP_CLEANUP == '1' ]; then
+            echo "Cleanup skipped. Leaving the existing $TERMINUS_ENV environment..."
+        else
+            terminus multidev:delete -y --delete-branch -- $SITE_ENV
+        fi
     else
         echo "Multidev environment $TERMINUS_ENV does not exist."
     fi
