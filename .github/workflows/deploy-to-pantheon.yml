@@ -31,11 +31,10 @@ jobs:
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
       - name: Install dependencies
         run: |
-          git fetch pantheon
-          git checkout -B master pantheon/master --allow-unrelated-histories
+          git checkout -B master
           composer install
           git add .
-          git commit -m "Install composer dependencies"
+          git commit -m "Install composer dependencies" || echo "Nothing to commit"
           git push --set-upstream pantheon master --force
       - name: Deploy to Pantheon
         uses: stevector-streaming/dtp@0.2.1
