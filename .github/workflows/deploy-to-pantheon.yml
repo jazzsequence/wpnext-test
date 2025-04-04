@@ -18,6 +18,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: start deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ github.token }}
+          env: dev
+          ref: ${{ github.head_ref }}
+
       - name: Get commit message
         id: get_commit
         run: |
@@ -46,3 +55,16 @@ jobs:
 
       - name: Push to Pantheon
         run: git push --set-upstream pantheon master --force
+        
+      - name: Update deployment status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ github.token }}
+          status: ${{ job.status }}
+          ref: ${{ github.head_ref }}
+          # todo, how does this work when there is a step above with the id of "deployment" not "deployment_id"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env: dev
+          env_url: https://dev-wpnext-test.pantheonsite.io
