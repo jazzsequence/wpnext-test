@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2155
 set -e
 
 # Get the multidev argument (if provided)
@@ -21,10 +22,10 @@ if [ -z "$MULTIDEV_ARG" ]; then
     PANTHEON_MULTIDEV_JSON=$(terminus multidev:list -n ${TERMINUS_SITE} --format=json)
     if echo "${PANTHEON_MULTIDEV_JSON}" | jq -e --arg TERMINUS_ENV "$TERMINUS_ENV" 'has($TERMINUS_ENV)' > /dev/null; then
         echo "Multidev environment $TERMINUS_ENV exists."
-        if [ $SKIP_CLEANUP == '1' ]; then
+        if [ "$SKIP_CLEANUP" == '1' ]; then
             echo "Cleanup skipped. Leaving the existing $TERMINUS_ENV environment..."
         else
-            terminus multidev:delete -y --delete-branch -- $SITE_ENV
+            terminus multidev:delete -y --delete-branch -- "$SITE_ENV"
         fi
     else
         echo "Multidev environment $TERMINUS_ENV does not exist."
@@ -41,9 +42,9 @@ echo "Preparing tests..."
 ./scripts/behat-test.sh
 
 # Cleanup the tests
-if [ -z "$MULTIDEV_ARG" ] && [ $SKIP_CLEANUP != '1' ]; then
+if [ -z "$MULTIDEV_ARG" ] && [ "$SKIP_CLEANUP" != '1' ]; then
     echo "Cleaning up tests..."
     "$BEHAT_PATH/cleanup.sh"
 else
-    terminus connection:set -n $SITE_ENV git
+    terminus connection:set -n "$SITE_ENV" git
 fi
