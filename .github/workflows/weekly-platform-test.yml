@@ -3,6 +3,7 @@ name: Weekly Platform Test
 on:
   schedule:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
+  workflow_dispatch:
 
 jobs:
   run-behat-tests:
