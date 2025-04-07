@@ -25,7 +25,7 @@ jobs:
         with:
           pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
 
-      - name: start deployment
+      - name: Start deployment
         uses: bobheadxi/deployments@v1
         id: deployment
         with:
@@ -69,6 +69,18 @@ jobs:
             echo "skip_push=true" >> $GITHUB_ENV
           else
             git commit -m "${{ steps.get_commit.outputs.message }}" || echo "Nothing to commit"
+          fi
+
+      - name: Compare commit messages
+        id: compare_commits
+        run: |
+          LAST_COMMIT_MSG=$(git log -1 --pretty=%s)
+          PREV_COMMIT_MSG=$(git log -2 --pretty=%s | tail -n 1)
+          echo "Last commit message: $LAST_COMMIT_MSG"
+          echo "Previous commit message: $PREV_COMMIT_MSG"
+          if [ "$LAST_COMMIT_MSG" == "$PREV_COMMIT_MSG" ]; then
+            echo "Duplicate commit messages detected. Skipping deployment."
+            echo "skip_deploy=true" >> $GITHUB_ENV
           fi
 
       - name: Push to Pantheon
