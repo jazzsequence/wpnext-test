@@ -23,12 +23,14 @@ wp_version=$(get_latest_wp_release)
 remote_wp_version=$(terminus wp -- "$TERMINUS_SITE".test-base core version)
 env_exists=$(terminus env:info "$SITE_ENV" || echo "")
 
+echo "Latest WordPress version is $wp_version. The version installed on $TERMINUS_SITE.test-base is $remote_wp_version."
+
 # Set FTP mode.
 terminus connection:set "$TERMINUS_SITE".test-base sftp -y
 
 # Only update to the latest release if we're not already on the latest version
-echo "Checking installed WordPress version on $TERMINUS_SITE.test-base..."
 if [ "$wp_version" != "$remote_wp_version" ]; then
+	echo "WordPress is not the latest version. Updating to $wp_version..."
 	terminus wp -- "$TERMINUS_SITE".test-base core update --version="$wp_version" --force
 	terminus env:commit "$TERMINUS_SITE".test-base --message="WordPress core update $wp_version"
 	terminus build:workflow:wait "$TERMINUS_SITE".test-base --max=30
