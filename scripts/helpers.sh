@@ -104,6 +104,9 @@ merge_updates_from_pantheon_to_github() {
     # Pull updates from Pantheon
     git pull pantheon master
 
+    # Checkout main after pulling updates
+    git checkout main
+
     # Merge the updates from Pantheon into GitHub
     git merge --ff-only $TYPE-updates --allow-unrelated-histories
 
