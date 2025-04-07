@@ -18,6 +18,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install Terminus
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
+
       - name: start deployment
         uses: bobheadxi/deployments@v1
         id: deployment
@@ -66,7 +71,9 @@ jobs:
 
       - name: Push to Pantheon
         if: env.skip_push != 'true'
-        run: git push --set-upstream pantheon master --force
+        run: |
+          git push --set-upstream pantheon master --force
+          terminus workflow:wait wpnext.dev
 
       - name: Update deployment status
         uses: bobheadxi/deployments@v1
