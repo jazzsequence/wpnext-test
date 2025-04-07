@@ -40,23 +40,15 @@ if [ "$TERMINUS_ENV" == 'dev' ] || [ "$TERMINUS_ENV" == 'master' ]; then
 	exit 1
 fi
 
-		# Create a new environment for this particular test run.
-		terminus env:create "$TERMINUS_SITE".test-base "$TERMINUS_ENV"
-	fi
+
+if [ -z "$env_exists" ]; then
+	echo "Environment $TERMINUS_ENV does not exist."
+
+	# Create a new environment for this particular test run.
+	terminus env:create "$TERMINUS_SITE".test-base "$TERMINUS_ENV"
+
 else
-	# If the environment was specified, make sure it exists.
-	if [ -z "$env_exists" ]; then
-		echo "Environment $TERMINUS_ENV does not exist."
-
-		# Create a new environment for this particular test run.
-		terminus env:create "$TERMINUS_SITE".test-base "$TERMINUS_ENV"
-	fi
-
-	# Never run this directly on dev.
-	if [ "$TERMINUS_ENV" == 'dev' ] || [ "$TERMINUS_ENV" == 'master' ]; then
-		echo "You cannot run this script on the dev environment."
-		exit 1
-	fi
+	echo "Environment $TERMINUS_ENV already exists. Skipping multidev creation."
 fi
 
 terminus connection:set "$SITE_ENV" sftp
