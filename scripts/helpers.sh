@@ -109,7 +109,7 @@ merge_updates_from_pantheon_to_github() {
     git checkout main
 
     # Merge the updates from Pantheon into GitHub
-    git merge --ff-only "$TYPE"-updates --allow-unrelated-histories
+    git merge --no-edit "$TYPE"-updates
 
     # Push to GitHub.
     git push origin main # Assumes `origin` is GitHub
