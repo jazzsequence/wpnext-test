@@ -51,8 +51,7 @@ else
   exit 1
 fi
 
-terminus connection:set wp59-test.dev git
-echo "Pushing changes to Pantheon..."
+echo "Pushing changes to GitHub..."
 git push origin master
 
 terminus workflow:wait $TERMINUS_SITE.dev
