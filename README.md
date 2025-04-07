@@ -11,9 +11,12 @@ The site includes various plugins to test new functionality or compatibility and
 ## Getting Started
 
 **Site ID:** `wpnext-test`  
-**Dev environment:** https://dev-wpnext-test.pantheonsite.io  
-**Test environment:** https://test-wpnext-test.pantheonsite.io  
-**Live environment:** https://live-wpnext-test.pantheonsite.io
+**Dev environment:** [![Dev environment](https://img.shields.io/badge/dev-yellow?logo=pantheon&logoColor=yellow&label=pantheon&labelColor=black&color=yellow
+)](https://dev-wpnext-test.pantheonsite.io)  
+**Test environment:** [![Test environment](https://img.shields.io/badge/test-yellow?logo=pantheon&logoColor=yellow&label=pantheon&labelColor=black&color=yellow
+)](https://test-wpnext-test.pantheonsite.io)  
+**Live environment:** [![Live environment](https://img.shields.io/badge/dev-yellow?logo=pantheon&logoColor=yellow&label=pantheon&labelColor=black&color=yellow
+)](https://live-wpnext-test.pantheonsite.io)
 
 ### 1. Clone the site repository locally
 
