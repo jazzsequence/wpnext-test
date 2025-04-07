@@ -68,3 +68,17 @@ jobs:
         run: |
           terminus env:deploy wpnext-test.${{ github.event.inputs.environment }} --note "${{ steps.get_commit.outputs.message }}"
           echo "Code deployed to ${{ github.event.inputs.environment }} environment."
+
+      - name: Update deployment status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          token: ${{ github.token }}
+          status: ${{ job.status }}
+          ref: ${{ github.head_ref }}
+          # todo, how does this work when there is a step above with the id of "deployment" not "deployment_id"
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env: ${{ github.event.inputs.environment }}
+          env_url: https://${{ github.event.inputs.environment }}-wpnext-test.pantheonsite.io
+        
