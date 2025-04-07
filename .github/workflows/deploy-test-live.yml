@@ -16,8 +16,8 @@ on:
         default: 'yes'
         type: choice
         options:
-          - yes
-          - no
+          - 'yes'
+          - 'no'
 
 permissions:
   contents: write
@@ -33,15 +33,6 @@ jobs:
         uses: pantheon-systems/terminus-github-actions@v1
         with:
           pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
-
-      - name: Set deploy inputs
-        id: deploy_inputs
-        run: |
-          echo "do_backup=${{ github.event.inputs.do_backup }}" >> $GITHUB_OUTPUT
-          
-      - name: Debug deploy inputs
-        run: |
-          echo "do_backup input: ${{ github.event.inputs.do_backup }}"      
 
       - name: Start deployment
         uses: bobheadxi/deployments@v1
@@ -64,7 +55,7 @@ jobs:
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
       
       - name: Create backup
-        if: ${{ github.deploy_inputs.outputs.do_backup == 'yes' }}
+        if: ${{ github.event.inputs.do_backup == 'yes' }}
         run: |
           terminus backup:create wpnext-test.${{ github.event.inputs.environment }} --element=all --keep-for=30
           echo "Backup created for ${{ github.event.inputs.environment }} environment."
