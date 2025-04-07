@@ -29,9 +29,6 @@ jobs:
     name: Deploy to ${{ github.event.inputs.environment }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Install Terminus
         uses: pantheon-systems/terminus-github-actions@v1
         with:
@@ -45,12 +42,6 @@ jobs:
           token: ${{ github.token }}
           env: ${{ github.event.inputs.environment }}
           ref: ${{ github.ref }}
-
-      - name: Get commit message
-        id: get_commit
-        run: |
-          COMMIT_MSG=$(git log -1 --pretty=%s)
-          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -71,7 +62,7 @@ jobs:
       
       - name: Deploy code
         run: |
-          terminus env:deploy wpnext-test.${{ github.event.inputs.environment }} --note "${{ steps.get_commit.outputs.message }}"
+          terminus env:deploy wpnext-test.${{ github.event.inputs.environment }} --note "Deploying code to ${{ github.event.inputs.environment }} from GitHub Actions"
           echo "Code deployed to ${{ github.event.inputs.environment }} environment."
 
       - name: Update deployment status
