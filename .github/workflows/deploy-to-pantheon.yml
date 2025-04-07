@@ -73,7 +73,7 @@ jobs:
         if: env.skip_push != 'true'
         run: |
           git push --set-upstream pantheon master --force
-          terminus workflow:wait wpnext.dev
+          terminus workflow:wait wpnext-test.dev
 
       - name: Update deployment status
         uses: bobheadxi/deployments@v1
