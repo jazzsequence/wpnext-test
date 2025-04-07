@@ -37,7 +37,11 @@ jobs:
       - name: Set deploy inputs
         id: deploy_inputs
         run: |
-          echo "do_backup=${{ github.event.inputs.do_backup }}" >> $GITHUB_OUTPUT        
+          echo "do_backup=${{ github.event.inputs.do_backup }}" >> $GITHUB_OUTPUT
+          
+      - name: Debug deploy inputs
+        run: |
+          echo "do_backup input: ${{ github.event.inputs.do_backup }}"      
 
       - name: Start deployment
         uses: bobheadxi/deployments@v1
