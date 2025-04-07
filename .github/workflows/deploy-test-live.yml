@@ -1,0 +1,70 @@
+name: (Manual) Deploy to Test or Live
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select the environment to deploy to'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - live
+      do_backup:
+        description: 'Do you want to create a backup before deploying?'
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - yes
+          - no
+
+jobs:
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Terminus
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
+
+      - name: Start deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ github.token }}
+          env: ${{ github.event.inputs.environment }}
+          ref: ${{ github.head_ref }}
+
+      - name: Get commit message
+        id: get_commit
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Configure Pantheon Host Key
+        run: |
+          echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
+          echo "Host *.drush.in PubkeyAcceptedKeyTypes +ssh-rsa" >> ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+      
+      - name: Create backup
+        if: github.event.inputs.do_backup == 'yes'
+        run: |
+          terminus backup:create wpnext-test.${{ github.event.inputs.environment }} --element=all --keep-for=30
+          echo "Backup created for ${{ github.event.inputs.environment }} environment."
+      
+      - name: Deploy code
+        run: |
+          terminus env:deploy wpnext-test.${{ github.event.inputs.environment }} --note "${{ steps.get_commit.outputs.message }}"
+          echo "Code deployed to ${{ github.event.inputs.environment }} environment."
