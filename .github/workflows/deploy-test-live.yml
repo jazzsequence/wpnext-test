@@ -76,7 +76,7 @@ jobs:
 
       - name: Update deployment status
         uses: bobheadxi/deployments@v1
-        if: always()
+        if: steps.deployment.outputs.deployment_id != ''
         with:
           step: finish
           token: ${{ github.token }}
