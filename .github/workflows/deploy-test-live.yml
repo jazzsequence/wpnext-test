@@ -44,7 +44,7 @@ jobs:
           step: start
           token: ${{ github.token }}
           env: ${{ github.event.inputs.environment }}
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref }}
 
       - name: Get commit message
         id: get_commit
