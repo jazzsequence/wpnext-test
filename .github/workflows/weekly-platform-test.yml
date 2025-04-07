@@ -36,6 +36,9 @@ jobs:
         with:
           pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
 
+      - name: Install Terminus Secrets Plugin
+        run: terminus self:plugin:install pantheon-systems/terminus-secrets-manager-plugin
+
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
 
