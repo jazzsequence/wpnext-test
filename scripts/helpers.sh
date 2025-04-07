@@ -79,6 +79,28 @@ get_lando() {
 	fi
 }
 
+merge_updates_from_pantheon_to_github() {
+    local TYPE=$1
+
+    # Checkout a new branch
+    git checkout -b $TYPE-updates
+    
+    # Pull updates from Pantheon
+    git pull pantheon master
+    
+    # Pull down the latest `main` from GitHub
+    git checkout main && git pull
+
+    # Merge the updates from Pantheon into GitHub
+    git merge --ff-only $TYPE-updates --allow-unrelated-histories
+
+    # Push to GitHub.
+    git push origin main # Assumes `origin` is GitHub
+
+    # Delete the $TYPE-updates branch
+    git branch -d $TYPE-updates
+}
+
 maybe_switch_to_git_mode() {
     local $TERMINUS_OR_LANDO
 
