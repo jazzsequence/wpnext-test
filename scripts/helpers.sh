@@ -65,7 +65,8 @@ get_lando() {
 		exit 1
 	fi
 
-	local APP_NAME=$(sed -n 's/^name: //p' .lando.yml)
+    # shellcheck disable=SC2155
+	local APP_NAME=$(sed -n 's/^name: //p' .lando.yml) 
 	local CONTAINER_NAME=${APP_NAME//-/}
 	# Check if there are any running containers for the container
 	running_containers=$(docker ps --filter "name=$CONTAINER_NAME" --format "{{.Names}}" | grep -c "$CONTAINER_NAME")
@@ -99,7 +100,7 @@ merge_updates_from_pantheon_to_github() {
     fi
 
     # Checkout a new branch
-    git checkout -b $TYPE-updates
+    git checkout -b "$TYPE"-updates
 
     # Pull updates from Pantheon
     git pull pantheon master
@@ -108,25 +109,25 @@ merge_updates_from_pantheon_to_github() {
     git checkout main
 
     # Merge the updates from Pantheon into GitHub
-    git merge --ff-only $TYPE-updates --allow-unrelated-histories
+    git merge --ff-only "$TYPE"-updates --allow-unrelated-histories
 
     # Push to GitHub.
     git push origin main # Assumes `origin` is GitHub
 
-    # Delete the $TYPE-updates branch
-    git branch -d $TYPE-updates
+    # Delete the "$TYPE"-updates branch
+    git branch -d "$TYPE"-updates
 }
 
 maybe_switch_to_git_mode() {
-    local $TERMINUS_OR_LANDO
+    local TERMINUS_OR_LANDO=${TERMINUS_OR_LANDO:-''}
 
-    if [ $TERMINUS_OR_LANDO = 'l' ]; then
+    if [ "$TERMINUS_OR_LANDO" = 'l' ]; then
     read -p "Switch back to git mode? (y or n): " -r GIT_MODE
 
-    if [ $GIT_MODE == "y" ]; then
+    if [ "$GIT_MODE" == "y" ]; then
         echo "Switching back to git mode."
-        terminus connection:set $TERMINUS_SITE.dev git
-    elif [ $GIT_MODE == "n" ]; then
+        terminus connection:set "$TERMINUS_SITE".dev git
+    elif [ "$GIT_MODE" == "n" ]; then
         echo "Staying on SFTP mode."
         exit 0
     else
@@ -136,6 +137,6 @@ maybe_switch_to_git_mode() {
     else
     # Terminus assumed, switch back to git so we can push to GitHub
     echo "Switching back to git mode."
-    terminus connection:set $TERMINUS_SITE.dev git
+    terminus connection:set "$TERMINUS_SITE".dev git
     fi    
 }
