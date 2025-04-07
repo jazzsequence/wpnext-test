@@ -10,11 +10,11 @@ The site includes various plugins to test new functionality or compatibility and
 
 ## Getting Started
 
-[![Dev environment](https://img.shields.io/badge/dev-yellow?logo=pantheon&logoColor=yellow&label=pantheon&labelColor=black&color=yellow
+[![Dev environment](https://img.shields.io/badge/dev-yellow?logo=pantheon&logoColor=yellow&label=wpnext-test&labelColor=black&color=yellow
 )](https://dev-wpnext-test.pantheonsite.io)
-[![Test environment](https://img.shields.io/badge/test-yellow?logo=pantheon&logoColor=yellow&label=pantheon&labelColor=black&color=yellow
+[![Test environment](https://img.shields.io/badge/test-yellow?logo=pantheon&logoColor=yellow&label=wpnext-test&labelColor=black&color=yellow
 )](https://test-wpnext-test.pantheonsite.io)
-[![Live environment](https://img.shields.io/badge/live-yellow?logo=pantheon&logoColor=yellow&label=pantheon&labelColor=black&color=yellow
+[![Live environment](https://img.shields.io/badge/live-yellow?logo=pantheon&logoColor=yellow&label=wpnext-test&labelColor=black&color=yellow
 )](https://live-wpnext-test.pantheonsite.io)
 
 **Site ID:** `wpnext-test`
