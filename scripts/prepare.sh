@@ -34,10 +34,11 @@ if [ "$wp_version" != "$remote_wp_version" ]; then
 	terminus build:workflow:wait "$TERMINUS_SITE".test-base --max=30
 fi
 
-# Only run multidev creation if the TERMINUS_ENV is 'behat'.
-if [ "$TERMINUS_ENV" == 'behat' ]; then
-	if [ -z "$env_exists" ]; then
-		echo "Environment $TERMINUS_ENV does not exist."
+# Never run this directly on dev.
+if [ "$TERMINUS_ENV" == 'dev' ] || [ "$TERMINUS_ENV" == 'master' ]; then
+	echo "You cannot run this script on the dev environment."
+	exit 1
+fi
 
 		# Create a new environment for this particular test run.
 		terminus env:create "$TERMINUS_SITE".test-base "$TERMINUS_ENV"
