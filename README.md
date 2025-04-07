@@ -21,8 +21,17 @@ The site includes various plugins to test new functionality or compatibility and
 
 ### 1. Clone the site repository locally
 
+This project uses GitHub as the source of truth, but some scripts assume WP-CLI is run on the Pantheon site directly. For this reason you'll want to clone from GitHub but add Pantheon as a remote.
+
 ```bash
-terminus local:clone wpnext-test && cd ~/pantheon-local-copies/wpnext-test
+git clone git@github.com:jazzsequence/wpnext-test.git && cd wpnext-test
+```
+
+### 2. Add the `pantheon` remote
+
+```bash
+site_id=$(terminus site:info --fields=id --format=list)
+git remote add pantheon ssh://codeserver.dev."$site_id"@codeserver.dev."$site_id".drush.in:2222/~/repository.git
 ```
 
 ### 2. Set a local `exclude` file
