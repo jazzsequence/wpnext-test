@@ -10,7 +10,7 @@ echo "Updating WordPress $TYPE to $wp_version..."
 terminus wp -- "$TERMINUS_SITE".dev $TYPE update --version="$wp_version" --force
 
 # Commit the changes and capture output
-COMMIT_OUTPUT=$(terminus env:commit "$TERMINUS_SITE".dev --message="Updating WordPress ${TYPE}s" 2>&1)
+COMMIT_OUTPUT=$(terminus env:commit "$TERMINUS_SITE".dev --message="Updating WordPress ${TYPE} to ${wp_version}" 2>&1)
 
 # Print output for debugging/logging
 echo "$COMMIT_OUTPUT"
