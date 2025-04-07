@@ -19,6 +19,11 @@ on:
           - yes
           - no
 
+permissions:
+  contents: write
+  deployments: write
+  statuses: write
+
 jobs:
   deploy:
     name: Deploy to ${{ github.event.inputs.environment }}
