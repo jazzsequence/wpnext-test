@@ -51,13 +51,19 @@ else
 	echo "Environment $TERMINUS_ENV already exists. Skipping multidev creation."
 fi
 
-terminus connection:set "$SITE_ENV" sftp
-# If it does exist, make sure there are no plugins that the tests don't expect.
-echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
-terminus wp "$SITE_ENV" -- plugin delete --all
-terminus wp "$SITE_ENV" -- plugin install akismet hello-dolly
+terminus connection:set "$SITE_ENV" sftp -y
 
-terminus env:wipe "$SITE_ENV" --yes
+# Only run the next commands if WordPress is installed.
+if ! terminus wp -- "$SITE_ENV" core info; then
+	echo "WordPress core is not installed. We're assuming this is from a previous run that did not complete. Skipping plugin deletion step."
+else
+	# If it does exist, make sure there are no plugins that the tests don't expect.
+	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
+	terminus wp "$SITE_ENV" -- plugin delete --all
+	terminus wp "$SITE_ENV" -- plugin install akismet hello-dolly
+
+	terminus env:wipe "$SITE_ENV" --yes
+fi
 
 ###
 # Get all necessary environment details.
