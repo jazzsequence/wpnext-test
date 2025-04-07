@@ -32,6 +32,7 @@ wp-content/plugins/games-collector
 wp-content/mu-plugins/cmb2
 wp-content/plugins/git-updater
 wp-content/mu-plugins/pantheon-mu-plugin
+wp-content/plugins/mailpoet
 ```
 
 ### 3. Run Composer install
