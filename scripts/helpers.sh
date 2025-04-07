@@ -82,14 +82,27 @@ get_lando() {
 merge_updates_from_pantheon_to_github() {
     local TYPE=$1
 
-    # Checkout a new branch
-    git checkout -b $TYPE-updates
-    
-    # Pull updates from Pantheon
-    git pull pantheon master
-    
     # Pull down the latest `main` from GitHub
     git checkout main && git pull
+
+    # Check if pantheon/master is different than origin/main
+    if ! git fetch pantheon master || ! git fetch origin main; then
+        echo "Failed to fetch from Pantheon or GitHub." >&2
+        exit 1
+    fi
+
+    if git diff --quiet origin/main..pantheon/master; then
+        echo "No changes found between pantheon/master and origin/main."
+        exit 0
+    else
+        echo "Changes found between pantheon/master and origin/main."
+    fi
+
+    # Checkout a new branch
+    git checkout -b $TYPE-updates
+
+    # Pull updates from Pantheon
+    git pull pantheon master
 
     # Merge the updates from Pantheon into GitHub
     git merge --ff-only $TYPE-updates --allow-unrelated-histories
