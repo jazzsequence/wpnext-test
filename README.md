@@ -82,6 +82,8 @@ If updating with Lando, you can update plugins, themes, or WordPress core to the
 
 If updating with Terminus, the behavior is mostly the same. Rather than installing the changes locally first, the script will run `terminus wp` commands to update the plugin, theme or latest alpha, beta or RC version of WordPress core. One notable difference with the Terminus option is that there is not (currently) support for running updates on all three things in one command -- plugins, themes and core updates are handled separately. Once the updates are applied on the Dev environment, the script will commit the updates and pull the changes down locally.
 
+Since the GitHub repository is intended to be the source of truth, after a Terminus-based update, the code will need to be pushed up to the GitHub repository. This is handled automatically by the update scripts.
+
 #### Usage
 ```bash
 composer wordpress-update
