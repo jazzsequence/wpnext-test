@@ -89,6 +89,7 @@ jobs:
       - name: Push to Pantheon
         if: env.skip_push != 'true'
         run: |
+          terminus connection:set wpnext-test.dev git
           git push --set-upstream pantheon master --force
           terminus workflow:wait wpnext-test.dev
 
