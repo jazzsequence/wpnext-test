@@ -5,7 +5,6 @@ source scripts/helpers.sh
 TYPE="plugin"
 
 terminus wp -- $TERMINUS_SITE.dev $TYPE update --all
-terminus build:workflow:wait $TERMINUS_SITE.dev --max=15
 
 # Commit the changes and capture output
 COMMIT_OUTPUT=$(terminus env:commit $TERMINUS_SITE.dev --message="Updating WordPress ${TYPE}s" 2>&1)
