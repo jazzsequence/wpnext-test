@@ -55,7 +55,7 @@ jobs:
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
       
       - name: Create backup
-        if: github.event.inputs.do_backup == 'yes'
+        if: ${{ github.event.inputs.do_backup == 'yes' }}
         run: |
           terminus backup:create wpnext-test.${{ github.event.inputs.environment }} --element=all --keep-for=30
           echo "Backup created for ${{ github.event.inputs.environment }} environment."
@@ -67,7 +67,7 @@ jobs:
 
       - name: Update deployment status
         uses: bobheadxi/deployments@v1
-        if: steps.deployment.outputs.deployment_id != ''
+        if: ${{ steps.deployment.outputs.deployment_id != '' }}
         with:
           step: finish
           token: ${{ github.token }}
