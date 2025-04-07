@@ -63,9 +63,9 @@ else
 	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 	terminus wp "$SITE_ENV" -- plugin delete --all
 	terminus wp "$SITE_ENV" -- plugin install akismet hello-dolly
-
-	terminus env:wipe "$SITE_ENV" --yes
 fi
+
+terminus env:wipe "$SITE_ENV" --yes
 
 ###
 # Get all necessary environment details.
