@@ -11,6 +11,9 @@ The site includes various plugins to test new functionality or compatibility and
 ## Getting Started
 
 **Site ID:** `wpnext-test`
+**Dev environment:** https://dev-wpnext-test.pantheonsite.io
+**Test environment:** https://test-wpnext-test.pantheonsite.io
+**Live environment:** https://live-wpnext-test.pantheonsite.io
 
 ### 1. Clone the site repository locally
 
