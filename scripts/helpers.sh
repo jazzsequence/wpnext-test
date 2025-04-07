@@ -78,3 +78,26 @@ get_lando() {
 		lando start
 	fi
 }
+
+maybe_switch_to_git_mode() {
+    local $TERMINUS_OR_LANDO
+
+    if [ $TERMINUS_OR_LANDO = 'l' ]; then
+    read -p "Switch back to git mode? (y or n): " -r GIT_MODE
+
+    if [ $GIT_MODE == "y" ]; then
+        echo "Switching back to git mode."
+        terminus connection:set $TERMINUS_SITE.dev git
+    elif [ $GIT_MODE == "n" ]; then
+        echo "Staying on SFTP mode."
+        exit 0
+    else
+        echo "Invalid option. Please try again."
+        exit 1
+    fi
+    else
+    # Terminus assumed, switch back to git so we can push to GitHub
+    echo "Switching back to git mode."
+    terminus connection:set $TERMINUS_SITE.dev git
+    fi    
+}

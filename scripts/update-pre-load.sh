@@ -20,6 +20,8 @@ else
   exit 1
 fi
 
+export TERMINUS_OR_LANDO
+
 # Switch to SFTP mode
 terminus connection:set $TERMINUS_SITE.dev sftp
 

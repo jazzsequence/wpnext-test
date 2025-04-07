@@ -13,3 +13,5 @@ terminus env:commit $TERMINUS_SITE.dev --message="WordPress core update $wp_vers
 
 # Wait for the workflow to finish
 terminus build:workflow:wait $TERMINUS_SITE.dev --max=30
+
+maybe_switch_to_git_mode $TERMINUS_OR_LANDO
