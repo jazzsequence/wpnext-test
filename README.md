@@ -34,7 +34,7 @@ site_id=$(terminus site:info --fields=id --format=list)
 git remote add pantheon ssh://codeserver.dev."$site_id"@codeserver.dev."$site_id".drush.in:2222/~/repository.git
 ```
 
-### 2. Set a local `exclude` file
+### 3. Set a local `exclude` file
 
 You can ignore files locally but not in the repository. We do this so we're not committing Composer-managed packages to the repository but they will get committed and pushed to Pantheon. To do this, in your IDE open `.git/info/exclude` and add the following lines:
 
@@ -51,7 +51,7 @@ wp-content/mu-plugins/pantheon-mu-plugin
 wp-content/plugins/mailpoet
 ```
 
-### 3. Run Composer install
+### 4. Run Composer install
 
 Many of the dependencies use Composer. It's assumed you have Composer installed locally, if not, you will need to [install that first](https://getcomposer.org/doc/00-intro.md#installation-linux-unix-macos).
 
@@ -59,7 +59,7 @@ Many of the dependencies use Composer. It's assumed you have Composer installed 
 composer install
 ```
 
-### 4. Start Lando (optional)
+### 5. Start Lando (optional)
 
 The project includes a `.lando.example-yml` file as well for local development using Lando. Your mileage may vary with your specific Lando configuration. However, if your Terminus account has access to the site, you should be able to run `lando start` (assuming [Lando is installed](https://lando.dev/download/)) to get a local environment, and then `lando pull -c none -f dev -d dev` to pull files and database from Pantheon.
 
