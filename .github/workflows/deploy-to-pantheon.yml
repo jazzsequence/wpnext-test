@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Push to Pantheon
-        if: env.skip_push != 'true'
+        if: ${{ env.skip_deploy != 'true' }}
         run: |
           terminus connection:set wpnext-test.dev git
           git push --set-upstream pantheon master --force
