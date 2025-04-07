@@ -55,7 +55,7 @@ terminus connection:set wp59-test.dev git
 echo "Pushing changes to Pantheon..."
 git push origin master
 
-terminus workflow:wait wp59-test.dev
+terminus workflow:wait $TERMINUS_SITE.dev
 
-terminus env:deploy wp59-test.test --note="Updating WordPress core, plugins, and themes"
-terminus env:deploy wp59-test.live --note="Updating WordPress core, plugins, and themes"
+terminus env:deploy $TERMINUS_SITE.test --note="Updating WordPress core, plugins, and themes"
+terminus env:deploy $TERMINUS_SITE.live --note="Updating WordPress core, plugins, and themes"

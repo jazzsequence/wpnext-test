@@ -3,6 +3,8 @@ set -e
 
 dir=$(pwd)/scripts
 
+export TERMINUS_SITE="wpnext-test"
+
 echo "Logging into Terminus. If this fails, make sure you're logged into terminus first."
 terminus auth:login
 
@@ -19,7 +21,7 @@ else
 fi
 
 # Switch to SFTP mode
-terminus connection:set wp59-test.dev sftp
+terminus connection:set $TERMINUS_SITE.dev sftp
 
 read -p "Enter the type of update you would like to perform (c or core, p or plugin, t or theme): " -r UPDATE_TYPE
 

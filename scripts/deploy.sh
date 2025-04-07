@@ -1,2 +1,4 @@
-terminus env:deploy wp59-test.test
-terminus env:deploy wp59-test.live
+export TERMINUS_SITE=${TERMINUS_SITE:-"wpnext-test"}
+
+terminus env:deploy $TERMINUS_SITE.test
+terminus env:deploy $TERMINUS_SITE.live
