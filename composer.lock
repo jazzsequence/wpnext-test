@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e29c6eedaf85b58f50c9f2d37b7014b8",
+    "content-hash": "8d64d8c309bbbd2b1a7a51d5b2d2eadd",
     "packages": [
         {
             "name": "behat/behat",
@@ -3942,6 +3942,24 @@
             },
             "type": "wordpress-plugin",
             "homepage": "https://wordpress.org/plugins/gutenberg/"
+        },
+        {
+            "name": "wpackagist-plugin/mailpoet",
+            "version": "5.10.0",
+            "source": {
+                "type": "svn",
+                "url": "https://plugins.svn.wordpress.org/mailpoet/",
+                "reference": "tags/5.10.0"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://downloads.wordpress.org/plugin/mailpoet.5.10.0.zip"
+            },
+            "require": {
+                "composer/installers": "^1.0 || ^2.0"
+            },
+            "type": "wordpress-plugin",
+            "homepage": "https://wordpress.org/plugins/mailpoet/"
         },
         {
             "name": "wpackagist-plugin/test-reports",
