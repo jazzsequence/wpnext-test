@@ -56,7 +56,7 @@ fi
 terminus connection:set "$SITE_ENV" sftp -y
 
 # Only run the next commands if WordPress is installed.
-if ! terminus wp -- "$SITE_ENV" core info; then
+if ! terminus wp -- "$SITE_ENV" core is-installed; then
 	echo "WordPress core is not installed. We're assuming this is from a previous run that did not complete. Skipping plugin deletion step."
 else
 	# If it does exist, make sure there are no plugins that the tests don't expect.
