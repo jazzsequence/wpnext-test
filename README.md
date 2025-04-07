@@ -95,7 +95,7 @@ composer wordpress-update
 
 ### `test`
 
-Prepares and runs the [`pantheon-systems/pantheon-wordpress-upstream-tests](https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests) Behat test suite against a new `behat` multidev that is branched from a barebones `test-base` multidev environment. The `test-base` and `behat` environments have been tuned to remove the custom plugins added to the base Dev environment and the database is wiped when the tests are initialized.
+Prepares and runs the [`pantheon-systems/pantheon-wordpress-upstream-tests`](https://github.com/pantheon-systems/pantheon-wordpress-upstream-tests) Behat test suite against a new `behat` multidev that is branched from a barebones `test-base` multidev environment. The `test-base` and `behat` environments have been tuned to remove the custom plugins added to the base Dev environment and the database is wiped when the tests are initialized.
 
 A WordPress update is run to the latest alpha, beta or RC version of WordPress if the current version does not match the latest.
 
