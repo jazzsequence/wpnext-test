@@ -99,6 +99,8 @@ Prepares and runs the [`pantheon-systems/pantheon-wordpress-upstream-tests`](htt
 
 A WordPress update is run to the latest alpha, beta or RC version of WordPress if the current version does not match the latest.
 
+This script is set to run [weekly](https://github.com/jazzsequence/wpnext-test/actions/workflows/weekly-platform-test.yml) using GitHub Actions internal cron.
+
 #### Usage
 ```bash
 composer test
