@@ -1,6 +1,6 @@
 # WordPress Release Tester
 
-[![GitHub deployments](https://img.shields.io/github/deployments/jazzsequence/wpnext-test/dev?logo=lightning&logoColor=yellow&label=deployment&labelColor=black)](https://dev-wpnext-test.pantheonsite.io)
+[![GitHub deployments](https://img.shields.io/github/deployments/jazzsequence/wpnext-test/dev?logo=pantheon&logoColor=yellow&label=deployment&labelColor=black)](https://dev-wpnext-test.pantheonsite.io)
 [![Weekly Platform Test](https://github.com/jazzsequence/wpnext-test/actions/workflows/weekly-platform-test.yml/badge.svg)](https://github.com/jazzsequence/wpnext-test/actions/workflows/weekly-platform-test.yml)
 [![Shellcheck](https://github.com/jazzsequence/wpnext-test/actions/workflows/shellcheck.yml/badge.svg)](https://github.com/jazzsequence/wpnext-test/actions/workflows/shellcheck.yml)
 
