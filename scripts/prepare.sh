@@ -21,7 +21,7 @@ fi
 # Set up test-base.
 wp_version=$(get_latest_wp_release)
 remote_wp_version=$(terminus wp -- "$TERMINUS_SITE".test-base core version)
-env_exists=$(terminus env:info "$SITE_ENV")
+env_exists=$(terminus env:info "$SITE_ENV" || echo "")
 
 # Set FTP mode.
 terminus connection:set "$TERMINUS_SITE".test-base sftp -y
