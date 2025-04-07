@@ -91,13 +91,6 @@ if ( ! defined( 'WP_DEBUG' ) ) {
 	}
 }
 
-
-defined( 'PANTHEON_WPVULNDB_API_TOKEN' ) or define( 'PANTHEON_WPVULNDB_API_TOKEN', 'NqhQr4aIEFFUzNyc5rRe0siKnsMw4GL6r7kSi40Was0' );
-if ( ! isset( $_ENV['PANTHEON_WPVULNDB_API_TOKEN'] ) ) {
-	$_ENV['PANTHEON_WPVULNDB_API_TOKEN'] = PANTHEON_WPVULNDB_API_TOKEN;
-}
-defined( 'WPSCAN_API_TOKEN' ) or define( 'WPSCAN_API_TOKEN', PANTHEON_WPVULNDB_API_TOKEN );
-defined( 'PANTHEON_WPSCAN_ENVIRONMENTS' ) or define( 'PANTHEON_WPSCAN_ENVIRONMENTS', 'dev' );
 /* That's all, stop editing! Happy Pressing. */
 
 
