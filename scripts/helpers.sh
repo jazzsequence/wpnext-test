@@ -99,17 +99,20 @@ merge_updates_from_pantheon_to_github() {
         echo "Changes found between pantheon/master and origin/main."
     fi
 
-    # Checkout a new branch
-    git checkout -b "$TYPE"-updates
+    # Fetch updates from Pantheon
+    git fetch pantheon
 
-    # Pull updates from Pantheon
-    git pull pantheon master
+    # Checkout a new branch
+    git checkout -b "$TYPE"-updates pantheon/master
+
+    # Rebase Pantheon's changes onto main.
+    git rebase main
 
     # Checkout main after pulling updates
     git checkout main
 
     # Merge the updates from Pantheon into GitHub
-    git merge --no-edit "$TYPE"-updates
+    git merge "$TYPE"-updates --ff-only
 
     # Push to GitHub.
     git push origin main # Assumes `origin` is GitHub
