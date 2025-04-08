@@ -378,14 +378,9 @@ input.bulk-select-switcher:focus + .bulk-select-button-label {
 
 /* Add Menu Item Boxes */
 .postbox .howto input,
-.customlinkdiv .menu-item-textbox,
-.customlinkdiv .error-message {
+.customlinkdiv .menu-item-textbox {
 	width: 180px;
 	float: left;
-}
-
-.customlinkdiv .error-message {
-	clear: left;
 }
 
 .accordion-container .outer-border {

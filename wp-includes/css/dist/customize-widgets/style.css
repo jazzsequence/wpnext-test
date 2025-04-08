@@ -60,24 +60,16 @@
 .customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon{
   border-radius:2px;
   color:#fff;
-  height:32px;
+  height:24px;
   margin:12px 0 12px auto;
-  min-width:32px;
+  min-width:24px;
   padding:0;
 }
 .customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon:before{
   content:none;
 }
-@media not (prefers-reduced-motion){
-  .customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon svg{
-    transition:transform .2s cubic-bezier(.165, .84, .44, 1);
-  }
-}
 .customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon.is-pressed{
   background:#1e1e1e;
-}
-.customize-widgets-header-toolbar .customize-widgets-header-toolbar__inserter-toggle.components-button.has-icon.is-pressed svg{
-  transform:rotate(45deg);
 }
 .customize-widgets-header-toolbar .components-button.has-icon.customize-widgets-editor-history-button.redo-button{
   margin-left:-12px;

@@ -100,9 +100,9 @@ __webpack_require__.d(actions_namespaceObject, {
   removeFormatTypes: () => (removeFormatTypes)
 });
 
-;// external ["wp","data"]
+;// CONCATENATED MODULE: external ["wp","data"]
 const external_wp_data_namespaceObject = window["wp"]["data"];
-;// ./node_modules/@wordpress/rich-text/build-module/store/reducer.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/store/reducer.js
 /**
  * WordPress dependencies
  */
@@ -136,7 +136,7 @@ function formatTypes(state = {}, action) {
   formatTypes
 }));
 
-;// ./node_modules/@wordpress/rich-text/build-module/store/selectors.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/store/selectors.js
 /**
  * WordPress dependencies
  */
@@ -211,7 +211,7 @@ const getFormatTypes = (0,external_wp_data_namespaceObject.createSelector)(state
  * };
  * ```
  *
- * @return {?Object} Format type.
+ * @return {Object?} Format type.
  */
 function getFormatType(state, name) {
   return state.formatTypes[name];
@@ -298,7 +298,7 @@ function getFormatTypeForClassName(state, elementClassName) {
   });
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/store/actions.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/store/actions.js
 /**
  * Returns an action object used in signalling that format types have been
  * added.
@@ -335,7 +335,7 @@ function removeFormatTypes(names) {
   };
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/store/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/store/index.js
 /**
  * WordPress dependencies
  */
@@ -363,7 +363,7 @@ const store = (0,external_wp_data_namespaceObject.createReduxStore)(STORE_NAME, 
 });
 (0,external_wp_data_namespaceObject.register)(store);
 
-;// ./node_modules/@wordpress/rich-text/build-module/is-format-equal.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/is-format-equal.js
 /** @typedef {import('./types').RichTextFormat} RichTextFormat */
 
 /**
@@ -416,7 +416,7 @@ function isFormatEqual(format1, format2) {
   return true;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/normalise-formats.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/normalise-formats.js
 /**
  * Internal dependencies
  */
@@ -454,7 +454,7 @@ function normaliseFormats(value) {
   };
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/apply-format.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/apply-format.js
 /**
  * Internal dependencies
  */
@@ -542,7 +542,7 @@ function applyFormat(value, format, startIndex = value.start, endIndex = value.e
   });
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/create-element.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/create-element.js
 /**
  * Parse the given HTML into a body element.
  *
@@ -569,7 +569,7 @@ function createElement({
   return createElement.body;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/special-characters.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/special-characters.js
 /**
  * Object replacement character, used as a placeholder for objects.
  */
@@ -581,9 +581,9 @@ const OBJECT_REPLACEMENT_CHARACTER = '\ufffc';
  */
 const ZWNBSP = '\ufeff';
 
-;// external ["wp","escapeHtml"]
+;// CONCATENATED MODULE: external ["wp","escapeHtml"]
 const external_wp_escapeHtml_namespaceObject = window["wp"]["escapeHtml"];
-;// ./node_modules/@wordpress/rich-text/build-module/get-active-formats.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/get-active-formats.js
 /** @typedef {import('./types').RichTextValue} RichTextValue */
 /** @typedef {import('./types').RichTextFormatList} RichTextFormatList */
 
@@ -667,7 +667,7 @@ function getActiveFormats(value, EMPTY_ACTIVE_FORMATS = []) {
   return _activeFormats || EMPTY_ACTIVE_FORMATS;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/get-format-type.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/get-format-type.js
 /**
  * WordPress dependencies
  */
@@ -690,7 +690,7 @@ function get_format_type_getFormatType(name) {
   return (0,external_wp_data_namespaceObject.select)(store).getFormatType(name);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/to-tree.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/to-tree.js
 /**
  * Internal dependencies
  */
@@ -896,18 +896,7 @@ function toTree({
         innerHTML
       } = replacement;
       const formatType = get_format_type_getFormatType(type);
-      if (isEditableTree && type === '#comment') {
-        pointer = append(getParent(pointer), {
-          type: 'span',
-          attributes: {
-            contenteditable: 'false',
-            'data-rich-text-comment': attributes['data-rich-text-comment']
-          }
-        });
-        append(append(pointer, {
-          type: 'span'
-        }), attributes['data-rich-text-comment'].trim());
-      } else if (!isEditableTree && type === 'script') {
+      if (!isEditableTree && type === 'script') {
         pointer = append(getParent(pointer), fromFormat({
           type: 'script',
           isEditableTree
@@ -980,7 +969,7 @@ function toTree({
   return tree;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/to-html-string.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/to-html-string.js
 /**
  * WordPress dependencies
  */
@@ -998,7 +987,7 @@ function toTree({
 /**
  * Create an HTML string from a Rich Text value.
  *
- * @param {Object}        $1                      Named arguments.
+ * @param {Object}        $1                      Named argements.
  * @param {RichTextValue} $1.value                Rich text value.
  * @param {boolean}       [$1.preserveWhiteSpace] Preserves newlines if true.
  *
@@ -1072,14 +1061,6 @@ function createElementHTML({
   object,
   children
 }) {
-  if (type === '#comment') {
-    // We can't restore the original comment delimiters, because once parsed
-    // into DOM nodes, we don't have the information. But in the future we
-    // could allow comment handlers to specify custom delimiters, for
-    // example `</{comment-content}>` for Bits, where `comment-content`
-    // would be `/{bit-name}` or `__{translatable-string}` (TBD).
-    return `<!--${attributes['data-rich-text-comment']}-->`;
-  }
   let attributeString = '';
   for (const key in attributes) {
     if (!(0,external_wp_escapeHtml_namespaceObject.isValidAttributeName)(key)) {
@@ -1101,7 +1082,7 @@ function createChildrenHTML(children = []) {
   }).join('');
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/get-text-content.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/get-text-content.js
 /**
  * Internal dependencies
  */
@@ -1123,7 +1104,7 @@ function getTextContent({
   return text.replace(OBJECT_REPLACEMENT_CHARACTER, '');
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/create.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/create.js
 /**
  * WordPress dependencies
  */
@@ -1245,13 +1226,6 @@ class RichTextData {
       html
     }));
   }
-  /**
-   * Create a RichTextData instance from an HTML element.
-   *
-   * @param {HTMLElement}                    htmlElement The HTML element to create the instance from.
-   * @param {{preserveWhiteSpace?: boolean}} options     Options.
-   * @return {RichTextData} The RichTextData instance.
-   */
   static fromHTMLElement(htmlElement, options = {}) {
     const {
       preserveWhiteSpace = false
@@ -1273,12 +1247,6 @@ class RichTextData {
   }
   // We could expose `toHTMLElement` at some point as well, but we'd only use
   // it internally.
-  /**
-   * Convert the rich text value to an HTML string.
-   *
-   * @param {{preserveWhiteSpace?: boolean}} options Options.
-   * @return {string} The HTML string.
-   */
   toHTMLString({
     preserveWhiteSpace
   } = {}) {
@@ -1549,7 +1517,7 @@ function removeReservedCharacters(string) {
 /**
  * Creates a Rich Text value from a DOM element and range.
  *
- * @param {Object}  $1                  Named arguments.
+ * @param {Object}  $1                  Named argements.
  * @param {Element} [$1.element]        Element to create value from.
  * @param {Range}   [$1.range]          Range to create value from.
  * @param {boolean} [$1.isEditableTree]
@@ -1586,21 +1554,6 @@ function createFromElement({
       accumulator.formats.length += text.length;
       accumulator.replacements.length += text.length;
       accumulator.text += text;
-      continue;
-    }
-    if (node.nodeType === node.COMMENT_NODE || node.nodeType === node.ELEMENT_NODE && node.tagName === 'SPAN' && node.hasAttribute('data-rich-text-comment')) {
-      const value = {
-        formats: [,],
-        replacements: [{
-          type: '#comment',
-          attributes: {
-            'data-rich-text-comment': node.nodeType === node.COMMENT_NODE ? node.nodeValue : node.getAttribute('data-rich-text-comment')
-          }
-        }],
-        text: OBJECT_REPLACEMENT_CHARACTER
-      };
-      accumulateSelection(accumulator, node, range, value);
-      mergePair(accumulator, value);
       continue;
     }
     if (node.nodeType !== node.ELEMENT_NODE) {
@@ -1706,7 +1659,7 @@ function createFromElement({
 /**
  * Gets the attributes of an element in object shape.
  *
- * @param {Object}  $1         Named arguments.
+ * @param {Object}  $1         Named argements.
  * @param {Element} $1.element Element to get attributes from.
  *
  * @return {Object|void} Attribute object or `undefined` if the element has no
@@ -1737,7 +1690,7 @@ function getAttributes({
   return accumulator;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/concat.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/concat.js
 /**
  * Internal dependencies
  */
@@ -1775,7 +1728,7 @@ function concat(...values) {
   return normaliseFormats(values.reduce(mergePair, create()));
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/get-active-format.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/get-active-format.js
 /**
  * Internal dependencies
  */
@@ -1802,7 +1755,7 @@ function getActiveFormat(value, formatType) {
   }) => type === formatType);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/get-active-object.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/get-active-object.js
 /**
  * Internal dependencies
  */
@@ -1831,7 +1784,7 @@ function getActiveObject({
   return replacements[start];
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/is-collapsed.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/is-collapsed.js
 /**
  * Internal dependencies
  */
@@ -1857,7 +1810,7 @@ function isCollapsed({
   return start === end;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/is-empty.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/is-empty.js
 /** @typedef {import('./types').RichTextValue} RichTextValue */
 
 /**
@@ -1874,7 +1827,7 @@ function isEmpty({
   return text.length === 0;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/join.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/join.js
 /**
  * Internal dependencies
  */
@@ -1900,18 +1853,18 @@ function join(values, separator = '') {
       text: separator
     });
   }
-  return normaliseFormats(values.reduce((accumulator, {
+  return normaliseFormats(values.reduce((accumlator, {
     formats,
     replacements,
     text
   }) => ({
-    formats: accumulator.formats.concat(separator.formats, formats),
-    replacements: accumulator.replacements.concat(separator.replacements, replacements),
-    text: accumulator.text + separator.text + text
+    formats: accumlator.formats.concat(separator.formats, formats),
+    replacements: accumlator.replacements.concat(separator.replacements, replacements),
+    text: accumlator.text + separator.text + text
   })));
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/register-format-type.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/register-format-type.js
 /**
  * WordPress dependencies
  */
@@ -2002,7 +1955,7 @@ function registerFormatType(name, settings) {
   return settings;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/remove-format.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/remove-format.js
 /**
  * Internal dependencies
  */
@@ -2073,7 +2026,7 @@ function filterFormats(formats, index, formatType) {
   }
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/insert.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/insert.js
 /**
  * Internal dependencies
  */
@@ -2117,7 +2070,7 @@ function insert(value, valueToInsert, startIndex = value.start, endIndex = value
   });
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/remove.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/remove.js
 /**
  * Internal dependencies
  */
@@ -2141,7 +2094,7 @@ function remove_remove(value, startIndex, endIndex) {
   return insert(value, create(), startIndex, endIndex);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/replace.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/replace.js
 /**
  * Internal dependencies
  */
@@ -2208,7 +2161,7 @@ function replace_replace({
   });
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/insert-object.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/insert-object.js
 /**
  * Internal dependencies
  */
@@ -2240,7 +2193,7 @@ function insertObject(value, formatToInsert, startIndex, endIndex) {
   return insert(value, valueToInsert, startIndex, endIndex);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/slice.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/slice.js
 /** @typedef {import('./types').RichTextValue} RichTextValue */
 
 /**
@@ -2272,7 +2225,7 @@ function slice(value, startIndex = value.start, endIndex = value.end) {
   };
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/split.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/split.js
 /**
  * Internal dependencies
  */
@@ -2348,7 +2301,7 @@ function splitAtSelection({
   return [before, after];
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/is-range-equal.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/is-range-equal.js
 /**
  * Returns true if two ranges are equal, or false otherwise. Ranges are
  * considered equal if their start and end occur in the same container and
@@ -2363,7 +2316,7 @@ function isRangeEqual(a, b) {
   return a === b || a && b && a.startContainer === b.startContainer && a.startOffset === b.startOffset && a.endContainer === b.endContainer && a.endOffset === b.endOffset;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/to-dom.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/to-dom.js
 /**
  * Internal dependencies
  */
@@ -2427,13 +2380,9 @@ function to_dom_append(element, child) {
     attributes
   } = child;
   if (type) {
-    if (type === '#comment') {
-      child = element.ownerDocument.createComment(attributes['data-rich-text-comment']);
-    } else {
-      child = element.ownerDocument.createElement(type);
-      for (const key in attributes) {
-        child.setAttribute(key, attributes[key]);
-      }
+    child = element.ownerDocument.createElement(type);
+    for (const key in attributes) {
+      child.setAttribute(key, attributes[key]);
     }
   }
   return element.appendChild(child);
@@ -2650,11 +2599,11 @@ function applySelection({
   }
 }
 
-;// external ["wp","a11y"]
+;// CONCATENATED MODULE: external ["wp","a11y"]
 const external_wp_a11y_namespaceObject = window["wp"]["a11y"];
-;// external ["wp","i18n"]
+;// CONCATENATED MODULE: external ["wp","i18n"]
 const external_wp_i18n_namespaceObject = window["wp"]["i18n"];
-;// ./node_modules/@wordpress/rich-text/build-module/toggle-format.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/toggle-format.js
 /**
  * WordPress dependencies
  */
@@ -2698,7 +2647,7 @@ function toggleFormat(value, format) {
   return applyFormat(value, format);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/unregister-format-type.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/unregister-format-type.js
 /**
  * WordPress dependencies
  */
@@ -2730,12 +2679,12 @@ function unregisterFormatType(name) {
   return oldFormat;
 }
 
-;// external ["wp","element"]
+;// CONCATENATED MODULE: external ["wp","element"]
 const external_wp_element_namespaceObject = window["wp"]["element"];
-;// external ["wp","deprecated"]
+;// CONCATENATED MODULE: external ["wp","deprecated"]
 const external_wp_deprecated_namespaceObject = window["wp"]["deprecated"];
 var external_wp_deprecated_default = /*#__PURE__*/__webpack_require__.n(external_wp_deprecated_namespaceObject);
-;// ./node_modules/@wordpress/rich-text/build-module/component/use-anchor-ref.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/use-anchor-ref.js
 /**
  * WordPress dependencies
  */
@@ -2811,9 +2760,9 @@ function useAnchorRef({
   }, [activeFormat, value.start, value.end, tagName, className]);
 }
 
-;// external ["wp","compose"]
+;// CONCATENATED MODULE: external ["wp","compose"]
 const external_wp_compose_namespaceObject = window["wp"]["compose"];
-;// ./node_modules/@wordpress/rich-text/build-module/component/use-anchor.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/use-anchor.js
 /**
  * WordPress dependencies
  */
@@ -2837,7 +2786,7 @@ const external_wp_compose_namespaceObject = window["wp"]["compose"];
 function getFormatElement(range, editableContentElement, tagName, className) {
   let element = range.startContainer;
 
-  // Even if the active format is defined, the actually DOM range's start
+  // Even if the active format is defined, the actualy DOM range's start
   // container may be outside of the format's DOM element:
   // `a‸<strong>b</strong>` (DOM) while visually it's `a<strong>‸b</strong>`.
   // So at a given selection index, start with the deepest format DOM element.
@@ -2998,7 +2947,7 @@ function useAnchor({
   return anchor;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/use-default-style.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/use-default-style.js
 /**
  * WordPress dependencies
  */
@@ -3041,7 +2990,7 @@ function useDefaultStyle() {
   }, []);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/use-boundary-style.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/use-boundary-style.js
 /**
  * WordPress dependencies
  */
@@ -3097,7 +3046,7 @@ function useBoundaryStyle({
   return ref;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/copy-handler.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/copy-handler.js
 /**
  * Internal dependencies
  */
@@ -3140,7 +3089,7 @@ function useBoundaryStyle({
   };
 });
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/select-object.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/select-object.js
 /* harmony default export */ const select_object = (() => element => {
   function onClick(event) {
     const {
@@ -3187,9 +3136,9 @@ function useBoundaryStyle({
   };
 });
 
-;// external ["wp","keycodes"]
+;// CONCATENATED MODULE: external ["wp","keycodes"]
 const external_wp_keycodes_namespaceObject = window["wp"]["keycodes"];
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/format-boundaries.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/format-boundaries.js
 /**
  * WordPress dependencies
  */
@@ -3291,7 +3240,7 @@ const EMPTY_ACTIVE_FORMATS = [];
   };
 });
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/delete.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/delete.js
 /**
  * WordPress dependencies
  */
@@ -3335,7 +3284,7 @@ const EMPTY_ACTIVE_FORMATS = [];
   };
 });
 
-;// ./node_modules/@wordpress/rich-text/build-module/update-formats.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/update-formats.js
 /**
  * Internal dependencies
  */
@@ -3392,7 +3341,8 @@ function updateFormats({
   return value;
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/input-and-selection.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/input-and-selection.js
+/* wp:polyfill */
 /**
  * Internal dependencies
  */
@@ -3628,7 +3578,7 @@ function fixPlaceholderSelection(defaultView) {
   };
 });
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/selection-change-compat.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/selection-change-compat.js
 /**
  * Internal dependencies
  */
@@ -3679,53 +3629,7 @@ function fixPlaceholderSelection(defaultView) {
   };
 });
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/prevent-focus-capture.js
-/**
- * Prevents focus from being captured by the element when clicking _outside_
- * around the element. This may happen when the parent element is flex.
- * @see https://github.com/WordPress/gutenberg/pull/65857
- * @see https://github.com/WordPress/gutenberg/pull/66402
- */
-function preventFocusCapture() {
-  return element => {
-    const {
-      ownerDocument
-    } = element;
-    const {
-      defaultView
-    } = ownerDocument;
-    let value = null;
-    function onPointerDown(event) {
-      // Abort if the event is default prevented, we will not get a pointer up event.
-      if (event.defaultPrevented) {
-        return;
-      }
-      if (event.target === element) {
-        return;
-      }
-      if (!event.target.contains(element)) {
-        return;
-      }
-      value = element.getAttribute('contenteditable');
-      element.setAttribute('contenteditable', 'false');
-      defaultView.getSelection().removeAllRanges();
-    }
-    function onPointerUp() {
-      if (value !== null) {
-        element.setAttribute('contenteditable', value);
-        value = null;
-      }
-    }
-    defaultView.addEventListener('pointerdown', onPointerDown);
-    defaultView.addEventListener('pointerup', onPointerUp);
-    return () => {
-      defaultView.removeEventListener('pointerdown', onPointerDown);
-      defaultView.removeEventListener('pointerup', onPointerUp);
-    };
-  };
-}
-
-;// ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/event-listeners/index.js
 /**
  * WordPress dependencies
  */
@@ -3741,13 +3645,10 @@ function preventFocusCapture() {
 
 
 
-
-const allEventListeners = [copy_handler, select_object, format_boundaries, event_listeners_delete, input_and_selection, selection_change_compat, preventFocusCapture];
+const allEventListeners = [copy_handler, select_object, format_boundaries, event_listeners_delete, input_and_selection, selection_change_compat];
 function useEventListeners(props) {
   const propsRef = (0,external_wp_element_namespaceObject.useRef)(props);
-  (0,external_wp_element_namespaceObject.useInsertionEffect)(() => {
-    propsRef.current = props;
-  });
+  propsRef.current = props;
   const refEffects = (0,external_wp_element_namespaceObject.useMemo)(() => allEventListeners.map(refEffect => refEffect(propsRef)), [propsRef]);
   return (0,external_wp_compose_namespaceObject.useRefEffect)(element => {
     const cleanups = refEffects.map(effect => effect(element));
@@ -3757,7 +3658,7 @@ function useEventListeners(props) {
   }, [refEffects]);
 }
 
-;// ./node_modules/@wordpress/rich-text/build-module/component/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/component/index.js
 /**
  * WordPress dependencies
  */
@@ -3910,7 +3811,7 @@ function useRichText({
   }
   const didMountRef = (0,external_wp_element_namespaceObject.useRef)(false);
 
-  // Value updates must happen synchronously to avoid overwriting newer values.
+  // Value updates must happen synchonously to avoid overwriting newer values.
   (0,external_wp_element_namespaceObject.useLayoutEffect)(() => {
     if (didMountRef.current && value !== _valueRef.current) {
       applyFromProps();
@@ -3918,7 +3819,7 @@ function useRichText({
     }
   }, [value]);
 
-  // Value updates must happen synchronously to avoid overwriting newer values.
+  // Value updates must happen synchonously to avoid overwriting newer values.
   (0,external_wp_element_namespaceObject.useLayoutEffect)(() => {
     if (!hadSelectionUpdateRef.current) {
       return;
@@ -3957,7 +3858,7 @@ function useRichText({
 }
 function __experimentalRichText() {}
 
-;// ./node_modules/@wordpress/rich-text/build-module/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/rich-text/build-module/index.js
 
 
 

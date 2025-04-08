@@ -1,18 +1,36 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	"use strict";
+/******/ 	// The require scope
+/******/ 	var __webpack_require__ = {};
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
 var __webpack_exports__ = {};
+// ESM COMPAT FLAG
+__webpack_require__.r(__webpack_exports__);
 
-;// external ["wp","richText"]
+;// CONCATENATED MODULE: external ["wp","richText"]
 const external_wp_richText_namespaceObject = window["wp"]["richText"];
-;// external ["wp","i18n"]
+;// CONCATENATED MODULE: external ["wp","i18n"]
 const external_wp_i18n_namespaceObject = window["wp"]["i18n"];
-;// external ["wp","blockEditor"]
+;// CONCATENATED MODULE: external ["wp","blockEditor"]
 const external_wp_blockEditor_namespaceObject = window["wp"]["blockEditor"];
-;// external ["wp","primitives"]
+;// CONCATENATED MODULE: external ["wp","primitives"]
 const external_wp_primitives_namespaceObject = window["wp"]["primitives"];
-;// external "ReactJSXRuntime"
+;// CONCATENATED MODULE: external "ReactJSXRuntime"
 const external_ReactJSXRuntime_namespaceObject = window["ReactJSXRuntime"];
-;// ./node_modules/@wordpress/icons/build-module/library/format-bold.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/format-bold.js
 /**
  * WordPress dependencies
  */
@@ -27,10 +45,12 @@ const formatBold = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)
 });
 /* harmony default export */ const format_bold = (formatBold);
 
-;// ./node_modules/@wordpress/format-library/build-module/bold/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/bold/index.js
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -82,7 +102,7 @@ const bold = {
   }
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/code.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/code.js
 /**
  * WordPress dependencies
  */
@@ -97,10 +117,12 @@ const code = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(exter
 });
 /* harmony default export */ const library_code = (code);
 
-;// ./node_modules/@wordpress/format-library/build-module/code/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/code/index.js
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -173,14 +195,16 @@ const code_code = {
   }
 };
 
-;// external ["wp","components"]
+;// CONCATENATED MODULE: external ["wp","components"]
 const external_wp_components_namespaceObject = window["wp"]["components"];
-;// external ["wp","element"]
+;// CONCATENATED MODULE: external ["wp","element"]
 const external_wp_element_namespaceObject = window["wp"]["element"];
-;// ./node_modules/@wordpress/format-library/build-module/image/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/image/index.js
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -337,7 +361,7 @@ function Edit({
   });
 }
 
-;// ./node_modules/@wordpress/icons/build-module/library/format-italic.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/format-italic.js
 /**
  * WordPress dependencies
  */
@@ -352,10 +376,12 @@ const formatItalic = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.js
 });
 /* harmony default export */ const format_italic = (formatItalic);
 
-;// ./node_modules/@wordpress/format-library/build-module/italic/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/italic/index.js
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -407,11 +433,11 @@ const italic = {
   }
 };
 
-;// external ["wp","url"]
+;// CONCATENATED MODULE: external ["wp","url"]
 const external_wp_url_namespaceObject = window["wp"]["url"];
-;// external ["wp","htmlEntities"]
+;// CONCATENATED MODULE: external ["wp","htmlEntities"]
 const external_wp_htmlEntities_namespaceObject = window["wp"]["htmlEntities"];
-;// ./node_modules/@wordpress/icons/build-module/library/link.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/link.js
 /**
  * WordPress dependencies
  */
@@ -426,11 +452,11 @@ const link_link = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(
 });
 /* harmony default export */ const library_link = (link_link);
 
-;// external ["wp","a11y"]
+;// CONCATENATED MODULE: external ["wp","a11y"]
 const external_wp_a11y_namespaceObject = window["wp"]["a11y"];
-;// external ["wp","data"]
+;// CONCATENATED MODULE: external ["wp","data"]
 const external_wp_data_namespaceObject = window["wp"]["data"];
-;// ./node_modules/@wordpress/format-library/build-module/link/utils.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/link/utils.js
 /**
  * WordPress dependencies
  */
@@ -595,7 +621,7 @@ function getFormatBoundary(value, format, startIndex = value.start, endIndex = v
   // Safe guard: start index cannot be less than 0.
   startIndex = startIndex < 0 ? 0 : startIndex;
 
-  // // Return the indices of the "edges" as the boundaries.
+  // // Return the indicies of the "edges" as the boundaries.
   return {
     start: startIndex,
     end: endIndex
@@ -635,7 +661,7 @@ const partialRight = (fn, ...partialArgs) => (...args) => fn(...args, ...partial
 const walkToStart = partialRight(walkToBoundary, 'backwards');
 const walkToEnd = partialRight(walkToBoundary, 'forwards');
 
-;// ./node_modules/@wordpress/format-library/build-module/link/inline.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/link/inline.js
 /**
  * WordPress dependencies
  */
@@ -654,7 +680,7 @@ const walkToEnd = partialRight(walkToBoundary, 'forwards');
 
 
 
-const LINK_SETTINGS = [...external_wp_blockEditor_namespaceObject.LinkControl.DEFAULT_LINK_SETTINGS, {
+const LINK_SETTINGS = [...external_wp_blockEditor_namespaceObject.__experimentalLinkControl.DEFAULT_LINK_SETTINGS, {
   id: 'nofollow',
   title: (0,external_wp_i18n_namespaceObject.__)('Mark as nofollow')
 }];
@@ -775,7 +801,7 @@ function InlineLinkUI({
       // As "replace" will operate on the first match only, it is
       // run only against the second half of the value which was
       // split at the active format's boundary. This avoids a bug
-      // with incorrectly targeted replacements.
+      // with incorrectly targetted replacements.
       // See: https://github.com/WordPress/gutenberg/issues/41771.
       // Note original formats will be lost when applying this change.
       // That is expected behaviour.
@@ -821,7 +847,7 @@ function InlineLinkUI({
     };
   }
   function createButtonText(searchTerm) {
-    return (0,external_wp_element_namespaceObject.createInterpolateElement)((0,external_wp_i18n_namespaceObject.sprintf)(/* translators: %s: search term. */
+    return (0,external_wp_element_namespaceObject.createInterpolateElement)((0,external_wp_i18n_namespaceObject.sprintf)( /* translators: %s: search term. */
     (0,external_wp_i18n_namespaceObject.__)('Create page: <mark>%s</mark>'), searchTerm), {
       mark: /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)("mark", {})
     });
@@ -836,7 +862,7 @@ function InlineLinkUI({
     shift: true,
     focusOnMount: focusOnMount,
     constrainTabbing: true,
-    children: /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(external_wp_blockEditor_namespaceObject.LinkControl, {
+    children: /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(external_wp_blockEditor_namespaceObject.__experimentalLinkControl, {
       value: linkValue,
       onChange: onChangeLink,
       onRemove: removeLink,
@@ -882,7 +908,7 @@ function getRichTextValueFromSelection(value, isActive) {
 }
 /* harmony default export */ const inline = (InlineLinkUI);
 
-;// ./node_modules/@wordpress/format-library/build-module/link/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/link/index.js
 /**
  * WordPress dependencies
  */
@@ -898,6 +924,8 @@ function getRichTextValueFromSelection(value, isActive) {
 /**
  * Internal dependencies
  */
+
+
 
 
 
@@ -1030,9 +1058,8 @@ function link_Edit({
 
   // Only autofocus if we have clicked a link within the editor
   const shouldAutoFocus = !(openedBy?.el?.tagName === 'A' && openedBy?.action === 'click');
-  const hasSelection = !(0,external_wp_richText_namespaceObject.isCollapsed)(value);
   return /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsxs)(external_ReactJSXRuntime_namespaceObject.Fragment, {
-    children: [hasSelection && /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(external_wp_blockEditor_namespaceObject.RichTextShortcut, {
+    children: [/*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(external_wp_blockEditor_namespaceObject.RichTextShortcut, {
       type: "primary",
       character: "k",
       onUse: addLink
@@ -1107,7 +1134,7 @@ const build_module_link_link = {
   edit: link_Edit
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/format-strikethrough.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/format-strikethrough.js
 /**
  * WordPress dependencies
  */
@@ -1122,10 +1149,12 @@ const formatStrikethrough = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceOb
 });
 /* harmony default export */ const format_strikethrough = (formatStrikethrough);
 
-;// ./node_modules/@wordpress/format-library/build-module/strikethrough/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/strikethrough/index.js
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -1167,10 +1196,12 @@ const strikethrough = {
   }
 };
 
-;// ./node_modules/@wordpress/format-library/build-module/underline/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/underline/index.js
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -1211,7 +1242,7 @@ const underline = {
   }
 };
 
-;// ./node_modules/@wordpress/icons/build-module/icon/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/icon/index.js
 /**
  * WordPress dependencies
  */
@@ -1223,7 +1254,7 @@ const underline = {
  * Return an SVG icon.
  *
  * @param {IconProps}                                 props icon is the SVG component to render
- *                                                          size is a number specifying the icon size in pixels
+ *                                                          size is a number specifiying the icon size in pixels
  *                                                          Other props will be passed to wrapped SVG component
  * @param {import('react').ForwardedRef<HTMLElement>} ref   The forwarded ref to the SVG element.
  *
@@ -1243,7 +1274,7 @@ function Icon({
 }
 /* harmony default export */ const icon = ((0,external_wp_element_namespaceObject.forwardRef)(Icon));
 
-;// ./node_modules/@wordpress/icons/build-module/library/text-color.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/text-color.js
 /**
  * WordPress dependencies
  */
@@ -1258,7 +1289,7 @@ const textColor = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(
 });
 /* harmony default export */ const text_color = (textColor);
 
-;// ./node_modules/@wordpress/icons/build-module/library/color.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/color.js
 /**
  * WordPress dependencies
  */
@@ -1273,9 +1304,9 @@ const color = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(exte
 });
 /* harmony default export */ const library_color = (color);
 
-;// external ["wp","privateApis"]
+;// CONCATENATED MODULE: external ["wp","privateApis"]
 const external_wp_privateApis_namespaceObject = window["wp"]["privateApis"];
-;// ./node_modules/@wordpress/format-library/build-module/lock-unlock.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/lock-unlock.js
 /**
  * WordPress dependencies
  */
@@ -1285,7 +1316,7 @@ const {
   unlock
 } = (0,external_wp_privateApis_namespaceObject.__dangerousOptInToUnstableAPIsOnlyForCoreModules)('I acknowledge private features are not for use in themes or plugins and doing so will break in the next version of WordPress.', '@wordpress/format-library');
 
-;// ./node_modules/@wordpress/format-library/build-module/text-color/inline.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/text-color/inline.js
 /**
  * WordPress dependencies
  */
@@ -1299,6 +1330,7 @@ const {
 /**
  * Internal dependencies
  */
+
 
 
 
@@ -1407,9 +1439,6 @@ function ColorPicker({
         [property]: color
       }));
     }
-    // Prevent the text and color picker from overlapping.
-    ,
-    __experimentalIsRenderedInSidebar: true
   });
 }
 function InlineColorUI({
@@ -1451,7 +1480,7 @@ function InlineColorUI({
   });
 }
 
-;// ./node_modules/@wordpress/format-library/build-module/text-color/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/text-color/index.js
 /**
  * WordPress dependencies
  */
@@ -1464,6 +1493,8 @@ function InlineColorUI({
 /**
  * Internal dependencies
  */
+
+
 
 
 const transparentValue = 'rgba(0, 0, 0, 0)';
@@ -1506,7 +1537,7 @@ function TextColorEdit({
   const [allowCustomControl, colors = EMPTY_ARRAY] = (0,external_wp_blockEditor_namespaceObject.useSettings)('color.custom', 'color.palette');
   const [isAddingColor, setIsAddingColor] = (0,external_wp_element_namespaceObject.useState)(false);
   const colorIndicatorStyle = (0,external_wp_element_namespaceObject.useMemo)(() => fillComputedColors(contentRef.current, getActiveColors(value, text_color_name, colors)), [contentRef, value, colors]);
-  const hasColorsToChoose = !!colors.length || allowCustomControl;
+  const hasColorsToChoose = colors.length || !allowCustomControl;
   if (!hasColorsToChoose && !isActive) {
     return null;
   }
@@ -1546,7 +1577,7 @@ const text_color_textColor = {
   edit: TextColorEdit
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/subscript.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/subscript.js
 /**
  * WordPress dependencies
  */
@@ -1561,7 +1592,7 @@ const subscript = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(
 });
 /* harmony default export */ const library_subscript = (subscript);
 
-;// ./node_modules/@wordpress/format-library/build-module/subscript/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/subscript/index.js
 /**
  * WordPress dependencies
  */
@@ -1603,7 +1634,7 @@ const subscript_subscript = {
   }
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/superscript.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/superscript.js
 /**
  * WordPress dependencies
  */
@@ -1618,7 +1649,7 @@ const superscript = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx
 });
 /* harmony default export */ const library_superscript = (superscript);
 
-;// ./node_modules/@wordpress/format-library/build-module/superscript/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/superscript/index.js
 /**
  * WordPress dependencies
  */
@@ -1660,7 +1691,7 @@ const superscript_superscript = {
   }
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/button.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/button.js
 /**
  * WordPress dependencies
  */
@@ -1675,7 +1706,7 @@ const button_button = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.j
 });
 /* harmony default export */ const library_button = (button_button);
 
-;// ./node_modules/@wordpress/format-library/build-module/keyboard/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/keyboard/index.js
 /**
  * WordPress dependencies
  */
@@ -1717,7 +1748,7 @@ const keyboard = {
   }
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/help.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/help.js
 /**
  * WordPress dependencies
  */
@@ -1732,7 +1763,7 @@ const help = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(exter
 });
 /* harmony default export */ const library_help = (help);
 
-;// ./node_modules/@wordpress/format-library/build-module/unknown/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/unknown/index.js
 /**
  * WordPress dependencies
  */
@@ -1780,7 +1811,7 @@ const unknown = {
   }
 };
 
-;// ./node_modules/@wordpress/icons/build-module/library/language.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/language.js
 /**
  * WordPress dependencies
  */
@@ -1795,7 +1826,7 @@ const language = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(e
 });
 /* harmony default export */ const library_language = (language);
 
-;// ./node_modules/@wordpress/format-library/build-module/language/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/language/index.js
 /**
  * WordPress dependencies
  */
@@ -1804,6 +1835,8 @@ const language = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx)(e
 /**
  * WordPress dependencies
  */
+
+
 
 
 
@@ -1915,7 +1948,7 @@ function InlineLanguageUI({
   });
 }
 
-;// ./node_modules/@wordpress/format-library/build-module/non-breaking-space/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/non-breaking-space/index.js
 /**
  * WordPress dependencies
  */
@@ -1945,7 +1978,7 @@ const nonBreakingSpace = {
   }
 };
 
-;// ./node_modules/@wordpress/format-library/build-module/default-formats.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/default-formats.js
 /**
  * Internal dependencies
  */
@@ -1965,7 +1998,7 @@ const nonBreakingSpace = {
 
 /* harmony default export */ const default_formats = ([bold, code_code, image_image, italic, build_module_link_link, strikethrough, underline, text_color_textColor, subscript_subscript, superscript_superscript, keyboard, unknown, language_language, nonBreakingSpace]);
 
-;// ./node_modules/@wordpress/format-library/build-module/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/format-library/build-module/index.js
 /**
  * WordPress dependencies
  */

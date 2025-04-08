@@ -11,10 +11,6 @@
 	overflow-y: scroll;
 }
 
-.themes-php #adminmenuwrap {
-	z-index: 10001; /* above Theme Overlay */
-}
-
 body.js .theme-browser.search-loading {
 	display: none;
 }
@@ -376,7 +372,6 @@ body.js .theme-browser.search-loading {
 	background: #f0f0f1;
 	background: rgba(240, 240, 241, 0.9);
 	z-index: 10000; /* Over WP Pointers. */
-	min-height: calc(100vh - var(--wp-admin--admin-bar--height, 32px));
 }
 
 .theme-overlay .theme-header {
@@ -920,10 +915,6 @@ body.folded .theme-browser ~ .theme-overlay .theme-wrap {
 		padding-left: 4%;
 		padding-right: 4%;
 	}
-
-	.theme-install-php .wp-filter .filter-count {
-		margin-top: 10px;
-	}
 }
 
 @media only screen and (max-width: 650px) {
@@ -944,7 +935,6 @@ body.folded .theme-browser ~ .theme-overlay .theme-wrap {
 	.theme-overlay .theme-screenshots {
 		width: 100%;
 		float: none;
-		margin: 0;
 	}
 
 	.theme-overlay .theme-info {
@@ -1648,14 +1638,12 @@ body.full-overlay-active {
 }
 
 /* Animations */
-@media (prefers-reduced-motion: no-preference) {
-	.wp-full-overlay,
-	.wp-full-overlay-sidebar,
-	.wp-full-overlay .collapse-sidebar,
-	.wp-full-overlay-main {
-		transition-property: left, right, top, bottom, width, margin;
-		transition-duration: 0.2s;
-	}
+.wp-full-overlay,
+.wp-full-overlay-sidebar,
+.wp-full-overlay .collapse-sidebar,
+.wp-full-overlay-main {
+	transition-property: left, right, top, bottom, width, margin;
+	transition-duration: 0.2s;
 }
 
 /* Device/preview size toggles */

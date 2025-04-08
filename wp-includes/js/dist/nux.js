@@ -74,12 +74,12 @@ __webpack_require__.d(selectors_namespaceObject, {
   isTipVisible: () => (isTipVisible)
 });
 
-;// external ["wp","deprecated"]
+;// CONCATENATED MODULE: external ["wp","deprecated"]
 const external_wp_deprecated_namespaceObject = window["wp"]["deprecated"];
 var external_wp_deprecated_default = /*#__PURE__*/__webpack_require__.n(external_wp_deprecated_namespaceObject);
-;// external ["wp","data"]
+;// CONCATENATED MODULE: external ["wp","data"]
 const external_wp_data_namespaceObject = window["wp"]["data"];
-;// ./node_modules/@wordpress/nux/build-module/store/reducer.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/store/reducer.js
 /**
  * WordPress dependencies
  */
@@ -150,7 +150,7 @@ const preferences = (0,external_wp_data_namespaceObject.combineReducers)({
   preferences
 }));
 
-;// ./node_modules/@wordpress/nux/build-module/store/actions.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/store/actions.js
 /**
  * Returns an action object that, when dispatched, presents a guide that takes
  * the user through a series of tips step by step.
@@ -204,7 +204,7 @@ function enableTips() {
   };
 }
 
-;// ./node_modules/@wordpress/nux/build-module/store/selectors.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/store/selectors.js
 /**
  * WordPress dependencies
  */
@@ -278,7 +278,7 @@ function selectors_areTipsEnabled(state) {
   return state.preferences.areTipsEnabled;
 }
 
-;// ./node_modules/@wordpress/nux/build-module/store/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/store/index.js
 /**
  * WordPress dependencies
  */
@@ -315,19 +315,19 @@ const store = (0,external_wp_data_namespaceObject.createReduxStore)(STORE_NAME, 
   persist: ['preferences']
 });
 
-;// external ["wp","compose"]
+;// CONCATENATED MODULE: external ["wp","compose"]
 const external_wp_compose_namespaceObject = window["wp"]["compose"];
-;// external ["wp","components"]
+;// CONCATENATED MODULE: external ["wp","components"]
 const external_wp_components_namespaceObject = window["wp"]["components"];
-;// external ["wp","i18n"]
+;// CONCATENATED MODULE: external ["wp","i18n"]
 const external_wp_i18n_namespaceObject = window["wp"]["i18n"];
-;// external ["wp","element"]
+;// CONCATENATED MODULE: external ["wp","element"]
 const external_wp_element_namespaceObject = window["wp"]["element"];
-;// external ["wp","primitives"]
+;// CONCATENATED MODULE: external ["wp","primitives"]
 const external_wp_primitives_namespaceObject = window["wp"]["primitives"];
-;// external "ReactJSXRuntime"
+;// CONCATENATED MODULE: external "ReactJSXRuntime"
 const external_ReactJSXRuntime_namespaceObject = window["ReactJSXRuntime"];
-;// ./node_modules/@wordpress/icons/build-module/library/close.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/close.js
 /**
  * WordPress dependencies
  */
@@ -342,7 +342,7 @@ const close_close = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx
 });
 /* harmony default export */ const library_close = (close_close);
 
-;// ./node_modules/@wordpress/nux/build-module/components/dot-tip/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/components/dot-tip/index.js
 /**
  * WordPress dependencies
  */
@@ -356,6 +356,7 @@ const close_close = /*#__PURE__*/(0,external_ReactJSXRuntime_namespaceObject.jsx
 /**
  * Internal dependencies
  */
+
 
 
 function onClick(event) {
@@ -439,7 +440,7 @@ function DotTip({
   };
 }))(DotTip));
 
-;// ./node_modules/@wordpress/nux/build-module/index.js
+;// CONCATENATED MODULE: ./node_modules/@wordpress/nux/build-module/index.js
 /**
  * WordPress dependencies
  */

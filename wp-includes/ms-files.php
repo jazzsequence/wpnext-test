@@ -10,8 +10,6 @@
 
 define( 'MS_FILES_REQUEST', true );
 define( 'SHORTINIT', true );
-
-/** Load WordPress Bootstrap */
 require_once dirname( __DIR__ ) . '/wp-load.php';
 
 if ( ! is_multisite() ) {
@@ -20,7 +18,7 @@ if ( ! is_multisite() ) {
 
 ms_file_constants();
 
-if ( ! is_super_admin() && ( '1' === $current_blog->archived || '1' === $current_blog->spam || '1' === $current_blog->deleted ) ) {
+if ( '1' === $current_blog->archived || '1' === $current_blog->spam || '1' === $current_blog->deleted ) {
 	status_header( 404 );
 	die( '404 &#8212; File not found.' );
 }

@@ -20,19 +20,16 @@
 		},
 		"isLink": {
 			"type": "boolean",
-			"default": false,
-			"role": "content"
+			"default": false
 		},
 		"rel": {
 			"type": "string",
 			"attribute": "rel",
-			"default": "",
-			"role": "content"
+			"default": ""
 		},
 		"linkTarget": {
 			"type": "string",
-			"default": "_self",
-			"role": "content"
+			"default": "_self"
 		}
 	},
 	"example": {

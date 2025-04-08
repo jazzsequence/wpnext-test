@@ -419,18 +419,12 @@ window.columns = {
 	 */
 	saveManageColumnsState : function() {
 		var hidden = this.hidden();
-		$.post(
-			ajaxurl,
-			{
-				action: 'hidden-columns',
-				hidden: hidden,
-				screenoptionnonce: $('#screenoptionnonce').val(),
-				page: pagenow
-			},
-			function() {
-				wp.a11y.speak( __( 'Screen Options updated.' ) );
-			}
-		);
+		$.post(ajaxurl, {
+			action: 'hidden-columns',
+			hidden: hidden,
+			screenoptionnonce: $('#screenoptionnonce').val(),
+			page: pagenow
+		});
 	},
 
 	/**

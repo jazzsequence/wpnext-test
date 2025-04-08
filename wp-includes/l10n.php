@@ -116,8 +116,7 @@ function get_user_locale( $user = 0 ) {
  *
  * @since 5.0.0
  *
- * @global string $pagenow          The filename of the current screen.
- * @global string $wp_local_package Locale code of the package.
+ * @global string $pagenow The filename of the current screen.
  *
  * @return string The determined locale.
  */
@@ -964,7 +963,7 @@ function load_default_textdomain( $locale = null ) {
 		return $return;
 	}
 
-	if ( is_admin() || wp_installing() || ( defined( 'WP_REPAIRING' ) && WP_REPAIRING ) || doing_action( 'wp_maybe_auto_update' ) ) {
+	if ( is_admin() || wp_installing() || ( defined( 'WP_REPAIRING' ) && WP_REPAIRING ) ) {
 		load_textdomain( 'default', WP_LANG_DIR . "/admin-$locale.mo", $locale );
 	}
 

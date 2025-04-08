@@ -16,8 +16,7 @@
 			"role": "local"
 		},
 		"href": {
-			"type": "string",
-			"role": "content"
+			"type": "string"
 		},
 		"fileId": {
 			"type": "string",
@@ -28,15 +27,13 @@
 		"fileName": {
 			"type": "rich-text",
 			"source": "rich-text",
-			"selector": "a:not([download])",
-			"role": "content"
+			"selector": "a:not([download])"
 		},
 		"textLinkHref": {
 			"type": "string",
 			"source": "attribute",
 			"selector": "a:not([download])",
-			"attribute": "href",
-			"role": "content"
+			"attribute": "href"
 		},
 		"textLinkTarget": {
 			"type": "string",
@@ -51,8 +48,7 @@
 		"downloadButtonText": {
 			"type": "rich-text",
 			"source": "rich-text",
-			"selector": "a[download]",
-			"role": "content"
+			"selector": "a[download]"
 		},
 		"displayPreview": {
 			"type": "boolean"

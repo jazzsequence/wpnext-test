@@ -720,10 +720,8 @@
 	opacity: 1;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-	#customize-preview {
-		transition: all 0.2s;
-	}
+#customize-preview {
+	transition: all 0.2s;
 }
 
 body.adding-menu-items #available-menu-items {
