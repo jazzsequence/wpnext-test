@@ -9,6 +9,9 @@ TYPE="core"
 echo "Updating WordPress $TYPE to $wp_version..."
 terminus wp -- "$TERMINUS_SITE".dev $TYPE update --version="$wp_version" --force
 
+# Wait for the update to be done done
+terminus workflow:wait -- "$TERMINUS_SITE" --max=15
+
 # Commit the changes and capture output
 COMMIT_OUTPUT=$(terminus env:commit "$TERMINUS_SITE".dev --message="Updating WordPress ${TYPE} to ${wp_version}" 2>&1)
 
