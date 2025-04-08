@@ -118,7 +118,7 @@ merge_updates_from_pantheon_to_github() {
     git push origin main # Assumes `origin` is GitHub
 
     # Delete the "$TYPE"-updates branch
-    git branch -d "$TYPE"-updates
+    git branch -D "$TYPE"-updates
 }
 
 maybe_switch_to_git_mode() {
