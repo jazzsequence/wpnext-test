@@ -35,6 +35,7 @@ jobs:
       - name: Commit build artifacts
         run: |
           git remote add pantheon ${{ secrets.GIT_REPO }}
+          git fetch pantheon
           git checkout -b master
           git add -A
           if git diff --quiet pantheon/master; then
