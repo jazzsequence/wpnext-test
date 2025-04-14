@@ -85,3 +85,4 @@ jobs:
           site: wpnext-test
           git_user_name: ${{ env.git_user_name }}
           git_user_email: ${{ env.git_user_email }}
+          git_commit_message: ${{ steps.get_commit.outputs.message }}
