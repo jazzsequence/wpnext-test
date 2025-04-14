@@ -41,7 +41,6 @@ You can ignore files locally but not in the repository. We do this so we're not 
 ```
 # WordPress plugins managed by Composer
 vendor/
-wp-content/plugins/wordpress-importer
 wp-content/plugins/test-reports
 wp-content/plugins/games-collector
 !wp-content/plugins/games-collector/vendor
