@@ -21,6 +21,9 @@ jobs:
     env:
       git_user_name: "Pantheon Robot"
       git_user_email: "bot@getpantheon.com"
+    concurrency:
+      group: ${{ github.workflow }}-main
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
         with:
