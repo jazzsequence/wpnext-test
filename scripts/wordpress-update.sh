@@ -22,7 +22,7 @@ if echo "$COMMIT_OUTPUT" | grep -q "There is no code to commit"; then
     echo "Nothing to commit"
 else
     # Wait for the workflow to finish
-    terminus build:workflow:wait "$TERMINUS_SITE".dev --max=30
+    terminus build:workflow:wait "$TERMINUS_SITE".dev --max=180
 
     maybe_switch_to_git_mode "$TERMINUS_OR_LANDO"
 
