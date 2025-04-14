@@ -23,6 +23,12 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Get commit message
+        id: get_commit
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
       - name: Install dependencies
         run: composer install
 
