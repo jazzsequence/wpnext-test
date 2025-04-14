@@ -41,13 +41,17 @@ You can ignore files locally but not in the repository. We do this so we're not 
 ```
 # WordPress plugins managed by Composer
 vendor/
+vendor/composer/
 wp-content/plugins/test-reports
 wp-content/plugins/games-collector
 !wp-content/plugins/games-collector/vendor
 wp-content/mu-plugins/cmb2
+wp-content/plugins/git-updater
 wp-content/mu-plugins/pantheon-mu-plugin
 wp-content/plugins/mailpoet
 wp-content/plugins/wp-cfm
+wp-content/plugins/gutenberg
+wp-content/plugins/wordpress-beta-tester
 ```
 
 ### 4. Run Composer install
