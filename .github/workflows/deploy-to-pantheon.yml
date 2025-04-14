@@ -23,6 +23,11 @@ jobs:
         with:
           fetch-depth: 2
 
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Configure Pantheon Host Key
         run: |
           echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
