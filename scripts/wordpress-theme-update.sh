@@ -7,6 +7,9 @@ TYPE="theme"
 
 terminus wp -- "$TERMINUS_SITE".dev $TYPE update --all
 
+# Wait for the update to be done done
+terminus workflow:wait "$TERMINUS_SITE" --max=15
+
 # Commit the changes and capture output
 COMMIT_OUTPUT=$(terminus env:commit "$TERMINUS_SITE".dev --message="Updating WordPress ${TYPE}s" 2>&1)
 
