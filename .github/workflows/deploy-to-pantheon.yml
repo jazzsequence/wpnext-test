@@ -28,6 +28,12 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Configure Git
+        run: |
+          git config --global user.name "Pantheon Robot"
+          git config --global user.email "bot@getpantheon.com"
+          git remote add pantheon ${{ secrets.GIT_REPO }}
+
       - name: Configure Pantheon Host Key
         run: |
           echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
@@ -45,7 +51,6 @@ jobs:
 
       - name: Commit build artifacts
         run: |
-          git remote add pantheon ${{ secrets.GIT_REPO }}
           git fetch pantheon
           git checkout -b master
           git add -A
