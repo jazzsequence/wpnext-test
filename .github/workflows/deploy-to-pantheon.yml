@@ -55,5 +55,5 @@ jobs:
         uses: stevector/push-to-pantheon@0.5.0
         with:
           ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          machine-token: ${{ secrets.TERMINUS_TOKEN }}
+          machine_token: ${{ secrets.TERMINUS_TOKEN }}
           site: wpnext-test
