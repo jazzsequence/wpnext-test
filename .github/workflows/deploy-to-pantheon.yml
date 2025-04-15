@@ -108,8 +108,6 @@ jobs:
           if git diff --quiet pantheon/master; then
             echo "No changes to commit."
             echo "skip_deploy=true" >> $GITHUB_ENV
-          else
-            git commit -m "${{ steps.get_commit.outputs.message }}" || echo "Nothing to commit"
           fi
 
       - name: Push to Pantheon
