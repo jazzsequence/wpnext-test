@@ -57,7 +57,7 @@ jobs:
 
       - name: Commit build artifacts
         run: |
-          GITHUB_MSG="${{ steps.get_github_commit.outputs.message }}"
+          GITHUB_MSG="${{ steps.get_commit.outputs.message }}"
           echo "GitHub Triggering Commit Message: $GITHUB_MSG"
 
           git fetch --no-tags --depth=5 pantheon master
