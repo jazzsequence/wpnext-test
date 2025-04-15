@@ -57,12 +57,54 @@ jobs:
 
       - name: Commit build artifacts
         run: |
-          git fetch pantheon
+          GITHUB_MSG="${{ steps.get_github_commit.outputs.message }}"
+          echo "GitHub Triggering Commit Message: $GITHUB_MSG"
+
+          git fetch --no-tags --depth=5 pantheon master
+          FETCH_EXIT_CODE=$?
+
+          if [ $FETCH_EXIT_CODE -ne 0 ]; then
+            echo "WARN: Failed to fetch from Pantheon (Exit Code: $FETCH_EXIT_CODE). Assuming deployment should proceed."
+            # Set skip_deploy output to false
+            echo "skip_deploy=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Get the message of the latest commit on Pantheon's master branch
+          # Use --no-pager to prevent potential interactive prompts
+          PANTHEON_LATEST_MSG=$(git --no-pager log -1 --pretty=%s pantheon/master)
+          echo "Latest Pantheon Master Commit Message: $PANTHEON_LATEST_MSG"
+
+          # Trim leading/trailing whitespace just in case
+          GITHUB_MSG_TRIMMED=$(echo "$GITHUB_MSG" | xargs)
+          PANTHEON_LATEST_MSG_TRIMMED=$(echo "$PANTHEON_LATEST_MSG" | xargs)
+
+          if [ "$GITHUB_MSG_TRIMMED" == "$PANTHEON_LATEST_MSG_TRIMMED" ]; then
+            echo "GitHub commit message matches the latest Pantheon commit message. Skipping deployment."
+            echo "skip_deploy=true" >> $GITHUB_OUTPUT
+            exit 0
+          else
+            # Optional: Compare against Pantheon's second-to-last commit if needed
+            # Requires fetch depth >= 2. Add error handling if only 1 commit exists.
+            PANTHEON_PREV_MSG=$(git --no-pager log -1 --pretty=%s pantheon/master~1)
+            echo "Previous Pantheon Master Commit Message: $PANTHEON_PREV_MSG"
+            if [ "$GITHUB_MSG_TRIMMED" == "$(echo "$PANTHEON_PREV_MSG" | xargs)" ]; then
+              echo "GitHub commit message matches Pantheon's second-to-last commit message. Skipping deployment."
+              echo "skip_deploy=true" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "Commit messages do not match. Proceeding with deployment."
+              echo "skip_deploy=false" >> $GITHUB_OUTPUT
+            fi
+            echo "Commit messages do not match. Proceeding with deployment."
+            echo "skip_deploy=false" >> $GITHUB_OUTPUT # Default: proceed if no match
+          fi
+
           git checkout -b master
           git add -A
           if git diff --quiet pantheon/master; then
             echo "No changes to commit."
-            echo "skip_push=true" >> $GITHUB_ENV
+            echo "skip_deploy=true" >> $GITHUB_ENV
           else
             git commit -m "${{ steps.get_commit.outputs.message }}" || echo "Nothing to commit"
           fi
