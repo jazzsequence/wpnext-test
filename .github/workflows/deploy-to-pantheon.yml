@@ -55,7 +55,7 @@ jobs:
       - name: Install dependencies
         run: composer install
 
-      - name: Commit build artifacts
+      - name: Compare commit messages
         run: |
           GITHUB_MSG="${{ steps.get_commit.outputs.message }}"
           echo "GitHub Triggering Commit Message: $GITHUB_MSG"
@@ -100,6 +100,10 @@ jobs:
             echo "skip_deploy=false" >> $GITHUB_OUTPUT # Default: proceed if no match
           fi
 
+      - name: Commit build artifacts
+        if: ${{ env.skip_deploy != 'true' }}
+        run: |
+          git fetch --no-tags --depth=5 pantheon master
           git checkout -b master
           git add -A
           if git diff --quiet pantheon/master; then
