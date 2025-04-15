@@ -125,3 +125,16 @@ This script is set to run [weekly](https://github.com/jazzsequence/wpnext-test/a
 ```bash
 composer test
 ```
+
+## Using the GitHub Actions manually
+
+The [Weekly Platform Test](https://github.com/jazzsequence/wpnext-test/actions/workflows/weekly-platform-test.yml) (Behat tests), [Deploy to Test or Live](https://github.com/jazzsequence/wpnext-test/actions/workflows/deploy-test-live.yml) and [Deploy to WPNext-Test](https://github.com/jazzsequence/wpnext-test/actions/workflows/deploy-to-pantheon.yml) workflows can all be triggered manually.
+
+### Weekly Platform Test
+These tests run on a weekly basis and are triggered by a cron job. They run the `composer test` command to run the Behat tests against the `behat` multidev environment. To trigger manually, navigate to the [Weekly Platform Test action](https://github.com/jazzsequence/wpnext-test/actions/workflows/weekly-platform-test.yml) and click the "Run workflow" button. There are no options for this other than to run against a branch (defaults to `main`).
+
+### Deploy to Test or Live
+This workflow will deploy the latest available code to the specified environment (default is `test`). You have the option of creating a backup of the site prior to deploying (default is `yes`). To trigger the deploy from GitHub, navigate to [(Manual) Deploy to Test or Live](https://github.com/jazzsequence/wpnext-test/actions/workflows/deploy-test-live.yml) and click the "Run workflow" button, specifying your selections for branch (default is `main`), environment and backup. This action is not triggered automatically.
+
+### Deploy to WPNext-Test
+This workflow is automatically triggered when there are any code changes (excluding GitHub workflow changes, scripts and updates to this README) on the repository. It can be triggered manually by navigating to [Deploy to WPNext-Test](https://github.com/jazzsequence/wpnext-test/actions/workflows/deploy-to-pantheon.yml),clicking the "Run workflow" button and specifying a branch (default is `main`).
