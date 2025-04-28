@@ -62,7 +62,7 @@
             "bash ./scripts/deploy.sh"
         ],
         "check-latest-wp": [
-            "source ./scripts/helpers.sh && get_latest_wp_release"
+            ". ./scripts/helpers.sh && get_latest_wp_release"
         ]
     }
 }
