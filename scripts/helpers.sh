@@ -16,8 +16,8 @@ get_latest_wp_release() {
     fi
 
     # Extract all Beta and Release Candidate items
-    all_versions=$(echo "$rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|Release Candidate|RC) ?[0-9]*' | sed 's/WordPress //g')
-    make_versions=$(echo "$make_rss_content" | grep -Eo 'WordPress [0-9]+\.[0-9]+ (Beta|Release Candidate|RC) ?[0-9]*' | sed 's/WordPress //g')
+    all_versions=$(echo "$rss_content" | sed 's/&nbsp;/ /g' | grep -Eo 'WordPress [0-9]+\.[0-9]+(\.[0-9]+)? *(Beta|Release Candidate|RC) *[0-9]*' | sed 's/WordPress //g')
+    make_versions=$(echo "$make_rss_content" | sed 's/&nbsp;/ /g' | grep -Eo 'WordPress [0-9]+\.[0-9]+(\.[0-9]+)? *(Beta|Release Candidate|RC) *[0-9]*' | sed 's/WordPress //g')
 
     # Combine raw versions before normalizing
     combined_raw_versions=$(echo -e "${all_versions}\n${make_versions}")
@@ -34,7 +34,13 @@ get_latest_wp_release() {
     # -k1,1Vr: Sort by version string (field 1), version sort (V), reverse (r) -> newest version first
     # -k2,2n:  Then by priority (field 2), numeric (n) -> RC (1) before Beta (2)
     # -k3,3nr: Then by suffix number (field 3), numeric (n), reverse (r) -> RC4 before RC3, Beta2 before Beta1
-    release_version=$(echo "$normalized_versions" | grep . | sort -k1,1Vr -k2,2n -k3,3nr | head -1)
+    sorted_versions=$(echo "$normalized_versions" | grep . | sort -k1,1Vr -k2,2n -k3,3nr)
+    release_version=$(echo "$sorted_versions" | head -1)
+
+    if [ -z "$release_version" ]; then
+        echo "Could not determine latest release version after sorting." >&2
+        exit 1
+    fi
 
     # normalize_versions uses an internal formatting for RC and beta release priorities. We need to change these back to standard -beta/-RC versions
     formatted_version=$(echo "$release_version" | awk '{
