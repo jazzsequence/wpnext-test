@@ -36,6 +36,7 @@ jobs:
       - name: Check for WordPress update
         env:
           TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
+        shell: bash
         run: |
           LATEST_WP_VERSION=$(composer check-latest-wp)
           CURRENT_WP_VERSION=$(terminus wp -- wpnext-test.dev core version)
