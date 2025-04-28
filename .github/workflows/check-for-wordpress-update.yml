@@ -1,0 +1,51 @@
+name: Check for WordPress update
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  check-for-update:
+    name: Check for WordPress update
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: Configure Pantheon Host Key
+        run: |
+          echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
+          echo "Host *.drush.in PubkeyAcceptedKeyTypes +ssh-rsa" >> ~/.ssh/config
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+
+      - name: Install Terminus
+        uses: pantheon-systems/terminus-github-actions@v1
+        with:
+          pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
+
+      - name: Check for WordPress update
+        env:
+          TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
+        run: |
+          LATEST_WP_VERSION=$(composer check-latest-wp)
+          CURRENT_WP_VERSION=$(terminus wp -- wpnext-test.dev core version)
+
+          # Compare versions and create an issue if an update is available
+          if [ "$LATEST_WP_VERSION" != "$CURRENT_WP_VERSION" ]; then
+            echo "WordPress update available: $LATEST_WP_VERSION (current: $CURRENT_WP_VERSION)"
+            # Create an issue or take any other action you want
+            # For example, using the GitHub CLI to create an issue:
+            gh issue create --title "[Automation] WordPress Update Available (${LATEST_WP_VERSION})" --body "A new version of WordPress (${LATEST_WP_VERSION}) is available. Current version: $CURRENT_WP_VERSION. Run `composer update-wordpress` to update." --assignee jazzsequence --label "update"
+          else
+            echo "No WordPress update available."
+          fi
