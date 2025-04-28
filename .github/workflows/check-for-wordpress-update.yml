@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * 0' # Runs every Sunday at midnight UTC
   workflow_dispatch:
 
+permissions:
+  issues: write
+
 jobs:
   check-for-update:
     name: Check for WordPress update
@@ -36,6 +39,7 @@ jobs:
       - name: Check for WordPress update
         env:
           TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           LATEST_WP_VERSION=$(composer check-latest-wp)
