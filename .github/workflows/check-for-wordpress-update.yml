@@ -41,6 +41,8 @@ jobs:
           LATEST_WP_VERSION=$(composer check-latest-wp)
           CURRENT_WP_VERSION=$(terminus wp -- wpnext-test.dev core version)
 
+          echo "Latest version: ${LATEST_WP_VERSION}"
+          echo "Current version: ${CURRENT_WP_VERSION}"
           # Compare versions and create an issue if an update is available
           if [ "$LATEST_WP_VERSION" != "$CURRENT_WP_VERSION" ]; then
             echo "WordPress update available: $LATEST_WP_VERSION (current: $CURRENT_WP_VERSION)"
