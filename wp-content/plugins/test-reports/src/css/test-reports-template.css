@@ -1,0 +1,60 @@
+.test-reports {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 4rem;
+	row-gap: 1rem;
+}
+
+.test-reports a {
+	text-decoration: none;
+}
+
+.test-reports-options legend {
+	margin-bottom: .5em;
+}
+
+.test-reports-options .report-type fieldset,
+.test-reports-options .report-location:not(.hidden) fieldset {
+	display: flex;
+	flex-direction: column;
+	gap: .5em;
+}
+
+.test-reports-radio input {
+	margin-top: 0;
+}
+
+.test-reports .report-type {
+	margin-bottom: 1em;
+}
+
+.test-reports-templates {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.test-reports .template {
+	padding-bottom: 2rem;
+}
+
+.test-reports .template-buttons {
+	align-items: center;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+}
+
+.test-reports .copy-to-clipboard {
+	align-items: center;
+	display: flex;
+	gap: .25rem;
+}
+
+.test-reports .success {
+	color: #008a20;
+}
+
+.test-reports .card {
+	margin-top: 1rem;
+}
