@@ -112,7 +112,7 @@ jobs:
 
       - name: Push to Pantheon
         if: ${{ env.skip_deploy != 'true' }}
-        uses: stevector/push-to-pantheon@0.6.0
+        uses: stevector/push-to-pantheon@0.6.1
         with:
           ssh_key: ${{ secrets.SSH_PRIVATE_KEY }}
           machine_token: ${{ secrets.TERMINUS_TOKEN }}
