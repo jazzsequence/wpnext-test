@@ -56,7 +56,7 @@ fi
 terminus connection:set "$SITE_ENV" sftp -y
 
 function set_plugin_start_state() {
-	local EXCLUDE="akismet hello-dolly"
+	local EXCLUDE="akismet,hello-dolly"
 
 	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 	terminus wp "$SITE_ENV" -- plugin delete --all --exclude="$EXCLUDE"
