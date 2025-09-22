@@ -81,16 +81,16 @@ fi
 # Check number of plugins, redo set_plugin_start_state as necessary.
 PLUGIN_COUNT=$(terminus wp -- "$SITE_ENV" plugin list --field=name | wc -l)
 for i in {1..10}; do
-	if [ "$PLUGIN_COUNT" -ne 2 ]; then
+	if [ "$PLUGIN_COUNT" -ne 3 ]; then
 		echo "[Attempt $i] There are $PLUGIN_COUNT plugins installed. Resetting to known state."
 		set_plugin_start_state
 		PLUGIN_COUNT=$(terminus wp -- "$SITE_ENV" plugin list --field=name | wc -l)
 		terminus wp -- "$SITE_ENV" plugin list
 		if [ "$i" -eq 10 ]; then
-			echo "❌ Gave up trying to get the plugin list to 2 plugins. Tests might fail. See above for the plugin list."
+			echo "❌ Gave up trying to get the plugin list to 3 plugins. Tests might fail. See above for the plugin list."
 		fi
 	else
-		echo "There are exactly 2 plugins installed. ✅"
+		echo "There are exactly 3 plugins installed (including the mu-plugin loader). ✅"
 		break
 	fi
 done
