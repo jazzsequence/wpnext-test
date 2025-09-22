@@ -85,6 +85,7 @@ for i in {1..10}; do
 		echo "There are $PLUGIN_COUNT plugins installed. Resetting to known state."
 		set_plugin_start_state
 		PLUGIN_COUNT=$(terminus wp -- "$SITE_ENV" plugin list --field=name | wc -l)
+		terminus wp -- "$SITE_ENV" plugin list
 	else
 		echo "There are exactly 2 plugins installed. ✅"
 		break
