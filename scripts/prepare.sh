@@ -56,10 +56,10 @@ fi
 terminus connection:set "$SITE_ENV" sftp -y
 
 function set_plugin_start_state() {
-	local PLUGINS_LIST="6.2-plugin-test 6.4-admin-notice-test 6.5-interactivity-test menu-locations-api classic-editor core-rollback disable-pantheon-font-handling games-collector gutenberg horror-ipsum jetpack mailpoet wp-native-php-sessions pantheon-advanced-page-cache pantheon-hud rollback-update-failure rollback-testing test-reports woocommerce wordpress-beta-tester wp-cfm wp-feature-notifications wp-redis wordpress-seo"
+	local EXCLUDE="akismet hello-dolly"
 
 	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
-	terminus wp "$SITE_ENV" -- plugin delete "$PLUGINS_LIST"
+	terminus wp "$SITE_ENV" -- plugin delete --all --exclude="$EXCLUDE"
 	terminus wp "$SITE_ENV" -- plugin install akismet hello-dolly
 }
 
