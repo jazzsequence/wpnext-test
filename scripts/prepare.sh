@@ -90,7 +90,7 @@ for i in {1..10}; do
 			echo "❌ Gave up trying to get the plugin list to 3 plugins. Tests might fail. See above for the plugin list."
 		fi
 	else
-		echo "There are exactly 3 plugins installed (including the mu-plugin loader). ✅"
+		echo "✅ There are exactly 3 plugins installed (including the mu-plugin loader)."
 		break
 	fi
 done
