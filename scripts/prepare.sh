@@ -55,17 +55,40 @@ fi
 
 terminus connection:set "$SITE_ENV" sftp -y
 
-PLUGINS_LIST="6.2-plugin-test 6.4-admin-notice-test 6.5-interactivity-test menu-locations-api classic-editor core-rollback disable-pantheon-font-handling games-collector gutenberg horror-ipsum jetpack mailpoet wp-native-php-sessions pantheon-advanced-page-cache pantheon-hud rollback-update-failure rollback-testing test-reports woocommerce wordpress-beta-tester wp-cfm wp-feature-notifications wp-redis wordpress-seo"
+function set_plugin_start_state() {
+	local PLUGINS_LIST="6.2-plugin-test 6.4-admin-notice-test 6.5-interactivity-test menu-locations-api classic-editor core-rollback disable-pantheon-font-handling games-collector gutenberg horror-ipsum jetpack mailpoet wp-native-php-sessions pantheon-advanced-page-cache pantheon-hud rollback-update-failure rollback-testing test-reports woocommerce wordpress-beta-tester wp-cfm wp-feature-notifications wp-redis wordpress-seo"
 
-# Only run the next commands if WordPress is installed.
-if ! terminus wp -- "$SITE_ENV" core is-installed; then
-	echo "WordPress core is not installed. We're assuming this is from a previous run that did not complete. Skipping plugin deletion step."
-else
-	# If it does exist, make sure there are no plugins that the tests don't expect.
 	echo "Deleting all plugins from $SITE_ENV and adding only akismet and hello-dolly. This is a destructive operation so I hope you know what you're doing..."
 	terminus wp "$SITE_ENV" -- plugin delete "$PLUGINS_LIST"
 	terminus wp "$SITE_ENV" -- plugin install akismet hello-dolly
+}
+
+# Only run the next commands if WordPress is installed.
+if ! terminus wp -- "$SITE_ENV" core is-installed; then
+	# Check if there are more than 2 plugins installed.
+	if [ "$(terminus wp -- "$SITE_ENV" plugin list --field=name | wc -l)" -gt 2 ]; then
+		echo "WordPress core is not installed, but there are plugins installed. Deleting plugins."
+		set_plugin_start_state
+	fi
+
+	echo "WordPress core is not installed. We're assuming this is from a previous run that did not complete. Skipping plugin deletion step."
+else
+	# If it does exist, make sure there are no plugins that the tests don't expect.
+	set_plugin_start_state
 fi
+
+# Check number of plugins, redo set_plugin_start_state as necessary.
+PLUGIN_COUNT=$(terminus wp -- "$SITE_ENV" plugin list --field=name | wc -l)
+for i in {1..10}; do
+	if [ "$PLUGIN_COUNT" -ne 2 ]; then
+		echo "There are $PLUGIN_COUNT plugins installed. Resetting to known state."
+		set_plugin_start_state
+		PLUGIN_COUNT=$(terminus wp -- "$SITE_ENV" plugin list --field=name | wc -l)
+	else
+		echo "There are exactly 2 plugins installed. ✅"
+		break
+	fi
+done
 
 terminus env:wipe "$SITE_ENV" --yes
 
