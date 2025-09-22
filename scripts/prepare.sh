@@ -69,6 +69,10 @@ fi
 
 terminus env:wipe "$SITE_ENV" --yes
 
+# Modify plugins.feature to use the iframe link for plugin installation
+sed -i '' '/When I follow "Install Now"/i\    Then I should see the link with id "plugin_install_from_iframe"' vendor/pantheon-systems/pantheon-wordpress-upstream-tests/features/plugins.feature
+sed -i '' 's/When I follow "Install Now"/When I follow the link with id "plugin_install_from_iframe"/' vendor/pantheon-systems/pantheon-wordpress-upstream-tests/features/plugins.feature
+
 ###
 # Get all necessary environment details.
 ###
