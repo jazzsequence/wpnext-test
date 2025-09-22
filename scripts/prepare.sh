@@ -74,6 +74,7 @@ if ! terminus wp -- "$SITE_ENV" core is-installed; then
 	echo "WordPress core is not installed. We're assuming this is from a previous run that did not complete. Skipping plugin deletion step."
 else
 	# If it does exist, make sure there are no plugins that the tests don't expect.
+	echo "WordPress core is installed. Ensuring only the expected plugins are installed."
 	set_plugin_start_state
 fi
 
