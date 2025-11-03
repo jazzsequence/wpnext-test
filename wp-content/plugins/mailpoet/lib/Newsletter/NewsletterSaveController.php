@@ -29,6 +29,7 @@ use MailPoet\UnexpectedValueException;
 use MailPoet\Util\Security;
 use MailPoet\WP\Emoji;
 use MailPoet\WP\Functions as WPFunctions;
+use MailPoet\WPCOM\DotcomHelperFunctions;
 use MailPoetVendor\Carbon\Carbon;
 use MailPoetVendor\Doctrine\ORM\EntityManager;
 
@@ -81,6 +82,8 @@ class NewsletterSaveController {
   /*** @var NewsletterCoupon */
   private $newsletterCoupon;
 
+  private DotcomHelperFunctions $dotcomHelperFunctions;
+
   public function __construct(
     AuthorizedEmailsController $authorizedEmailsController,
     Emoji $emoji,
@@ -97,7 +100,8 @@ class NewsletterSaveController {
     WPFunctions $wp,
     ApiDataSanitizer $dataSanitizer,
     Scheduler $scheduler,
-    NewsletterCoupon $newsletterCoupon
+    NewsletterCoupon $newsletterCoupon,
+    DotcomHelperFunctions $dotcomHelperFunctions
   ) {
     $this->authorizedEmailsController = $authorizedEmailsController;
     $this->emoji = $emoji;
@@ -115,6 +119,7 @@ class NewsletterSaveController {
     $this->dataSanitizer = $dataSanitizer;
     $this->scheduler = $scheduler;
     $this->newsletterCoupon = $newsletterCoupon;
+    $this->dotcomHelperFunctions = $dotcomHelperFunctions;
   }
 
   public function save(array $data = []): NewsletterEntity {
@@ -156,10 +161,27 @@ class NewsletterSaveController {
     $this->rescheduleIfNeeded($newsletter);
     $this->updateQueue($newsletter, $data['options'] ?? []);
     $this->authorizedEmailsController->onNewsletterSenderAddressUpdate($newsletter, $oldSenderAddress);
-    if (isset($data['new_editor']) && $data['new_editor']) {
+    if ($this->isNewEditor($data)) {
       $this->ensureWpPost($newsletter);
     }
     return $newsletter;
+  }
+
+  private function isNewEditor(array $data): bool {
+    if (!isset($data['new_editor'])) {
+      return false;
+    }
+
+    $value = $data['new_editor'];
+
+    if (is_bool($value)) return $value;
+    if (is_int($value)) return $value === 1;
+    if (is_string($value)) {
+      $norm = strtolower(trim($value));
+      if (in_array($norm, ['1', 'true', 'yes', 'on'], true)) return true;
+      if (in_array($norm, ['0', 'false', 'no', 'off', ''], true)) return false;
+    }
+    return (bool)$value;
   }
 
   private function sanitizeAutomationEmailData(array $data, NewsletterEntity $newsletter): array {
@@ -198,7 +220,7 @@ class NewsletterSaveController {
     $this->newslettersRepository->flush();
 
     // duplicate wp post data
-    $post = $this->wp->getPost($newsletter->getWpPostId());
+    $post = !is_null($newsletter->getWpPostId()) ? $this->wp->getPost($newsletter->getWpPostId()) : null;
     if ($post instanceof \WP_Post) {
       $newPostId = $this->wp->wpInsertPost([
         'post_status' => NewsletterEntity::STATUS_DRAFT,
@@ -461,10 +483,19 @@ class NewsletterSaveController {
       return;
     }
 
+    $postStatus = 'draft';
+    // The automation emails need to be private in the Garden environment for the correct display in the email editor.
+    if (
+      $newsletter->getType() === NewsletterEntity::TYPE_AUTOMATION
+      && $this->dotcomHelperFunctions->isGarden()
+    ) {
+      $postStatus = 'private';
+    }
+
     $newPostId = $this->wp->wpInsertPost([
       'post_content' => '',
       'post_type' => EmailEditor::MAILPOET_EMAIL_POST_TYPE,
-      'post_status' => 'draft',
+      'post_status' => $postStatus,
       'post_author' => $this->wp->getCurrentUserId(),
       'post_title' => __('New Email', 'mailpoet'),
     ]);

@@ -453,7 +453,7 @@ class ProductSchema extends AbstractSchema {
 			],
 			'low_stock_remaining' => [
 				'description' => __( 'Quantity left in stock if stock is low, or null if not applicable.', 'woocommerce' ),
-				'type'        => [ 'integer', 'null' ],
+				'type'        => [ 'number', 'null' ],
 				'context'     => [ 'view', 'edit' ],
 				'readonly'    => true,
 			],
@@ -489,22 +489,28 @@ class ProductSchema extends AbstractSchema {
 					],
 					'minimum'     => [
 						'description' => __( 'The minimum quantity that can be added to the cart.', 'woocommerce' ),
-						'type'        => 'integer',
+						'type'        => 'number',
 						'context'     => [ 'view', 'edit' ],
 						'readonly'    => true,
 					],
 					'maximum'     => [
 						'description' => __( 'The maximum quantity that can be added to the cart.', 'woocommerce' ),
-						'type'        => 'integer',
+						'type'        => 'number',
 						'context'     => [ 'view', 'edit' ],
 						'readonly'    => true,
 					],
 					'multiple_of' => [
 						'description' => __( 'The amount that quantities increment by. Quantity must be an multiple of this value.', 'woocommerce' ),
-						'type'        => 'integer',
+						'type'        => 'number',
 						'context'     => [ 'view', 'edit' ],
 						'readonly'    => true,
 						'default'     => 1,
+					],
+					'single_text' => [
+						'description' => __( 'Button text in the single product page.', 'woocommerce' ),
+						'type'        => 'string',
+						'context'     => [ 'view', 'edit' ],
+						'readonly'    => true,
 					],
 				],
 			],
@@ -558,6 +564,7 @@ class ProductSchema extends AbstractSchema {
 					'text'        => $this->prepare_html_response( $product->add_to_cart_text() ),
 					'description' => $this->prepare_html_response( $product->add_to_cart_description() ),
 					'url'         => $this->prepare_html_response( $product->add_to_cart_url() ),
+					'single_text' => $this->prepare_html_response( $product->single_add_to_cart_text() ),
 				],
 				( new QuantityLimits() )->get_add_to_cart_limits( $product )
 			),
@@ -582,7 +589,7 @@ class ProductSchema extends AbstractSchema {
 	 * Gets remaining stock amount for a product.
 	 *
 	 * @param \WC_Product $product Product instance.
-	 * @return integer|null
+	 * @return int|float|null
 	 */
 	protected function get_remaining_stock( \WC_Product $product ) {
 		if ( is_null( $product->get_stock_quantity() ) ) {
@@ -595,7 +602,7 @@ class ProductSchema extends AbstractSchema {
 	 * If a product has low stock, return the remaining stock amount for display.
 	 *
 	 * @param \WC_Product $product Product instance.
-	 * @return integer|null
+	 * @return int|float|null
 	 */
 	protected function get_low_stock_remaining( \WC_Product $product ) {
 		$remaining_stock = $this->get_remaining_stock( $product );

@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) exit;
 
 
 use MailPoet\Form\AssetsController;
+use MailPoet\Settings\Pages;
 use MailPoet\WP\Functions as WPFunction;
 
 class PageRenderer {
@@ -63,7 +64,7 @@ class PageRenderer {
   }
 
   public function setPageTitle($title = '') {
-    if ($title === __('MailPoet Page', 'mailpoet')) {
+    if ($title === Pages::PAGE_TITLE || $title === __('MailPoet Page', 'mailpoet')) {
       return $this->getPageTitle();
     }
     return $title;
@@ -72,9 +73,17 @@ class PageRenderer {
   public function setPageContent($pageContent) {
     $this->assetsController->setupFrontEndDependencies();
 
-    $content = $this->formRenderer->render($this->data);
-    if (!$content) {
-      return false;
+    // For preview, show a placeholder message since we don't have a real captcha session
+    if (isset($this->data['preview']) && $this->data['preview']) {
+      $content = '<div class="mailpoet_captcha_preview">' .
+        '<p>' . __('This is a preview of the CAPTCHA page.', 'mailpoet') . '</p>' .
+        '<p>' . __('When users need to verify they’re not a robot, the CAPTCHA form will be displayed here.', 'mailpoet') . '</p>' .
+        '</div>';
+    } else {
+      $content = $this->formRenderer->render($this->data);
+      if (!$content) {
+        return false;
+      }
     }
 
     return str_replace('[mailpoet_page]', trim($content), $pageContent);

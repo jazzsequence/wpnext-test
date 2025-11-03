@@ -9,23 +9,23 @@
 
 <script>
   <% autoescape 'js' %>
-  var mailpoet_form_data = <%= json_encode(form) %>;
-  var mailpoet_form_exports = <%= json_encode(form_exports) %>;
-  var mailpoet_form_segments = <%= json_encode(segments) %>;
-  var mailpoet_custom_fields = <%= json_encode(custom_fields) %>;
-  var mailpoet_date_types = <%= json_encode(date_types) %>;
-  var mailpoet_date_formats = <%= json_encode(date_formats) %>;
-  var mailpoet_month_names = <%= json_encode(month_names) %>;
-  var mailpoet_form_preview_page = <%= json_encode(preview_page_url) %>;
-  var mailpoet_custom_fonts = <%= json_encode(custom_fonts) %>;
-  var mailpoet_translations = <%= json_encode(translations) %>;
-  var mailpoet_all_wp_posts = <%= json_encode(posts) %>;
-  var mailpoet_all_wp_pages = <%= json_encode(pages) %>;
-  var mailpoet_all_wp_categories = <%= json_encode(categories) %>;
-  var mailpoet_all_wp_tags = <%= json_encode(tags) %>;
-  var mailpoet_woocommerce_products = <%= json_encode(products) %>;
-  var mailpoet_woocommerce_categories = <%= json_encode(product_categories) %>;
-  var mailpoet_woocommerce_tags = <%= json_encode(product_tags) %>;
+  var mailpoet_form_data = <%= form|wp_json_encode %>;
+  var mailpoet_form_exports = <%= form_exports|wp_json_encode %>;
+  var mailpoet_form_segments = <%= segments|wp_json_encode %>;
+  var mailpoet_custom_fields = <%= custom_fields|wp_json_encode %>;
+  var mailpoet_date_types = <%= date_types|wp_json_encode %>;
+  var mailpoet_date_formats = <%= date_formats|wp_json_encode %>;
+  var mailpoet_month_names = <%= month_names|wp_json_encode %>;
+  var mailpoet_form_preview_page = <%= preview_page_url|wp_json_encode %>;
+  var mailpoet_custom_fonts = <%= custom_fonts|wp_json_encode %>;
+  var mailpoet_translations = <%= translations|wp_json_encode %>;
+  var mailpoet_all_wp_posts = <%= posts|wp_json_encode %>;
+  var mailpoet_all_wp_pages = <%= pages|wp_json_encode %>;
+  var mailpoet_all_wp_categories = <%= categories|wp_json_encode %>;
+  var mailpoet_all_wp_tags = <%= tags|wp_json_encode %>;
+  var mailpoet_woocommerce_products = <%= products|wp_json_encode %>;
+  var mailpoet_woocommerce_categories = <%= product_categories|wp_json_encode %>;
+  var mailpoet_woocommerce_tags = <%= product_tags|wp_json_encode %>;
   var mailpoet_close_icons_url = '<%= image_url("form_close_icon") %>';
   var mailpoet_tutorial_seen = '<%= editor_tutorial_seen %>';
   var mailpoet_tutorial_url = '<%= cdn_url('form-editor/tutorial.mp4') %>';
@@ -75,21 +75,16 @@
   'formSaved': __('Form saved.'),
   'formSavedAppendix': __('Cookies reset — you will see all your dismissed popup forms again.'),
   'customFieldSaved': __('Custom field saved.'),
-  'placeFixedBarFormOnPages': _x('Fixed bar', 'This is a text on a widget that leads to settings for form placement - form type is fixed bar'),
   'placeFixedBarFormOnPagesDescription': __('Display your form in a fixed horizontal bar at the top or bottom of posts or pages.'),
-  'placeSlideInFormOnPages': _x('Slide–in', 'This is a text on a widget that leads to settings for form placement - form type is slide in'),
   'placeSlideInFormOnPagesDescription': __('Display your form in a slide–in form on top of your page content.'),
-  'placePopupFormOnPages': _x('Pop-up', 'This is a text on a widget that leads to settings for form placement - form type is pop-up, it will be displayed on page in a small modal window'),
   'placePopupFormOnPagesDescription': __('Display your form in a pop-up window.'),
   'exitIntentTitle': __('Display on exit-intent'),
   'exitIntentDescription': __('Show the form immediately if the visitor attempts to leave the site.'),
   'exitIntentSwitch': __('Exit-intent display'),
-  'placeFormBellowPages': _x('Below pages', 'This is a text on a widget that leads to settings for form placement'),
   'placeFormBellowPagesDescription': __('This form placement allows you to add this form at the end of all the pages or posts, below the content.'),
   'placeFormOnAllPages': _x('Display on all pages', 'This is a text on a switch if a form should be displayed bellow all pages'),
   'placeFormOnAllPosts': _x('Display on all posts/products', 'This is a text on a switch if a form should be displayed bellow all posts'),
   'placeFormOnHomepage': __('Display on the homepage'),
-  'placeFormOthers': _x('Others (widget)', 'Placement of the form using theme widget'),
   'formPlacementDelay': _x('Display with a delay of', 'Label on a selection of different times'),
   'formPlacementPlacementPosition': _x('Position', 'Placement of a fixed bar form, on top of the page or on the bottom'),
   'formPlacementPlacementPositionTop': _x('top', 'Placement of a fixed bar form, on top of the page or on the bottom'),
@@ -208,8 +203,7 @@
   'formPreviewOthersDisclaimer': __('Psssst. We try our best to show you what the widget might look like, but better check the final result on your website.'),
   'closeButtonHeading': __('Close Button Style'),
   'tutorialHeading': __('A video tour of the form editor'),
-  'noName': _x('no name', 'fallback for forms without a name in a form list'),
   'saveFormFirst': __('Please save the form first!'),
-  'addNewTag': __('Add New Tag'),
+  'addNewTag': __('Add new tag'),
 }) %>
 <% endblock %>

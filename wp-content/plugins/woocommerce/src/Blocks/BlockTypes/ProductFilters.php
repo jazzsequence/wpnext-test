@@ -1,10 +1,18 @@
 <?php
+
+declare( strict_types = 1 );
+
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
+
+use Automattic\WooCommerce\Blocks\Utils\BlocksSharedState;
+use Automattic\WooCommerce\Internal\ProductFilters\Params;
 
 /**
  * ProductFilters class.
  */
 class ProductFilters extends AbstractBlock {
+	use BlocksSharedState;
+
 	/**
 	 * Block name.
 	 *
@@ -32,10 +40,14 @@ class ProductFilters extends AbstractBlock {
 		global $pagenow;
 		parent::enqueue_data( $attributes );
 
-		$this->asset_data_registry->add( 'isBlockTheme', wc_current_theme_is_fse_theme() );
-		$this->asset_data_registry->add( 'isProductArchive', is_shop() || is_product_taxonomy() );
-		$this->asset_data_registry->add( 'isSiteEditor', 'site-editor.php' === $pagenow );
-		$this->asset_data_registry->add( 'isWidgetEditor', 'widgets.php' === $pagenow || 'customize.php' === $pagenow );
+		$this->initialize_shared_config( 'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WooCommerce' );
+
+		wp_interactivity_config(
+			$this->get_full_block_name(),
+			[
+				'isProductArchive' => is_shop() || is_product_taxonomy() || ( is_search() && 'product' === get_post_type() ),
+			]
+		);
 	}
 
 	/**
@@ -47,10 +59,13 @@ class ProductFilters extends AbstractBlock {
 	 * @return string Rendered block type output.
 	 */
 	protected function render( $attributes, $content, $block ) {
-		wp_enqueue_script_module( $this->get_full_block_name() );
+		wp_enqueue_script( 'wc-settings' );
 
 		$query_id      = $block->context['queryId'] ?? 0;
 		$filter_params = $this->get_filter_params( $query_id );
+
+		wp_interactivity_config( $this->get_full_block_name(), [ 'canonicalUrl' => $this->get_canonical_url_no_pagination( $filter_params ) ] );
+
 		/**
 		 * Filter hook to modify the selected filter items.
 		 *
@@ -61,7 +76,7 @@ class ProductFilters extends AbstractBlock {
 		usort(
 			$active_filters,
 			function ( $a, $b ) {
-				return strnatcmp( $a['label'], $b['label'] );
+				return strnatcmp( $a['activeLabel'], $b['activeLabel'] );
 			}
 		);
 
@@ -81,9 +96,8 @@ class ProductFilters extends AbstractBlock {
 			''
 		);
 		$interactivity_context = array(
-			'params'         => $filter_params,
-			'originalParams' => $filter_params,
-			'activeFilters'  => $active_filters,
+			'params'        => $filter_params,
+			'activeFilters' => $active_filters,
 		);
 
 		$classes = '';
@@ -100,11 +114,15 @@ class ProductFilters extends AbstractBlock {
 			'data-wp-interactive'              => $this->get_full_block_name(),
 			'data-wp-watch--scrolling'         => 'callbacks.scrollLimit',
 			'data-wp-on--keyup'                => 'actions.closeOverlayOnEscape',
-			'data-wp-router-region'            => $this->generate_navigation_id( $block ),
 			'data-wp-context'                  => wp_json_encode( $interactivity_context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ),
 			'data-wp-class--is-overlay-opened' => 'context.isOverlayOpened',
 			'style'                            => $styles,
 		);
+
+		// TODO: Remove this conditional once the fix is released in WP. https://github.com/woocommerce/gutenberg/pull/4.
+		if ( ! isset( $block->context['productCollectionLocation'] ) ) {
+			$wrapper_attributes['data-wp-router-region'] = $this->generate_navigation_id( $block );
+		}
 
 		ob_start();
 		?>
@@ -121,6 +139,7 @@ class ProductFilters extends AbstractBlock {
 					<div
 						class="wc-block-product-filters__overlay-dialog"
 						role="dialog"
+						aria-label="<?php echo esc_html__( 'Product Filters', 'woocommerce' ); ?>"
 					>
 						<header class="wc-block-product-filters__overlay-header">
 							<button
@@ -208,17 +227,7 @@ class ProductFilters extends AbstractBlock {
 
 		parse_str( $parsed_url['query'], $url_query_params );
 
-		/**
-		 * Filters the active filter data provided by filter blocks.
-		 *
-		 * @since 11.7.0
-		 *
-		 * @param array $filter_param_keys The active filters data
-		 * @param array $url_param_keys    The query param parsed from the URL.
-		 *
-		 * @return array Active filters params.
-		 */
-		$filter_param_keys = array_unique( apply_filters( 'woocommerce_blocks_product_filters_param_keys', array(), array_keys( $url_query_params ) ) );
+		$filter_param_keys = wc_get_container()->get( Params::class )->get_param_keys();
 
 		return array_filter(
 			$url_query_params,
@@ -230,13 +239,78 @@ class ProductFilters extends AbstractBlock {
 	}
 
 	/**
-	 * Disable the block type script, this uses script modules.
+	 * Disable the style handle for this block type. We use block.json to load the style.
 	 *
-	 * @param string|null $key The key.
+	 * @return null
+	 */
+	protected function get_block_type_style() {
+		return null;
+	}
+
+	/**
+	 * Disable the editor style handle for this block type. We use block.json to load the style.
 	 *
+	 * @return null
+	 */
+	protected function get_block_type_editor_style() {
+		return null;
+	}
+
+	/**
+	 * Disable the script handle for this block type. We use block.json to load the script.
+	 *
+	 * @param string|null $key The key of the script to get.
 	 * @return null
 	 */
 	protected function get_block_type_script( $key = null ) {
 		return null;
+	}
+
+	/**
+	 * Get the canonical URL without pagination.
+	 *
+	 * @param array $filter_params Filter parameters.
+	 * @return string Canonical URL without pagination.
+	 */
+	private function get_canonical_url_no_pagination( $filter_params ) {
+		$canonical_url_no_pagination = is_singular() ? get_permalink() : get_pagenum_link( 1 );
+		$parsed_url                  = wp_parse_url( html_entity_decode( $canonical_url_no_pagination, ENT_QUOTES, get_bloginfo( 'charset' ) ) );
+
+		// If there are active filters, $parsed_url['query'] is empty for page or post but not empty for archives.
+		if ( empty( $filter_params ) || empty( $parsed_url['query'] ) ) {
+			return $canonical_url_no_pagination;
+		}
+
+		foreach ( array_keys( $filter_params ) as $key ) {
+			$parsed_url['query'] = remove_query_arg( $key, $parsed_url['query'] );
+		}
+
+		$url = '';
+
+		if ( isset( $parsed_url['scheme'] ) ) {
+			$url .= $parsed_url['scheme'] . '://';
+		}
+
+		if ( isset( $parsed_url['host'] ) ) {
+			$url .= $parsed_url['host'];
+		}
+
+		if ( isset( $parsed_url['port'] ) ) {
+			$url .= ':' . $parsed_url['port'];
+		}
+
+		if ( isset( $parsed_url['path'] ) ) {
+			$url .= $parsed_url['path'];
+		}
+
+		if ( ! empty( $parsed_url['query'] ) ) {
+			$url .= '?' . $parsed_url['query'];
+		}
+
+		if ( isset( $parsed_url['fragment'] ) ) {
+			$url .= '#' . $parsed_url['fragment'];
+		}
+
+		return $url;
 	}
 }

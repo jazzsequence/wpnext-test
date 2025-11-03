@@ -1,5 +1,9 @@
 <?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 new WPCOM_JSON_API_GET_Site_Endpoint(
 	array(
 		'description'                          => 'Get information about a site.',
@@ -32,6 +36,8 @@ new WPCOM_JSON_API_GET_Site_Endpoint(
 
 /**
  * GET Site endpoint class.
+ *
+ * @phan-constructor-used-for-side-effects
  */
 class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 
@@ -42,6 +48,7 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 	 */
 	public static $site_format = array(
 		'ID'                          => '(int) Site ID',
+		'slug'                        => '(string) Slug of site',
 		'name'                        => '(string) Title of site',
 		'description'                 => '(string) Tagline or description of site',
 		'URL'                         => '(string) Full URL to the site',
@@ -88,6 +95,10 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 		'is_deleted'                  => '(bool) If the site flagged as deleted.',
 		'is_a4a_client'               => '(bool) If the site is an A4A client site.',
 		'is_a4a_dev_site'             => '(bool) If the site is an A4A dev site.',
+		'is_garden'                   => '(bool) If the site is a Garden site.',
+		'garden_name'                 => '(string) The name of the Garden site.',
+		'garden_partner'              => '(string) The partner of the Garden site.',
+		'garden_is_provisioned'       => '(bool) If the Garden site is provisioned.',
 	);
 
 	/**
@@ -205,9 +216,9 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 		'was_created_with_blank_canvas_design',
 		'videopress_storage_used',
 		'is_difm_lite_in_progress',
+		'is_summer_special_2025',
 		'site_intent',
 		'site_partner_bundle',
-		'site_goals',
 		'onboarding_segment',
 		'site_vertical_id',
 		'blogging_prompts_settings',
@@ -230,6 +241,7 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 	 * @var array $jetpack_response_field_additions
 	 */
 	protected static $jetpack_response_field_additions = array(
+		'slug',
 		'subscribers_count',
 		'site_migration',
 		'site_owner',
@@ -239,6 +251,10 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 		'was_hosting_trial',
 		'was_upgraded_from_trial',
 		'is_a4a_dev_site',
+		'is_garden',
+		'garden_name',
+		'garden_partner',
+		'garden_is_provisioned',
 	);
 
 	/**
@@ -256,7 +272,7 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 	/**
 	 * Jetpack response option additions.
 	 *
-	 * @var array $jetpack_response_field_member_additions
+	 * @var array $jetpack_response_option_additions
 	 */
 	protected static $jetpack_response_option_additions = array(
 		'publicize_permanently_disabled',
@@ -326,8 +342,10 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 	 * /sites/mine
 	 * /sites/%s -> $blog_id\
 	 *
-	 * @param string $path - the path.
-	 * @param int    $blog_id - the blog ID.
+	 * @param string     $path - the path.
+	 * @param int|string $blog_id - the blog ID or the string 'mine'.
+	 *
+	 * @return array|\WP_Error Site response array on success, or WP_Error on failure.
 	 */
 	public function callback( $path = '', $blog_id = 0 ) {
 		if ( 'mine' === $blog_id ) {
@@ -464,6 +482,9 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 		switch ( $key ) {
 			case 'ID':
 				$response[ $key ] = $this->site->blog_id;
+				break;
+			case 'slug':
+				$response[ $key ] = $this->site->get_slug();
 				break;
 			case 'name':
 				$response[ $key ] = $this->site->get_name();
@@ -621,6 +642,18 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 				break;
 			case 'is_a4a_dev_site':
 				$response[ $key ] = $this->site->is_a4a_dev_site();
+				break;
+			case 'is_garden':
+				$response[ $key ] = $this->site->is_garden();
+				break;
+			case 'garden_name':
+				$response[ $key ] = $this->site->garden_name();
+				break;
+			case 'garden_partner':
+				$response[ $key ] = $this->site->garden_partner();
+				break;
+			case 'garden_is_provisioned':
+				$response[ $key ] = $this->site->garden_is_provisioned();
 				break;
 		}
 
@@ -879,6 +912,9 @@ class WPCOM_JSON_API_GET_Site_Endpoint extends WPCOM_JSON_API_Endpoint {
 				case 'is_difm_lite_in_progress':
 					$options[ $key ] = $site->is_difm_lite_in_progress();
 					break;
+				case 'is_summer_special_2025':
+					$options[ $key ] = $site->is_summer_special_2025();
+					break;
 				case 'site_intent':
 					$options[ $key ] = $site->get_site_intent();
 					break;
@@ -1049,7 +1085,9 @@ new WPCOM_JSON_API_List_Post_Formats_Endpoint(
 );
 
 /**
- * List Post Formates endpoint class.
+ * List Post Formats endpoint class.
+ *
+ * @phan-constructor-used-for-side-effects
  */
 class WPCOM_JSON_API_List_Post_Formats_Endpoint extends WPCOM_JSON_API_Endpoint { // phpcs:ignore
 	/**
@@ -1060,6 +1098,8 @@ class WPCOM_JSON_API_List_Post_Formats_Endpoint extends WPCOM_JSON_API_Endpoint 
 	 *
 	 * @param string $path - the path.
 	 * @param int    $blog_id - the blog ID.
+	 *
+	 * @return array|\WP_Error Array with 'formats' on success, or WP_Error on failure.
 	 */
 	public function callback( $path = '', $blog_id = 0 ) {
 		$blog_id = $this->api->switch_to_blog_and_validate_user( $this->api->get_blog_id( $blog_id ) );
@@ -1115,6 +1155,8 @@ new WPCOM_JSON_API_List_Page_Templates_Endpoint(
 
 /**
  * List page templates endpoint class.
+ *
+ * @phan-constructor-used-for-side-effects
  */
 class WPCOM_JSON_API_List_Page_Templates_Endpoint extends WPCOM_JSON_API_Endpoint { // phpcs:ignore
 	/**
@@ -1124,6 +1166,8 @@ class WPCOM_JSON_API_List_Page_Templates_Endpoint extends WPCOM_JSON_API_Endpoin
 	 *
 	 * @param string $path - the path.
 	 * @param int    $blog_id - the blog ID.
+	 *
+	 * @return array|\WP_Error Array with 'templates' on success, or WP_Error on failure.
 	 */
 	public function callback( $path = '', $blog_id = 0 ) {
 		$blog_id = $this->api->switch_to_blog_and_validate_user( $this->api->get_blog_id( $blog_id ) );

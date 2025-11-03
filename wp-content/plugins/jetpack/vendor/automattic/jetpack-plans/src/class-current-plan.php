@@ -63,6 +63,7 @@ class Current_Plan {
 				'core/video',
 				'core/cover',
 				'core/audio',
+				'multistep-form',
 			),
 		),
 		'personal' => array(
@@ -146,7 +147,10 @@ class Current_Plan {
 				'jetpack_complete_monthly',
 				'vip',
 			),
-			'supports' => array(),
+			'supports' => array(
+				'field-file', // Forms
+				'social-image-generator',
+			),
 		),
 	);
 

@@ -31,6 +31,7 @@ if ( ! class_exists( 'WC_Email_Failed_Order', false ) ) :
 		public function __construct() {
 			$this->id             = 'failed_order';
 			$this->title          = __( 'Failed order', 'woocommerce' );
+			$this->email_group    = 'orders';
 			$this->template_html  = 'emails/admin-failed-order.php';
 			$this->template_plain = 'emails/plain/admin-failed-order.php';
 			$this->placeholders   = array(
@@ -136,6 +137,24 @@ if ( ! class_exists( 'WC_Email_Failed_Order', false ) ) :
 					'sent_to_admin'      => true,
 					'plain_text'         => true,
 					'email'              => $this,
+				)
+			);
+		}
+
+
+		/**
+		 * Get block editor email template content.
+		 *
+		 * @return string
+		 */
+		public function get_block_editor_email_template_content() {
+			return wc_get_template_html(
+				$this->template_block_content,
+				array(
+					'order'         => $this->object,
+					'sent_to_admin' => true,
+					'plain_text'    => false,
+					'email'         => $this,
 				)
 			);
 		}

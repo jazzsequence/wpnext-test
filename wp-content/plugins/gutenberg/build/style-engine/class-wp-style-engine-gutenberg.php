@@ -4,7 +4,7 @@
  *
  * Generates classnames and block styles.
  *
- * @package Gutenberg
+ * @package gutenberg
  */
 
 if ( ! class_exists( 'WP_Style_Engine_Gutenberg' ) ) {
@@ -133,6 +133,9 @@ if ( ! class_exists( 'WP_Style_Engine_Gutenberg' ) ) {
 						'individual' => 'border-%s-radius',
 					),
 					'path'          => array( 'border', 'radius' ),
+					'css_vars'      => array(
+						'border-radius' => '--wp--preset--border-radius--$slug',
+					),
 				),
 				'style'  => array(
 					'property_keys' => array(

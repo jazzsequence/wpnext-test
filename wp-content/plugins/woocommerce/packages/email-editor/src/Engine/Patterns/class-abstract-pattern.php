@@ -1,12 +1,12 @@
 <?php
 /**
- * This file is part of the MailPoet plugin.
+ * This file is part of the WooCommerce Email Editor package
  *
- * @package MailPoet\EmailEditor
+ * @package Automattic\WooCommerce\EmailEditor
  */
 
 declare(strict_types = 1);
-namespace MailPoet\EmailEditor\Engine\Patterns;
+namespace Automattic\WooCommerce\EmailEditor\Engine\Patterns;
 
 /**
  * Abstract class for block patterns.
@@ -36,6 +36,12 @@ abstract class Abstract_Pattern {
 	 * @var string[] $template_types
 	 */
 	protected $template_types = array();
+	/**
+	 * List of supported post types.
+	 *
+	 * @var string[] $post_types
+	 */
+	protected $post_types = array();
 	/**
 	 * Flag to enable/disable inserter.
 	 *
@@ -93,6 +99,7 @@ abstract class Abstract_Pattern {
 			'inserter'      => $this->inserter,
 			'blockTypes'    => $this->block_types,
 			'templateTypes' => $this->template_types,
+			'postTypes'     => $this->post_types,
 			'source'        => $this->source,
 			'viewportWidth' => $this->viewport_width,
 		);

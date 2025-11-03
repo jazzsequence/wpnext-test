@@ -1,6 +1,10 @@
 <?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 use Automattic\Jetpack\VideoPress\Jwt_Token_Bridge;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 /**
  * VideoPress playback module markup generator.
  *
@@ -104,9 +108,7 @@ class VideoPress_Player {
 		}
 		if ( empty( $cached_video ) ) {
 			$video = new VideoPress_Video( $guid, $maxwidth );
-			if ( empty( $video ) ) {
-				return;
-			} elseif ( isset( $video->error ) ) {
+			if ( isset( $video->error ) ) {
 				$this->video = $video->error;
 				return;
 			} elseif ( is_wp_error( $video ) ) {
@@ -562,7 +564,7 @@ class VideoPress_Player {
 			$html .= "if ( jQuery.VideoPress.video.prepare({$guid_js},{$player_config}," . self::$shown[ $guid ] . ') ) {' . PHP_EOL;
 			$html .= 'if ( jQuery(' . $jq_container . ').data( "player" ) === "flash" ){jQuery.VideoPress.video.play(jQuery(' . wp_json_encode( '#' . $this->video_container_id ) . '));}else{';
 			$html .= 'jQuery(' . $jq_placeholder . ').html(' . wp_json_encode( $this->html_age_date() ) . ');' . PHP_EOL;
-			$html .= 'jQuery(' . wp_json_encode( '#' . $video_placeholder_id . ' input[type=submit]' ) . ').one("click", function(event){jQuery.VideoPress.requirements.isSufficientAge(jQuery(' . $jq_container . '),' . absint( $this->video->age_rating ) . ')});' . PHP_EOL;
+			$html .= 'jQuery(' . wp_json_encode( '#' . $video_placeholder_id . ' input[type="submit"]' ) . ').one("click", function(event){jQuery.VideoPress.requirements.isSufficientAge(jQuery(' . $jq_container . '),' . absint( $this->video->age_rating ) . ')});' . PHP_EOL;
 			$html .= '}}}' . PHP_EOL;
 		} else {
 			$html .= "if ( jQuery.VideoPress.video.prepare({$guid_js}, {$player_config}," . self::$shown[ $guid ] . ') ) {' . PHP_EOL;
@@ -705,6 +707,7 @@ class VideoPress_Player {
 				if ( ! in_array( $option, array( 'width', 'height' ), true ) ) {
 
 					// add_query_arg ignores false as a value, so replacing it with 0
+					// @phan-suppress-next-line PhanPluginSimplifyExpressionBool -- Probably it could, but semantically let's keep it as-is.
 					$iframe_url = add_query_arg( $option, ( false === $value ) ? 0 : $value, $iframe_url );
 				}
 			}
@@ -859,7 +862,7 @@ class VideoPress_Player {
 
 		$embed = array(
 			'id'     => $this->video_id,
-			'src'    => esc_url_raw( $this->video->players->swf->url . '&' . http_build_query( $this->get_flash_variables(), null, '&' ), array( 'http', 'https' ) ),
+			'src'    => esc_url_raw( $this->video->players->swf->url . '&' . http_build_query( $this->get_flash_variables(), '', '&' ), array( 'http', 'https' ) ),
 			'type'   => 'application/x-shockwave-flash',
 			'width'  => $this->video->calculated_width,
 			'height' => $this->video->calculated_height,
@@ -895,7 +898,7 @@ class VideoPress_Player {
 			$thumbnail_html .= esc_attr( $this->video->title );
 		}
 		$thumbnail_html .= '" src="' . esc_url( $this->video->poster_frame_uri, array( 'http', 'https' ) ) . '" width="' . $this->video->calculated_width . '" height="' . $this->video->calculated_height . '" />';
-		$flash_vars      = esc_attr( http_build_query( $this->get_flash_variables(), null, '&' ) );
+		$flash_vars      = esc_attr( http_build_query( $this->get_flash_variables(), '', '&' ) );
 		$flash_params    = '';
 		foreach ( $this->get_flash_parameters() as $attribute => $value ) {
 			$flash_params .= '<param name="' . esc_attr( $attribute ) . '" value="' . esc_attr( $value ) . '" />';

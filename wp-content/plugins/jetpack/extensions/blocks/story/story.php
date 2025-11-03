@@ -15,6 +15,10 @@ use Jetpack;
 use Jetpack_Gutenberg;
 use Jetpack_PostImages;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 const EMBED_SIZE        = array( 360, 640 ); // twice as many pixels for retina displays.
 const CROP_UP_TO        = 0.2;
 const MAX_BULLETS       = 7;
@@ -347,7 +351,7 @@ function render_static_slide( $media_files ) {
 	}
 
 	// if no "static" media was found for the thumbnail try to render a video tag without poster.
-	if ( empty( $media_template ) && ! empty( $media_files ) ) {
+	if ( empty( $media_template ) ) {
 		$media_template = render_video( $media_files[0] );
 	}
 
@@ -467,6 +471,9 @@ function render_block( $attributes ) {
 		)
 	);
 
+	/* translators: Placehodlder if the Story block can't find a post title to use. */
+	$story_title = in_the_loop() ? get_the_title() : __( 'Story', 'jetpack' );
+
 	return sprintf(
 		'<div class="%1$s" data-id="%2$s" data-settings="%3$s">
 			<div class="wp-story-app">
@@ -500,7 +507,7 @@ function render_block( $attributes ) {
 		__( 'Play story in new tab', 'jetpack' ),
 		__( 'Site icon', 'jetpack' ),
 		esc_attr( get_blavatar_or_site_icon_url( 80, includes_url( 'images/w-logo-blue.png' ) ) ),
-		esc_html( get_the_title() ),
+		esc_html( $story_title ),
 		render_static_slide( $media_files ),
 		render_top_right_icon( $settings ),
 		render_pagination( $settings )

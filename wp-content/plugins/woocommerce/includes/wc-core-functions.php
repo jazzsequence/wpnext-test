@@ -33,11 +33,11 @@ require WC_ABSPATH . 'includes/wc-attribute-functions.php';
 require WC_ABSPATH . 'includes/wc-rest-functions.php';
 require WC_ABSPATH . 'includes/wc-widget-functions.php';
 require WC_ABSPATH . 'includes/wc-webhook-functions.php';
+require WC_ABSPATH . 'includes/wc-order-step-logger-functions.php';
 
 /**
  * Filters on data used in admin and frontend.
  */
-add_filter( 'woocommerce_coupon_code', 'html_entity_decode' );
 add_filter( 'woocommerce_coupon_code', 'wc_sanitize_coupon_code' );
 add_filter( 'woocommerce_coupon_code', 'wc_strtolower' );
 add_filter( 'woocommerce_stock_amount', 'intval' ); // Stock amounts are integers by default.
@@ -1123,30 +1123,6 @@ function wc_setcookie( $name, $value, $expire = 0, $secure = false, $httponly = 
 }
 
 /**
- * Get the URL to the WooCommerce Legacy REST API.
- *
- * Note that as of WooCommerce 9.0 the WooCommerce Legacy REST API has been moved to a dedicated extension,
- * and the implementation of its root endpoint in WooCommerce core is now just a stub that will always return an error.
- * See the setup_legacy_api_stub method in includes/class-woocommerce.php and:
- * https://developer.woocommerce.com/2023/10/03/the-legacy-rest-api-will-move-to-a-dedicated-extension-in-woocommerce-9-0/
- *
- * @deprecated 9.0.0 The Legacy REST API has been removed from WooCommerce core.
- *
- * @since 2.1
- * @param string $path an endpoint to include in the URL.
- * @return string the URL.
- */
-function get_woocommerce_api_url( $path ) {
-	$url = get_home_url( null, 'wc-api/v3/', is_ssl() ? 'https' : 'http' );
-
-	if ( ! empty( $path ) && is_string( $path ) ) {
-		$url .= ltrim( $path, '/' );
-	}
-
-	return $url;
-}
-
-/**
  * Recursively get page children.
  *
  * @param  int $page_id Page ID.
@@ -1429,14 +1405,26 @@ function wc_get_user_agent() {
  * Generate a rand hash.
  *
  * @since  2.4.0
+ * @param  string $prefix Prefix for the hash.
+ * @param  ?int   $max_length Maximum length of the hash. Excludes the prefix.
  * @return string
  */
-function wc_rand_hash() {
-	if ( ! function_exists( 'openssl_random_pseudo_bytes' ) ) {
-		return sha1( wp_rand() );
+function wc_rand_hash( $prefix = '', $max_length = null ) {
+	try {
+		$random = bin2hex( random_bytes( 20 ) );
+	} catch ( Exception $e ) {
+		if ( function_exists( 'wp_fast_hash' ) ) {
+			$random = bin2hex( substr( wp_fast_hash( wp_rand() ), -20 ) );
+		} else {
+			$random = bin2hex( substr( sha1( wp_rand() ), -20 ) );
+		}
 	}
 
-	return bin2hex( openssl_random_pseudo_bytes( 20 ) ); // @codingStandardsIgnoreLine
+	if ( $max_length && $max_length > 0 ) {
+		$random = substr( $random, 0, $max_length );
+	}
+
+	return $prefix . $random;
 }
 
 /**
@@ -1657,6 +1645,22 @@ function wc_get_credit_card_type_label( $type ) {
  */
 function wc_back_link( $label, $url ) {
 	echo '<small class="wc-admin-breadcrumb"><a href="' . esc_url( $url ) . '" aria-label="' . esc_attr( $label ) . '">&#x2934;&#xfe0e;</a></small>';
+}
+
+/**
+ * Outputs a header with "back" link so admin screens can easily jump back a page.
+ *
+ * @param string $title Title of the current page.
+ * @param string $label Label of the page to return to.
+ * @param string $url   URL of the page to return to.
+ */
+function wc_back_header( $title, $label, $url ) {
+	$arrow = is_rtl() ? 'dashicons-arrow-right-alt2' : 'dashicons-arrow-left-alt2';
+
+	echo '<h2 class="wc-admin-header">';
+	echo '<small><a href="' . esc_url( $url ) . '" aria-label="' . esc_attr( $label ) . '"><span class="dashicons ' . esc_attr( $arrow ) . '" aria-hidden="true"></span></a></small>';
+	echo esc_html( $title );
+	echo '</h2>';
 }
 
 /**
@@ -2043,9 +2047,11 @@ function wc_add_number_precision( ?float $value, bool $round = true ) {
 		return 0.0;
 	}
 
-	$cent_precision = pow( 10, wc_get_price_decimals() );
-	$value          = $value * $cent_precision;
-	return $round ? NumberUtil::round( $value, wc_get_rounding_precision() - wc_get_price_decimals() ) : $value;
+	// Fallback to standard rounding precision in order to cover rounding changes in PHP 8.4.
+	$result          = $value * pow( 10, wc_get_price_decimals() );
+	$round_precision = $round ? wc_get_rounding_precision() - wc_get_price_decimals() : wc_get_rounding_precision();
+
+	return NumberUtil::round( $result, $round_precision );
 }
 
 /**
@@ -2074,7 +2080,7 @@ function wc_remove_number_precision( $value ) {
  */
 function wc_add_number_precision_deep( $value, $round = true ) {
 	if ( ! is_array( $value ) ) {
-		return wc_add_number_precision( $value, $round );
+		return wc_add_number_precision( (float) $value, $round );
 	}
 
 	foreach ( $value as $key => $sub_value ) {
@@ -2626,8 +2632,7 @@ function wc_get_server_database_version() {
 		);
 	}
 
-	// phpcs:ignore WordPress.DB.RestrictedFunctions
-	$server_info = mysqli_get_server_info( $wpdb->dbh );
+	$server_info = $wpdb->get_var( 'SELECT VERSION()' );
 
 	return array(
 		'string' => $server_info,

@@ -284,7 +284,7 @@ class WC_Settings_Accounts extends WC_Settings_Page {
 		);
 
 		// Feature requires a block theme. Re-order settings if not using a block theme.
-		if ( ! wc_current_theme_is_fse_theme() ) {
+		if ( ! wp_is_block_theme() ) {
 			$account_settings = array_map(
 				function ( $setting ) {
 					if ( 'woocommerce_enable_signup_and_login_from_checkout' === $setting['id'] ) {
@@ -390,9 +390,12 @@ class WC_Settings_Accounts extends WC_Settings_Page {
 
 			// Tracks for customize link.
 			if ( typeof window?.wcTracks?.recordEvent === "function" ) {
-				document.querySelector("a.delayed-account-creation-customize-link").addEventListener("click", function() {
-					window.wcTracks.recordEvent("delayed_account_creation_customize_link_clicked");
-				});
+				const customizeLink = document.querySelector("a.delayed-account-creation-customize-link");
+				if ( customizeLink ) {
+					customizeLink.addEventListener("click", function() {
+						window.wcTracks.recordEvent("delayed_account_creation_customize_link_clicked");
+					});
+				}
 			}
 		'
 		);

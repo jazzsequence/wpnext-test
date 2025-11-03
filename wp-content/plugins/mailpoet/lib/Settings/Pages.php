@@ -11,6 +11,7 @@ use MailPoet\WP\Functions as WPFunctions;
 class Pages {
   const PAGE_SUBSCRIPTIONS = 'subscriptions';
   const PAGE_CAPTCHA = 'captcha';
+  const PAGE_TITLE = 'MailPoet Page';
 
   public function __construct() {
   }
@@ -18,8 +19,8 @@ class Pages {
   public function init() {
     WPFunctions::get()->registerPostType('mailpoet_page', [
       'labels' => [
-        'name' => __('MailPoet Page', 'mailpoet'),
-        'singular_name' => __('MailPoet Page', 'mailpoet'),
+        'name' => self::PAGE_TITLE,
+        'singular_name' => self::PAGE_TITLE,
       ],
       'public' => true,
       'has_archive' => false,
@@ -54,7 +55,7 @@ class Pages {
       'post_type' => 'mailpoet_page',
       'post_author' => 1,
       'post_content' => '[mailpoet_page]',
-      'post_title' => __('MailPoet Page', 'mailpoet'),
+      'post_title' => self::PAGE_TITLE,
       'post_name' => $postName,
     ]);
 
@@ -119,6 +120,7 @@ class Pages {
 
   public static function getPageData($page) {
     $subscriptionUrlFactory = Subscription\SubscriptionUrlFactory::getInstance();
+    $captchaUrlFactory = \MailPoet\DI\ContainerWrapper::getInstance()->get(\MailPoet\Captcha\CaptchaUrlFactory::class);
     return [
       'id' => $page->ID,
       'title' => $page->post_title, // phpcs:ignore Squiz.NamingConventions.ValidVariableName.MemberNotCamelCaps
@@ -128,6 +130,7 @@ class Pages {
         'confirm' => $subscriptionUrlFactory->getSubscriptionUrl($page, 'confirm'),
         'confirm_unsubscribe' => $subscriptionUrlFactory->getSubscriptionUrl($page, 'confirm_unsubscribe'),
         're_engagement' => $subscriptionUrlFactory->getSubscriptionUrl($page, 're_engagement'),
+        'captcha' => $captchaUrlFactory->getCaptchaPreviewUrl($page),
       ],
     ];
   }

@@ -16,7 +16,7 @@ class ConflictResolver {
       '^/wp-includes',
       // CDN
       'googleapis.com/ajax/libs',
-      'wp.com',
+      '\bwp\.com\b',
       // third-party
       'jetpack',
       'query-monitor',
@@ -38,10 +38,11 @@ class ConflictResolver {
       '^/wp-includes',
       // CDN
       'googleapis.com/ajax/libs',
-      'wp.com',
+      '\bwp\.com\b',
       // third-party
       'query-monitor',
       'wpt-tx-updater-network',
+      'polylang',
       // WP.com
       'full-site-editing',
       'wpcomsh',

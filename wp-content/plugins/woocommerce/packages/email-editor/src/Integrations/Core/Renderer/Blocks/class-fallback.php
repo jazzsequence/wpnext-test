@@ -1,14 +1,15 @@
 <?php
 /**
- * This file is part of the MailPoet plugin.
+ * This file is part of the WooCommerce Email Editor package
  *
- * @package MailPoet\EmailEditor
+ * @package Automattic\WooCommerce\EmailEditor
  */
 
 declare( strict_types = 1 );
-namespace MailPoet\EmailEditor\Integrations\Core\Renderer\Blocks;
+namespace Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks;
 
-use MailPoet\EmailEditor\Engine\Settings_Controller;
+use Automattic\WooCommerce\EmailEditor\Engine\Renderer\ContentRenderer\Rendering_Context;
+use Automattic\WooCommerce\EmailEditor\Integrations\Utils\Table_Wrapper_Helper;
 
 /**
  * Fallback block renderer.
@@ -21,14 +22,27 @@ use MailPoet\EmailEditor\Engine\Settings_Controller;
  */
 class Fallback extends Abstract_Block_Renderer {
 	/**
-	 * Renders the block content.
+	 * Renders the block content
 	 *
-	 * @param string              $block_content Block content.
-	 * @param array               $parsed_block Parsed block.
-	 * @param Settings_Controller $settings_controller Settings controller.
+	 * @param string            $block_content Block content.
+	 * @param array             $parsed_block Parsed block.
+	 * @param Rendering_Context $rendering_context Rendering context.
 	 * @return string
 	 */
-	protected function render_content( $block_content, array $parsed_block, Settings_Controller $settings_controller ): string {
-		return $block_content;
+	protected function render_content( $block_content, array $parsed_block, Rendering_Context $rendering_context ): string {
+		$block_attrs = $parsed_block['attrs'] ?? array();
+
+		$table_attrs = array(
+			'style' => 'border-collapse: separate;', // Needed because of border radius.
+			'width' => '100%',
+		);
+
+		$align = $block_attrs['textAlign'] ?? $block_attrs['align'] ?? 'left';
+
+		$cell_attrs = array(
+			'align' => $align,
+		);
+
+		return Table_Wrapper_Helper::render_table_wrapper( $block_content, $table_attrs, $cell_attrs );
 	}
 }

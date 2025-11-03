@@ -5,6 +5,168 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.9] - 2025-10-06
+### Changed
+- Update package dependencies. [#45334] [#45335]
+
+## [0.32.8] - 2025-09-29
+### Changed
+- Update dependencies. [#44736]
+
+## [0.32.7] - 2025-09-22
+### Changed
+- Update dependencies. [#44736]
+
+## [0.32.6] - 2025-09-19
+### Changed
+- Update package dependencies. [#45173] [#45229]
+
+## [0.32.5] - 2025-09-15
+### Changed
+- Update package dependencies. [#45127] [#45128]
+
+## [0.32.4] - 2025-09-08
+### Changed
+- Update package dependencies. [#45027] [#45097]
+
+## [0.32.3] - 2025-09-01
+### Changed
+- Update dependencies. [#44736]
+
+## [0.32.2] - 2025-08-25
+### Changed
+- Update package dependencies. [#44899]
+
+## [0.32.1] - 2025-08-18
+### Added
+- Add `typecheck` placeholder script (to be implemented). [#44795]
+
+## [0.32.0] - 2025-08-14
+### Changed
+- Update package dependencies. [#44701]
+- VideoPress: Include VideoPress editor state in REST API requests. [#44616]
+
+## [0.31.2] - 2025-08-11
+### Changed
+- Update dependencies. [#44673]
+- Update package dependencies. [#44677]
+
+### Fixed
+- I18n: Improve context hints in comments for translators. [#44686]
+
+## [0.31.1] - 2025-08-05
+### Fixed
+- Prevent PHP fatal if URL is not a string. [#44619]
+
+## [0.31.0] - 2025-08-04
+### Changed
+- My Jetpack: Unify the user connection flow with a unified screen. [#44469]
+- Update dependencies. [#44551]
+
+## [0.30.6] - 2025-07-28
+### Changed
+- Internal updates.
+
+## [0.30.5] - 2025-07-21
+### Changed
+- Update package dependencies. [#44356]
+
+## [0.30.4] - 2025-07-14
+### Changed
+- Update package dependencies. [#44217] [#44219]
+
+## [0.30.3] - 2025-07-07
+### Changed
+- Update package dependencies. [#44148] [#44151]
+
+### Fixed
+- VideoPress: Fix PHP fatals in `class-initializer.php`. [#44169]
+- VideoPress: Fix video row action button clickability by properly hiding stats on hover. [#44167]
+
+## [0.30.2] - 2025-06-30
+### Changed
+- Internal updates.
+
+## [0.30.1] - 2025-06-24
+### Changed
+- Update dependencies. [#43885]
+
+## [0.30.0] - 2025-06-23
+### Changed
+- Scripts: Change imports for hosting checks. [#43972]
+- Update package dependencies. [#44020] [#44040]
+
+### Fixed
+- Autoloader: Prevent double slash in autoloader path. [#44030]
+
+## [0.29.6] - 2025-06-16
+### Changed
+- Update package dependencies. [#43892] [#43951]
+
+### Fixed
+- Prevent PHP warning when rendering blocks. [#43890]
+
+## [0.29.5] - 2025-06-10
+### Changed
+- Update dependencies. [#43878]
+
+## [0.29.4] - 2025-06-05
+### Changed
+- Update package dependencies. [#43718] [#43734] [#43766]
+
+## [0.29.3] - 2025-06-02
+### Changed
+- Update package dependencies. [#43710] [#43711]
+
+### Fixed
+- Catch PHP notices when handling unexpected data types. [#43728]
+
+## [0.29.2] - 2025-05-26
+### Changed
+- Update package dependencies. [#43516] [#43578]
+
+## [0.29.1] - 2025-05-19
+### Changed
+- Update package dependencies. [#43398]
+
+## [0.29.0] - 2025-05-12
+### Changed
+- Stable release management: Do not ship source files. [#43310]
+- Update package dependencies. [#43400]
+- Use functions from the `@automattic/number-formatters` package. [#42864]
+
+## [0.28.4] - 2025-05-05
+### Changed
+- Update package dependencies. [#43320] [#43326] [#43355]
+
+### Fixed
+- Linting: Address final rules in WordPress Stylelint config. [#43296]
+- Linting: Do additional stylesheet cleanup. [#43247]
+- Prevent PHP warnings when post is invalid. [#43288]
+
+## [0.28.3] - 2025-04-28
+### Fixed
+- Linting: Fix more Stylelint violations. [#43213]
+- My Jetpack: Fix TypeScript type checking and the corresponding errors. [#43205]
+
+## [0.28.2] - 2025-04-21
+### Changed
+- Editor extensions: Handle status of the VideoPress module when the Jetpack plugin is active. [#40209]
+
+## [0.28.1] - 2025-04-14
+### Fixed
+- Linting: Clean up various Stylelint violations. [#43010]
+- Linting: Format SCSS imports consistently. [#43018]
+- Linting: Update stylesheets to use WordPress rules for colors. [#42920]
+
+## [0.28.0] - 2025-04-07
+### Added
+- Replace video embed with VideoPress block in Media & Text block. [#42522]
+
+### Changed
+- Linting: First pass of style coding standards. [#42734]
+- Update package dependencies. [#42762] [#42809]
+
 ## [0.27.6] - 2025-03-31
 ### Fixed
 - Admin Menu: Ensure Akismet menu item shows alongside standalone plugin menus. [#42776]
@@ -1594,6 +1756,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Created empty package [#24952]
 
+[0.32.9]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.8...v0.32.9
+[0.32.8]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.7...v0.32.8
+[0.32.7]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.6...v0.32.7
+[0.32.6]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.5...v0.32.6
+[0.32.5]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.4...v0.32.5
+[0.32.4]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.3...v0.32.4
+[0.32.3]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.2...v0.32.3
+[0.32.2]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.1...v0.32.2
+[0.32.1]: https://github.com/Automattic/jetpack-videopress/compare/v0.32.0...v0.32.1
+[0.32.0]: https://github.com/Automattic/jetpack-videopress/compare/v0.31.2...v0.32.0
+[0.31.2]: https://github.com/Automattic/jetpack-videopress/compare/v0.31.1...v0.31.2
+[0.31.1]: https://github.com/Automattic/jetpack-videopress/compare/v0.31.0...v0.31.1
+[0.31.0]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.6...v0.31.0
+[0.30.6]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.5...v0.30.6
+[0.30.5]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.4...v0.30.5
+[0.30.4]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.3...v0.30.4
+[0.30.3]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.2...v0.30.3
+[0.30.2]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.1...v0.30.2
+[0.30.1]: https://github.com/Automattic/jetpack-videopress/compare/v0.30.0...v0.30.1
+[0.30.0]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.6...v0.30.0
+[0.29.6]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.5...v0.29.6
+[0.29.5]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.4...v0.29.5
+[0.29.4]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.3...v0.29.4
+[0.29.3]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.2...v0.29.3
+[0.29.2]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.1...v0.29.2
+[0.29.1]: https://github.com/Automattic/jetpack-videopress/compare/v0.29.0...v0.29.1
+[0.29.0]: https://github.com/Automattic/jetpack-videopress/compare/v0.28.4...v0.29.0
+[0.28.4]: https://github.com/Automattic/jetpack-videopress/compare/v0.28.3...v0.28.4
+[0.28.3]: https://github.com/Automattic/jetpack-videopress/compare/v0.28.2...v0.28.3
+[0.28.2]: https://github.com/Automattic/jetpack-videopress/compare/v0.28.1...v0.28.2
+[0.28.1]: https://github.com/Automattic/jetpack-videopress/compare/v0.28.0...v0.28.1
+[0.28.0]: https://github.com/Automattic/jetpack-videopress/compare/v0.27.6...v0.28.0
 [0.27.6]: https://github.com/Automattic/jetpack-videopress/compare/v0.27.5...v0.27.6
 [0.27.5]: https://github.com/Automattic/jetpack-videopress/compare/v0.27.4...v0.27.5
 [0.27.4]: https://github.com/Automattic/jetpack-videopress/compare/v0.27.3...v0.27.4
