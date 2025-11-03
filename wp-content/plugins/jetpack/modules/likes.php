@@ -1,7 +1,7 @@
 <?php //phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 /**
  * Module Name: Likes
- * Module Description: Give visitors an easy way to show they appreciate your content.
+ * Module Description: Let readers like your posts to show appreciation and encourage interaction.
  * First Introduced: 2.2
  * Sort Order: 23
  * Requires Connection: Yes
@@ -22,6 +22,10 @@
 
 use Automattic\Jetpack\Assets;
 use Automattic\Jetpack\Status\Host;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
 
 Assets::add_resource_hint(
 	array(
@@ -294,7 +298,7 @@ class Jetpack_Likes {
 			.vers img { display: none; }
 			.metabox-prefs .vers img { display: inline; }
 			.fixed .column-likes { width: 2.5em; padding: 4px 0; text-align: left; }
-			.fixed .column-stats { width: 5em; }
+			.fixed .column-stats { width: 5em; white-space: nowrap; }
 			.fixed .column-likes .post-com-count {
 				-webkit-box-sizing: border-box;
 				-moz-box-sizing: border-box;
@@ -314,7 +318,7 @@ class Jetpack_Likes {
 			}
 			.fixed .column-likes .post-com-count::after { border: none !important; }
 			.fixed .column-likes .post-com-count:hover { background-color: #2271b1; }
-			.fixed .column-likes .vers:before {
+			.fixed .column-likes .vers::before {
 				font: normal 20px/1 dashicons;
 				content: '\f155';
 				speak: none;
@@ -425,8 +429,10 @@ class Jetpack_Likes {
 		$url_parts = wp_parse_url( $url );
 		$domain    = $url_parts['host'];
 
-		// Make sure to include the scripts before the iframe otherwise weird things happen.
-		add_action( 'wp_footer', 'jetpack_likes_master_iframe', 21 );
+		// Make sure to include the `queuehandler` scripts before the iframe otherwise the script won't find the iframe.
+		if ( ! has_action( 'wp_footer', 'jetpack_likes_master_iframe' ) ) {
+			add_action( 'wp_footer', 'jetpack_likes_master_iframe', 21 );
+		}
 
 		/**
 		* If the same post appears more then once on a page the page goes crazy

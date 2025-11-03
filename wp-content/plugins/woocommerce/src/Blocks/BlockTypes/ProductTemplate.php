@@ -9,6 +9,7 @@ use WP_Block;
  * ProductTemplate class.
  */
 class ProductTemplate extends AbstractBlock {
+	use EnableBlockJsonAssetsTrait;
 
 	/**
 	 * Block name.
@@ -77,7 +78,13 @@ class ProductTemplate extends AbstractBlock {
 
 		$classnames .= ' wc-block-product-template';
 
-		$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => trim( $classnames ) ) );
+		$wrapper_attributes = get_block_wrapper_attributes(
+			array(
+				'class'              => trim( $classnames ),
+				'data-wp-on--scroll' => 'actions.watchScroll',
+				'data-wp-init'       => 'callbacks.initResizeObserver',
+			)
+		);
 
 		$content = '';
 		while ( $query->have_posts() ) {

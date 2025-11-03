@@ -452,19 +452,17 @@ class Menu {
     );
 
     // Upgrade page
-    if ($this->capabilitiesManager->showUpgradePage()) {
-      $this->wp->addSubmenuPage(
-        self::MAIN_PAGE_SLUG,
-        $this->setPageTitle(__('Upgrade', 'mailpoet')),
-        esc_html__('Upgrade', 'mailpoet'),
-        AccessControl::PERMISSION_ACCESS_PLUGIN_ADMIN,
-        self::UPGRADE_PAGE_SLUG,
-        [
-          $this,
-          'upgrade',
-        ]
-      );
-    }
+    $this->wp->addSubmenuPage(
+      $this->capabilitiesManager->showUpgradePage() ? self::MAIN_PAGE_SLUG : self::HELP_PAGE_SLUG,
+      $this->setPageTitle(__('Upgrade', 'mailpoet')),
+      esc_html__('Upgrade', 'mailpoet'),
+      AccessControl::PERMISSION_ACCESS_PLUGIN_ADMIN,
+      self::UPGRADE_PAGE_SLUG,
+      [
+        $this,
+        'upgrade',
+      ]
+    );
 
     // WooCommerce Setup
     $this->wp->addSubmenuPage(
@@ -766,8 +764,8 @@ class Menu {
   }
 
   public function checkPremiumKey(?ServicesChecker $checker = null) {
-    $showNotices = isset($_SERVER['SCRIPT_NAME'])
-      && stripos(sanitize_text_field(wp_unslash($_SERVER['SCRIPT_NAME'])), 'plugins.php') !== false;
+    $showNotices = self::isOnMailPoetAdminPage() || (isset($_SERVER['SCRIPT_NAME'])
+      && stripos(sanitize_text_field(wp_unslash($_SERVER['SCRIPT_NAME'])), 'plugins.php') !== false);
     $checker = $checker ?: $this->servicesChecker;
     $this->premiumKeyValid = $checker->isPremiumKeyValid($showNotices);
   }

@@ -94,6 +94,9 @@ class Initializer {
 
 		if ( is_admin() ) {
 			AJAX::init();
+		} else {
+			require_once __DIR__ . '/class-block-replacement.php';
+			Block_Replacement::init();
 		}
 	}
 
@@ -164,7 +167,7 @@ class Initializer {
 	 *
 	 * @return string|false
 	 */
-	public static function video_enqueue_bridge_when_oembed_present( $cache, $url, $attr, $post_ID ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+	public static function video_enqueue_bridge_when_oembed_present( $cache, $url, $attr, $post_ID = null ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 		if ( Utils::is_videopress_url( $url ) ) {
 			Jwt_Token_Bridge::enqueue_jwt_token_bridge();
 		}
@@ -341,6 +344,19 @@ class Initializer {
 	 * @return void
 	 */
 	public static function register_videopress_video_block() {
+		/*
+		 * If only Jetpack is active, and if the VideoPress module is not active,
+		 * we can register the block just to display a placeholder to turn on the module.
+		 * That invitation is only useful for admins though.
+		 */
+		if (
+			Status::is_jetpack_plugin_without_videopress_module_active()
+			&& ! Status::is_standalone_plugin_active()
+			&& ! current_user_can( 'jetpack_activate_modules' )
+		) {
+			return;
+		}
+
 		$videopress_video_metadata_file        = __DIR__ . '/../build/block-editor/blocks/video/block.json';
 		$videopress_video_metadata_file_exists = file_exists( $videopress_video_metadata_file );
 		if ( ! $videopress_video_metadata_file_exists ) {
@@ -360,19 +376,6 @@ class Initializer {
 
 		// Do not register if the block is already registered.
 		if ( $is_block_registered ) {
-			return;
-		}
-
-		// Is this a REST API request?
-		$is_rest = defined( 'REST_API_REQUEST' ) && REST_API_REQUEST;
-
-		if ( $is_rest ) {
-			register_block_type(
-				$videopress_video_metadata_file,
-				array(
-					'render_callback' => array( __CLASS__, 'render_videopress_video_block' ),
-				)
-			);
 			return;
 		}
 

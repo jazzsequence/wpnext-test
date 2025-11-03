@@ -14,6 +14,8 @@ use Automattic\WooCommerce\Internal\CostOfGoodsSold\CostOfGoodsSoldController;
 use Automattic\WooCommerce\Internal\Orders\CouponsController;
 use Automattic\WooCommerce\Internal\Orders\TaxesController;
 use Automattic\WooCommerce\Internal\Admin\Orders\MetaBoxes\CustomMetaBox;
+use Automattic\WooCommerce\Internal\Utilities\Users;
+use Automattic\WooCommerce\Proxies\LegacyProxy;
 use Automattic\WooCommerce\Utilities\ArrayUtil;
 use Automattic\WooCommerce\Utilities\NumberUtil;
 use Automattic\WooCommerce\Utilities\OrderUtil;
@@ -47,11 +49,27 @@ class WC_AJAX {
 	}
 
 	/**
+	 * Set the 'wc-ajax' argument in $wp_query.
+	 */
+	private static function set_wc_ajax_argument_in_query() {
+		global $wp_query;
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( ! empty( $_GET['wc-ajax'] ) && empty( $wp_query->get( 'wc-ajax' ) ) ) {
+			$wp_query->set( 'wc-ajax', sanitize_text_field( wp_unslash( $_GET['wc-ajax'] ) ) );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	}
+
+	/**
 	 * Set WC AJAX constant and headers.
 	 */
 	public static function define_ajax() {
+		global $wp_query;
+
 		// phpcs:disable
-		if ( ! empty( $_GET['wc-ajax'] ) ) {
+		self::set_wc_ajax_argument_in_query();
+		if ( ! empty( $wp_query->get( 'wc-ajax' ) ) ) {
 			wc_maybe_define_constant( 'DOING_AJAX', true );
 			wc_maybe_define_constant( 'WC_DOING_AJAX', true );
 			if ( ! WP_DEBUG || ( WP_DEBUG && ! WP_DEBUG_DISPLAY ) ) {
@@ -88,9 +106,7 @@ class WC_AJAX {
 		global $wp_query;
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( ! empty( $_GET['wc-ajax'] ) ) {
-			$wp_query->set( 'wc-ajax', sanitize_text_field( wp_unslash( $_GET['wc-ajax'] ) ) );
-		}
+		self::set_wc_ajax_argument_in_query();
 
 		$action = $wp_query->get( 'wc-ajax' );
 
@@ -156,6 +172,7 @@ class WC_AJAX {
 			'load_order_items',
 			'add_order_note',
 			'delete_order_note',
+			'json_search_order_metakeys',
 			'json_search_products',
 			'json_search_products_and_variations',
 			'json_search_downloadable_products_and_variations',
@@ -182,6 +199,7 @@ class WC_AJAX {
 			'shipping_zone_methods_save_settings',
 			'shipping_classes_save_changes',
 			'toggle_gateway_enabled',
+			'load_status_widget',
 		);
 
 		foreach ( $ajax_events as $ajax_event ) {
@@ -196,7 +214,7 @@ class WC_AJAX {
 		foreach ( $ajax_private_events as $ajax_event ) {
 			add_action(
 				'wp_ajax_woocommerce_' . $ajax_event,
-				function() use ( $ajax_event ) {
+				function () use ( $ajax_event ) {
 					call_user_func( array( __CLASS__, $ajax_event ) );
 				}
 			);
@@ -210,7 +228,8 @@ class WC_AJAX {
 		foreach ( $ajax_heartbeat_callbacks as $ajax_callback ) {
 			add_filter(
 				'heartbeat_received',
-				function( $response, $data ) use ( $ajax_callback ) {
+				// phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+				function ( $response, $data ) use ( $ajax_callback ) {
 					return call_user_func_array( array( __CLASS__, $ajax_callback ), func_get_args() );
 				},
 				11,
@@ -736,7 +755,7 @@ class WC_AJAX {
 					if ( ! $attribute ) {
 						continue;
 					}
-					$i++;
+					++$i;
 					$metabox_class = array();
 
 					if ( $attribute->is_taxonomy() ) {
@@ -947,8 +966,8 @@ class WC_AJAX {
 					$inserted_id = wc_downloadable_file_permission( $download_id, $product->get_id(), $order, $download_data['quantity'], $download_data['order_item'] );
 					if ( $inserted_id ) {
 						$download = new WC_Customer_Download( $inserted_id );
-						$loop ++;
-						$file_counter ++;
+						++$loop;
+						++$file_counter;
 
 						if ( $file->get_name() ) {
 							$file_count = $file->get_name();
@@ -968,13 +987,20 @@ class WC_AJAX {
 	 * Get customer details via ajax.
 	 */
 	public static function get_customer_details() {
-		check_ajax_referer( 'get-customer-details', 'security' );
+		$legacy_proxy = wc_get_container()->get( LegacyProxy::class );
+		$legacy_proxy->call_function( 'check_ajax_referer', 'get-customer-details', 'security' );
 
-		if ( ! current_user_can( 'edit_shop_orders' ) || ! isset( $_POST['user_id'] ) ) {
+		$user_id = absint(
+			$legacy_proxy->call_function( 'filter_input', INPUT_POST, 'user_id', FILTER_VALIDATE_INT )
+		);
+
+		if (
+			! current_user_can( 'edit_shop_orders' )
+			|| is_wp_error( Users::get_user_in_current_site( $user_id ) )
+		) {
 			wp_die( -1 );
 		}
 
-		$user_id  = absint( $_POST['user_id'] );
 		$customer = new WC_Customer( $user_id );
 
 		if ( has_filter( 'woocommerce_found_customer_details' ) ) {
@@ -1087,6 +1113,8 @@ class WC_AJAX {
 			do_action( 'woocommerce_ajax_order_items_added', $added_items, $order );
 
 			$data = get_post_meta( $order_id );
+
+			$order = wc_get_order( $order_id );
 
 			// Get HTML to return.
 			ob_start();
@@ -1574,7 +1602,10 @@ class WC_AJAX {
 			?>
 			<li rel="<?php echo absint( $note->id ); ?>" class="<?php echo esc_attr( implode( ' ', $note_classes ) ); ?>">
 				<div class="note_content">
-					<?php echo wp_kses_post( wpautop( wptexturize( make_clickable( $note->content ) ) ) ); ?>
+					<?php
+					$content = wc_wptexturize_order_note( $note->content );
+					echo wp_kses_post( wpautop( make_clickable( $content ) ) );
+					?>
 				</div>
 				<p class="meta">
 					<abbr class="exact-date" title="<?php echo esc_attr( $note->date_created->date( 'y-m-d h:i:s' ) ); ?>">
@@ -1736,12 +1767,14 @@ class WC_AJAX {
 	public static function json_search_customers() {
 		ob_start();
 
-		check_ajax_referer( 'search-customers', 'security' );
+		$legacy_proxy = wc_get_container()->get( LegacyProxy::class );
+		$legacy_proxy->call_function( 'check_ajax_referer', 'search-customers', 'security' );
 
 		if ( ! current_user_can( 'edit_shop_orders' ) ) {
 			wp_die( -1 );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$term  = isset( $_GET['term'] ) ? (string) wc_clean( wp_unslash( $_GET['term'] ) ) : '';
 		$limit = 0;
 
@@ -1754,8 +1787,9 @@ class WC_AJAX {
 		if ( is_numeric( $term ) ) {
 			$customer = new WC_Customer( intval( $term ) );
 
-			// Customer does not exists.
-			if ( 0 !== $customer->get_id() ) {
+			// Only add existing/valid users. In a multisite context, they must be visible to the current user (in
+			// general, this means that they must have been added to the current site).
+			if ( 0 !== $customer->get_id() && ! is_wp_error( Users::get_user_in_current_site( $customer->get_id() ) ) ) {
 				$ids = array( $customer->get_id() );
 			}
 		}
@@ -1769,12 +1803,17 @@ class WC_AJAX {
 			if ( 3 > strlen( $term ) ) {
 				$limit = 20;
 			}
+
+			// Multisite note: via its dependency on WP_User_Query, WC_Customer_Data_Store::search_customers() will only
+			// look for users who have already been added to the current blog.
 			$ids = $data_store->search_customers( $term, $limit );
 		}
 
 		$found_customers = array();
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! empty( $_GET['exclude'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$ids = array_diff( $ids, array_map( 'absint', (array) wp_unslash( $_GET['exclude'] ) ) );
 		}
 
@@ -1895,7 +1934,7 @@ class WC_AJAX {
 						$item_exists = count(
 							array_filter(
 								$terms_map[ $ancestor ]->children,
-								function( $term ) use ( $current_child ) {
+								function ( $term ) use ( $current_child ) {
 									return $term->term_id === $current_child->term_id;
 								}
 							)
@@ -1910,7 +1949,7 @@ class WC_AJAX {
 		}
 		$parent_terms = array_filter(
 			array_values( $terms_map ),
-			function( $term ) {
+			function ( $term ) {
 				return 0 === $term->parent;
 			}
 		);
@@ -2009,6 +2048,7 @@ class WC_AJAX {
 		wp_send_json( apply_filters( 'woocommerce_json_search_found_product_categories', $found_product_categories, $search_text ) );
 	}
 
+
 	/**
 	 * Ajax request handling for page searching.
 	 */
@@ -2106,9 +2146,9 @@ class WC_AJAX {
 				continue;
 			}
 			if ( $nextid === $id ) {
-				$index ++;
+				++$index;
 			}
-			$index ++;
+			++$index;
 			$menu_orders[ $id ] = $index;
 
 			if ( $wpdb->update( $wpdb->posts, array( 'menu_order' => $index ), array( 'ID' => $id ) ) ) {
@@ -3637,6 +3677,25 @@ class WC_AJAX {
 	}
 
 	/**
+	 * AJAX handler for asynchronously loading the status widget content.
+	 */
+	public static function load_status_widget() {
+		check_ajax_referer( 'wc-status-widget', 'security' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) || ! current_user_can( 'view_woocommerce_reports' ) || ! current_user_can( 'publish_shop_orders' ) ) {
+			wp_send_json_error( 'missing_permissions' );
+			wp_die();
+		}
+
+		include_once __DIR__ . '/admin/class-wc-admin-dashboard.php';
+		ob_start();
+		$wc_admin_dashboard = new WC_Admin_Dashboard();
+		$wc_admin_dashboard->status_widget_content();
+		$content = ob_get_clean();
+		wp_send_json_success( array( 'content' => $content ) );
+	}
+
+	/**
 	 * Reimplementation of WP core's `wp_ajax_add_meta` method to support order custom meta updates with custom tables.
 	 */
 	private static function order_add_meta() {
@@ -3648,8 +3707,18 @@ class WC_AJAX {
 	 *
 	 * @return void
 	 */
-	private static function order_delete_meta() : void {
+	private static function order_delete_meta(): void {
 		wc_get_container()->get( CustomMetaBox::class )->delete_meta_ajax();
+	}
+
+	/**
+	 * Hooked into `wp_ajax_woocommerce_json_search_order_metakeys` to return the list of unique meta keys for the
+	 * edit order screen custom fields metabox.
+	 *
+	 * @return void
+	 */
+	public static function json_search_order_metakeys(): void {
+		wc_get_container()->get( CustomMetaBox::class )->search_metakeys_ajax();
 	}
 
 	/**

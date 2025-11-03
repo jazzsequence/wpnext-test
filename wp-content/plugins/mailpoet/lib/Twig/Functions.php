@@ -77,7 +77,7 @@ class Functions extends AbstractExtension {
     return [
       new TwigFunction(
         'json_encode',
-        'json_encode',
+        [$this, 'jsonEncode'],
         ['is_safe' => ['all']]
       ),
       new TwigFunction(
@@ -224,6 +224,16 @@ class Functions extends AbstractExtension {
         'pending_approval_message',
         [$this, 'pendingApprovalMessage'],
         ['is_safe' => ['html']]
+      ),
+      new TwigFunction(
+        'get_product_placeholder_img',
+        [$this, 'wcPlaceholderImgSrc'],
+        ['is_safe' => ['all']]
+      ),
+      new TwigFunction(
+        'get_wc_page_url',
+        [$this, 'wcPageUrl'],
+        ['is_safe' => ['all']]
       ),
     ];
   }
@@ -388,5 +398,27 @@ class Functions extends AbstractExtension {
 
   public function pendingApprovalMessage(): string {
     return $this->getPendingApprovalNotice()->getPendingApprovalMessage();
+  }
+
+  public function wcPlaceholderImgSrc(string $size = 'woocommerce_thumbnail'): string {
+    return esc_url($this->getWooCommerceHelper()->wcPlaceholderImgSrc($size));
+  }
+
+  public function wcPageUrl(string $page): string {
+    return esc_url($this->getWooCommerceHelper()->wcGetPagePermalink($page));
+  }
+
+  /**
+   * Safely encodes data to JSON for use in script tags.
+   * Always includes JSON_HEX_TAG to prevent breaking out of script context
+   * and JSON_UNESCAPED_SLASHES for better readability.
+   *
+   * @param mixed $data
+   * @param int $flags
+   * @return string|false
+   */
+  public function jsonEncode($data, $flags = 0) {
+    $flags = $flags | JSON_HEX_TAG | JSON_UNESCAPED_SLASHES;
+    return json_encode($data, $flags);
   }
 }

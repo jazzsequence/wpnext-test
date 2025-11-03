@@ -5,6 +5,176 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.52.21] - 2025-10-06
+### Changed
+- Update package dependencies. [#45334]
+
+## [0.52.20] - 2025-09-29
+### Changed
+- Update dependencies. [#44615]
+
+## [0.52.19] - 2025-09-22
+### Changed
+- Update dependencies. [#44615]
+
+## [0.52.18] - 2025-09-19
+### Changed
+- Update package dependencies. [#45173] [#45229]
+
+## [0.52.17] - 2025-09-15
+### Changed
+- Update package dependencies. [#45127] [#45128]
+
+## [0.52.16] - 2025-09-08
+### Changed
+- Update package dependencies. [#45027]
+
+## [0.52.15] - 2025-09-01
+### Changed
+- Update dependencies. [#44615]
+
+## [0.52.14] - 2025-08-25
+### Fixed
+- Resolve `PhanImpossibleCondition` violations. [#44869]
+- Pass SSL argument properly to Photon for sites with https enabled. [#44851]
+
+## [0.52.13] - 2025-08-18
+### Changed
+- Update dependencies. [#44615]
+
+## [0.52.12] - 2025-08-14
+### Changed
+- Update package dependencies. [#44701]
+
+## [0.52.11] - 2025-08-11
+### Changed
+- Update package dependencies. [#44677]
+
+### Fixed
+- I18n: Improve context hints in comments for translators. [#44686]
+- Prevent PHP errors when directly accessing various files. [#44646]
+
+## [0.52.10] - 2025-08-04
+### Changed
+- Update dependencies. [#44551]
+
+## [0.52.9] - 2025-07-28
+### Changed
+- Internal updates.
+
+## [0.52.8] - 2025-07-21
+### Changed
+- Update package dependencies. [#44356]
+
+## [0.52.7] - 2025-07-14
+### Changed
+- Update package dependencies. [#44217]
+
+## [0.52.6] - 2025-07-07
+### Changed
+- Update package dependencies. [#44148] [#44151]
+
+### Fixed
+- Accessibility: Update screen reader 'clip' property usage to 'clip-path'. [#44027]
+
+## [0.52.5] - 2025-06-30
+### Changed
+- Internal updates.
+
+## [0.52.4] - 2025-06-24
+### Changed
+- Update dependencies. [#42919]
+
+## [0.52.3] - 2025-06-23
+### Changed
+- Update package dependencies. [#44020]
+
+## [0.52.2] - 2025-06-16
+### Changed
+- Update dependencies. [#42919]
+
+## [0.52.1] - 2025-06-10
+### Changed
+- Update dependencies. [#42919]
+
+## [0.52.0] - 2025-06-09
+### Fixed
+- Address `body_class` filter fatal in older versions of the Blaskan theme. [#43797]
+- Tests: Ensure method param count matches PHPUnit data providers. [#43815] [#43828]
+
+## [0.51.0] - 2025-06-05
+### Changed
+- Update package dependencies. [#43734] [#43747]
+
+### Removed
+- Classic Themes: Replace the Core Search widget instead of adding a new widget to the main sidebar. [#43450]
+
+## [0.50.2] - 2025-06-02
+### Changed
+- Update package dependencies. [#43710]
+
+### Fixed
+- Protect against improper calls to `the_title()` filter. [#43511]
+
+## [0.50.1] - 2025-05-26
+### Changed
+- Update package dependencies. [#43516] [#43578]
+
+## [0.50.0] - 2025-05-19
+### Added
+- Add highlighting of search term in returned search results. [#43110]
+- Allow new Inline Search to be enabled. [#43457]
+
+### Changed
+- Update package dependencies. [#43398]
+
+### Fixed
+- Mitigate bug with certain P2 theme [#43503]
+
+## [0.49.0] - 2025-05-15
+### Added
+- Add query filters support to Inline Search. [#43441]
+
+## [0.48.0] - 2025-05-12
+### Added
+- Surface search corrections when correcting search terms. [#42473]
+
+### Changed
+- Update package dependencies. [#43400]
+- Use functions from the `@automattic/number-formatters` package. [#42796]
+
+## [0.47.24] - 2025-05-05
+### Changed
+- Update package dependencies. [#43320] [#43326] [#43350]
+
+### Fixed
+- Linting: Address final rules in WordPress Stylelint config. [#43296]
+- Linting: Do additional stylesheet cleanup. [#43247]
+
+## [0.47.23] - 2025-04-28
+### Fixed
+- Linting: Fix more Stylelint violations. [#43213]
+- Linting: Remove outdated vendor prefixes in stylesheets. [#43219]
+
+## [0.47.22] - 2025-04-14
+### Fixed
+- Fix errors caused by malformed order arguments. [#42897]
+- Linting: Format SCSS imports consistently. [#43018]
+- Linting: Update stylesheets to use WordPress rules for fonts and colors. [#42920] [#42928]
+- Linting: Use double colon notation for pseudo-element selectors. [#43019]
+
+## [0.47.21] - 2025-04-07
+### Changed
+- Code: First pass of style coding standards. [#42734]
+
+## [0.47.20] - 2025-04-04
+### Changed
+- Update dependencies. [#42820]
+- Update package dependencies. [#42809]
+
+### Fixed
+- Admin menu registration: Allow child classes to overwrite priority. [#42814]
+
 ## [0.47.19] - 2025-03-31
 ### Changed
 - Update dependencies. [#42678]
@@ -1174,6 +1344,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated package dependencies.
 - Update PHPUnit configs to include just what needs coverage rather than include everything then try to exclude stuff that doesn't.
 
+[0.52.21]: https://github.com/Automattic/jetpack-search/compare/v0.52.20...v0.52.21
+[0.52.20]: https://github.com/Automattic/jetpack-search/compare/v0.52.19...v0.52.20
+[0.52.19]: https://github.com/Automattic/jetpack-search/compare/v0.52.18...v0.52.19
+[0.52.18]: https://github.com/Automattic/jetpack-search/compare/v0.52.17...v0.52.18
+[0.52.17]: https://github.com/Automattic/jetpack-search/compare/v0.52.16...v0.52.17
+[0.52.16]: https://github.com/Automattic/jetpack-search/compare/v0.52.15...v0.52.16
+[0.52.15]: https://github.com/Automattic/jetpack-search/compare/v0.52.14...v0.52.15
+[0.52.14]: https://github.com/Automattic/jetpack-search/compare/v0.52.13...v0.52.14
+[0.52.13]: https://github.com/Automattic/jetpack-search/compare/v0.52.12...v0.52.13
+[0.52.12]: https://github.com/Automattic/jetpack-search/compare/v0.52.11...v0.52.12
+[0.52.11]: https://github.com/Automattic/jetpack-search/compare/v0.52.10...v0.52.11
+[0.52.10]: https://github.com/Automattic/jetpack-search/compare/v0.52.9...v0.52.10
+[0.52.9]: https://github.com/Automattic/jetpack-search/compare/v0.52.8...v0.52.9
+[0.52.8]: https://github.com/Automattic/jetpack-search/compare/v0.52.7...v0.52.8
+[0.52.7]: https://github.com/Automattic/jetpack-search/compare/v0.52.6...v0.52.7
+[0.52.6]: https://github.com/Automattic/jetpack-search/compare/v0.52.5...v0.52.6
+[0.52.5]: https://github.com/Automattic/jetpack-search/compare/v0.52.4...v0.52.5
+[0.52.4]: https://github.com/Automattic/jetpack-search/compare/v0.52.3...v0.52.4
+[0.52.3]: https://github.com/Automattic/jetpack-search/compare/v0.52.2...v0.52.3
+[0.52.2]: https://github.com/Automattic/jetpack-search/compare/v0.52.1...v0.52.2
+[0.52.1]: https://github.com/Automattic/jetpack-search/compare/v0.52.0...v0.52.1
+[0.52.0]: https://github.com/Automattic/jetpack-search/compare/v0.51.0...v0.52.0
+[0.51.0]: https://github.com/Automattic/jetpack-search/compare/v0.50.2...v0.51.0
+[0.50.2]: https://github.com/Automattic/jetpack-search/compare/v0.50.1...v0.50.2
+[0.50.1]: https://github.com/Automattic/jetpack-search/compare/v0.50.0...v0.50.1
+[0.50.0]: https://github.com/Automattic/jetpack-search/compare/v0.49.0...v0.50.0
+[0.49.0]: https://github.com/Automattic/jetpack-search/compare/v0.48.0...v0.49.0
+[0.48.0]: https://github.com/Automattic/jetpack-search/compare/v0.47.24...v0.48.0
+[0.47.24]: https://github.com/Automattic/jetpack-search/compare/v0.47.23...v0.47.24
+[0.47.23]: https://github.com/Automattic/jetpack-search/compare/v0.47.22...v0.47.23
+[0.47.22]: https://github.com/Automattic/jetpack-search/compare/v0.47.21...v0.47.22
+[0.47.21]: https://github.com/Automattic/jetpack-search/compare/v0.47.20...v0.47.21
+[0.47.20]: https://github.com/Automattic/jetpack-search/compare/v0.47.19...v0.47.20
 [0.47.19]: https://github.com/Automattic/jetpack-search/compare/v0.47.18...v0.47.19
 [0.47.18]: https://github.com/Automattic/jetpack-search/compare/v0.47.17...v0.47.18
 [0.47.17]: https://github.com/Automattic/jetpack-search/compare/v0.47.16...v0.47.17

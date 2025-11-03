@@ -47,19 +47,23 @@ class __TwigTemplate_b2e90aa663ee76ef09938814932102214bf0368922c2c205f621d8de927
     {
         $macros = $this->macros;
         // line 2
-        yield "<p class=\"mailpoet_confirm_unsubscribe\">
-  ";
-        // line 3
+        yield "<form action=\"";
+        yield $this->env->getRuntime('MailPoetVendor\Twig\Runtime\EscaperRuntime')->escape(($context["unsubscribeUrl"] ?? null), "html", null, true);
+        yield "\" method=\"post\">
+<!--  if updating this hidden field form value, remember to update the corresponding logic in mailpoet/lib/Router/Endpoints/Subscription.php::addTypeParamToUnsubscribeUrl -->
+  <input type=\"hidden\" name=\"type\" value=\"confirmation\">
+  <p class=\"mailpoet_confirm_unsubscribe\">
+    ";
+        // line 6
         yield $this->extensions['MailPoet\Twig\I18n']->translate("Simply click on this link to stop receiving emails from us.");
         yield "
-  <br>
-  <a href=\"";
-        // line 5
-        yield $this->env->getRuntime('MailPoetVendor\Twig\Runtime\EscaperRuntime')->escape(($context["unsubscribeUrl"] ?? null), "html", null, true);
-        yield "\" rel=\"nofollow\">";
+    <br>
+    <a href=\"#\" onclick=\"this.closest('form').submit(); return false;\" rel=\"nofollow\">";
+        // line 8
         yield $this->extensions['MailPoet\Twig\I18n']->translateWithContext("Yes, unsubscribe me", "Text in unsubscribe link");
         yield "</a>
 </p>
+</form>
 ";
         return; yield '';
     }
@@ -77,7 +81,7 @@ class __TwigTemplate_b2e90aa663ee76ef09938814932102214bf0368922c2c205f621d8de927
      */
     public function getDebugInfo()
     {
-        return array (  55 => 5,  50 => 3,  47 => 2,  39 => 1,);
+        return array (  60 => 8,  55 => 6,  47 => 2,  39 => 1,);
     }
 
     public function getSourceContext()

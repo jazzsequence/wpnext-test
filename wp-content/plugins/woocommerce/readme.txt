@@ -1,10 +1,10 @@
 === WooCommerce ===
 Contributors: automattic, woocommerce, mikejolley, jameskoster, claudiosanches, rodrigosprimo, peterfabian1000, vedjain, jamosova, obliviousharmony, konamiman, sadowski, wpmuguru, royho, barryhughes-1, claudiulodro, tiagonoronha, ryelle, levinmedia, aljullu, nerrad, joshuawold, assassinateur, haszari, mppfeiffer, nielslange, opr18, ralucastn, tjcafferkey, danielwrobert, patriciahillebrandt, albarin, dinhtungdu, imanish003, karolmanijak, sunyatasattva, alexandrelara, gigitux, danieldudzic, samueljseay, alexflorisca, opr18, tarunvijwani, pauloarromba, saadtarhi, bor0, kloon, coreymckrill, jorgeatorres, leifsinger, neosinner
 Tags: online store, ecommerce, shop, shopping cart, sell online
-Requires at least: 6.6
-Tested up to: 6.7
+Requires at least: 6.7
+Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 9.7.1
+Stable tag: 10.3.3
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -40,7 +40,7 @@ WooCommerce means business. Keep tabs on the performance metrics most important 
 
 Expand your audience across marketing and social channels with [Google Ads](https://woocommerce.com/products/google-ads/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing), [HubSpot](https://woocommerce.com/products/hubspot-for-woocommerce/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing), [Mailchimp](https://woocommerce.com/products/mailchimp-for-woocommerce/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing), and [Facebook](https://woocommerce.com/products/facebook/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) integrations. You can always check out the in-dashboard [Marketing Hub](https://woocommerce.com/document/marketing-hub/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) for fresh ideas and tips to help you succeed.
 
-Enhance store functionality with hundreds of free and paid extensions from the [official WooCommerce Marketplace](https://woocommerce.com/products/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing). Our developers [vet each new extension](https://woocommerce.com/document/marketplace-overview/#section-6?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) and regularly review existing extensions to maintain Marketplace quality standards. We are actively [looking for products that help store builders create successful stores](https://woocommerce.com/document/marketplace-overview/#section-2?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing).
+Enhance store functionality with hundreds of free and paid extensions from the [WooCommerce Marketplace](https://woocommerce.com/products/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing). Our developers [vet each new extension](https://woocommerce.com/document/marketplace-overview/#section-6?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) and regularly review existing extensions to maintain Marketplace quality standards. We are actively [looking for products that help store builders create successful stores](https://woocommerce.com/document/marketplace-overview/#section-2?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing).
 
 Manage your store from anywhere with the free WooCommerce [mobile app](https://woocommerce.com/mobile/?utm_medium=referral&utm_source=wordpress.org&utm_campaign=wp_org_repo_listing) (Android and iOS). Spoiler alert: Keep an ear out for the slightly addictive "cha-ching" notification sound each time you make a new sale!
 
@@ -143,9 +143,10 @@ Check out [Frequently Asked Questions](https://woocommerce.com/document/frequent
 = Minimum Requirements =
 
 * PHP 7.4 or greater is required (PHP 8.0 or greater is recommended)
-* MySQL 5.6 or greater, OR MariaDB version 10.1 or greater, is required
-
-Visit the [WooCommerce server requirements documentation](https://woocommerce.com/document/server-requirements/?utm_source=wp%20org%20repo%20listing&utm_content=3.6) for a detailed list of server requirements.
+* MySQL 5.5.5 or greater, OR MariaDB version 10.1 or greater, is required
+* WordPress 6.7 or greater
+* (Recommended) WordPress [memory limit](https://woocommerce.com/document/increasing-the-wordpress-memory-limit/) of 256 MB or greater.
+* (Recommended) [HTTPS](https://woocommerce.com/document/ssl-and-https/) support.
 
 = Automatic installation =
 
@@ -169,12 +170,19 @@ WooCommerce comes with some sample data you can use to see how products look; im
 
 == Changelog ==
 
-= 9.8.1 2025-04-09 =
+= 10.3.4 2025-10-31 =
 
 **WooCommerce**
 
-* Fix - Fix a bug in which having 2x of a sold individually item in cart would throw a fatal. [#57070](https://github.com/woocommerce/woocommerce/pull/57070)
-* Dev - Fix flakiness in `product/product-edit.spec.js` [#56900](https://github.com/woocommerce/woocommerce/pull/56900)
+* Fix - Attempts to identify the PayPal two-letter country code from a three-letter code using the `league/iso3166` composer package, and applies minor additional fixes [#61741](https://github.com/woocommerce/woocommerce/pull/61741)
+* Fix - Fixes the locale code sent when creating a PayPal Standard order, limiting it to two characters. [#61688](https://github.com/woocommerce/woocommerce/pull/61688)
+* Fix - Fixes the SHIPPING_CALLBACK_CONFIG_NOT_SUPPORTED errors for PayPal Standard [#61689](https://github.com/woocommerce/woocommerce/pull/61689)
+* Fix - Improves how the city and postal code field requirements are defined based on the official PayPal address requirements table for the Orders V2 API. [#61724](https://github.com/woocommerce/woocommerce/pull/61724)
+* Fix - Prevent autocomplete scripts loading if the setting is disabled [#61684](https://github.com/woocommerce/woocommerce/pull/61684)
+* Fix - Properly handling PayPal order items with negative amounts. [#61719](https://github.com/woocommerce/woocommerce/pull/61719)
+* Fix - Sets the country code sent to PayPal when using PayPal Standard to the expected two-letter format [#61691](https://github.com/woocommerce/woocommerce/pull/61691)
+* Fix - Unifies how order items total amount is calculated for PayPal Standard purchases [#61692](https://github.com/woocommerce/woocommerce/pull/61692)
+* Dev - Remove deprecation notices from legacy script handles [#61693](https://github.com/woocommerce/woocommerce/pull/61693)
 
 
 [See changelog for all versions](https://raw.githubusercontent.com/woocommerce/woocommerce/trunk/changelog.txt).

@@ -5,6 +5,145 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.25] - 2025-10-06
+### Changed
+- Update package dependencies. [#45334] [#45335]
+
+## [4.2.24] - 2025-09-29
+### Changed
+- Update dependencies. [#44940]
+
+## [4.2.23] - 2025-09-22
+### Changed
+- Update dependencies. [#44940]
+
+## [4.2.22] - 2025-09-19
+### Changed
+- Update package dependencies. [#45173] [#45229]
+
+## [4.2.21] - 2025-09-15
+### Changed
+- Update dependencies. [#44940]
+
+## [4.2.20] - 2025-09-08
+### Changed
+- Update package dependencies. [#45027] [#45097]
+
+## [4.2.19] - 2025-09-01
+### Changed
+- Update dependencies. [#44940]
+
+## [4.2.18] - 2025-08-25
+### Changed
+- Update dependencies. [#44934]
+
+## [4.2.17] - 2025-08-18
+### Added
+- Add `typecheck` script to ensure that TypeScript files are type-checked. [#44795]
+
+## [4.2.16] - 2025-08-14
+### Changed
+- Update package dependencies. [#44701]
+
+## [4.2.15] - 2025-08-11
+### Changed
+- Update package dependencies. [#44677]
+
+### Fixed
+- I18n: Improve context hints in comments for translators. [#44686]
+
+## [4.2.14] - 2025-08-04
+### Changed
+- Update dependencies. [#44551]
+
+## [4.2.13] - 2025-07-28
+### Changed
+- Internal updates.
+
+## [4.2.12] - 2025-07-21
+### Changed
+- Update package dependencies. [#44356]
+
+## [4.2.11] - 2025-07-14
+### Changed
+- Update package dependencies. [#44217] [#44219]
+
+## [4.2.10] - 2025-07-07
+### Changed
+- Update package dependencies. [#44148] [#44151]
+
+## [4.2.9] - 2025-06-30
+### Changed
+- Update dependencies. [#43971]
+
+## [4.2.8] - 2025-06-27
+### Fixed
+- Fix PHP fatals on WP_Error. [#43388]
+
+## [4.2.7] - 2025-06-24
+### Changed
+- Update dependencies. [#43971]
+
+## [4.2.6] - 2025-06-23
+### Changed
+- Update package dependencies. [#44020]
+
+## [4.2.5] - 2025-06-16
+### Changed
+- Update dependencies. [#43878]
+
+## [4.2.4] - 2025-06-05
+### Changed
+- Update package dependencies. [#43718] [#43734] [#43766]
+
+## [4.2.3] - 2025-06-02
+### Changed
+- Internal updates.
+
+## [4.2.2] - 2025-05-26
+### Changed
+- Update dependencies. [#43569] [#43578]
+
+## [4.2.1] - 2025-05-19
+### Changed
+- Update package dependencies. [#43398]
+
+## [4.2.0] - 2025-05-12
+### Changed
+- Stable release management: Do not ship source files. [#43310]
+- Update package dependencies. [#43400]
+- Use `formatCurrency()` and `getCurrencyObject()` functions from the `@automattic/number-formatters` package. [#42796]
+
+## [4.1.2] - 2025-05-05
+### Changed
+- Update package dependencies. [#43326] [#43356]
+
+### Fixed
+- Linting: Address final rules in WordPress Stylelint config. [#43296]
+- Linting: Do additional stylesheet cleanup. [#43247]
+
+## [4.1.1] - 2025-04-28
+### Fixed
+- Linting: Fix more Stylelint violations. [#43213]
+- Linting: Remove outdated vendor prefixes in stylesheets. [#43219]
+
+## [4.1.0] - 2025-04-21
+### Added
+- Sync: Add `jetpack_sync_active_modules` callable to whitelist of must-sync callables. [#43134]
+
+## [4.0.22] - 2025-04-14
+### Fixed
+- Linting: Update stylesheets to use WordPress rules for fonts and colors. [#42920] [#42928]
+- Linting: Use double colon notation for pseudo-element selectors. [#43019]
+
+## [4.0.21] - 2025-04-07
+### Changed
+- Linting: First pass of style coding standards. [#42734]
+
+## [4.0.20] - 2025-04-03
+### Changed
+- Update package dependencies. [#42762] [#42809]
+
 ## [4.0.19] - 2025-03-31
 ### Changed
 - Update dependencies. [#42678]
@@ -820,6 +959,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add API endpoints and Jetpack Backup package for managing Help…
 
+[4.2.25]: https://github.com/Automattic/jetpack-backup/compare/v4.2.24...v4.2.25
+[4.2.24]: https://github.com/Automattic/jetpack-backup/compare/v4.2.23...v4.2.24
+[4.2.23]: https://github.com/Automattic/jetpack-backup/compare/v4.2.22...v4.2.23
+[4.2.22]: https://github.com/Automattic/jetpack-backup/compare/v4.2.21...v4.2.22
+[4.2.21]: https://github.com/Automattic/jetpack-backup/compare/v4.2.20...v4.2.21
+[4.2.20]: https://github.com/Automattic/jetpack-backup/compare/v4.2.19...v4.2.20
+[4.2.19]: https://github.com/Automattic/jetpack-backup/compare/v4.2.18...v4.2.19
+[4.2.18]: https://github.com/Automattic/jetpack-backup/compare/v4.2.17...v4.2.18
+[4.2.17]: https://github.com/Automattic/jetpack-backup/compare/v4.2.16...v4.2.17
+[4.2.16]: https://github.com/Automattic/jetpack-backup/compare/v4.2.15...v4.2.16
+[4.2.15]: https://github.com/Automattic/jetpack-backup/compare/v4.2.14...v4.2.15
+[4.2.14]: https://github.com/Automattic/jetpack-backup/compare/v4.2.13...v4.2.14
+[4.2.13]: https://github.com/Automattic/jetpack-backup/compare/v4.2.12...v4.2.13
+[4.2.12]: https://github.com/Automattic/jetpack-backup/compare/v4.2.11...v4.2.12
+[4.2.11]: https://github.com/Automattic/jetpack-backup/compare/v4.2.10...v4.2.11
+[4.2.10]: https://github.com/Automattic/jetpack-backup/compare/v4.2.9...v4.2.10
+[4.2.9]: https://github.com/Automattic/jetpack-backup/compare/v4.2.8...v4.2.9
+[4.2.8]: https://github.com/Automattic/jetpack-backup/compare/v4.2.7...v4.2.8
+[4.2.7]: https://github.com/Automattic/jetpack-backup/compare/v4.2.6...v4.2.7
+[4.2.6]: https://github.com/Automattic/jetpack-backup/compare/v4.2.5...v4.2.6
+[4.2.5]: https://github.com/Automattic/jetpack-backup/compare/v4.2.4...v4.2.5
+[4.2.4]: https://github.com/Automattic/jetpack-backup/compare/v4.2.3...v4.2.4
+[4.2.3]: https://github.com/Automattic/jetpack-backup/compare/v4.2.2...v4.2.3
+[4.2.2]: https://github.com/Automattic/jetpack-backup/compare/v4.2.1...v4.2.2
+[4.2.1]: https://github.com/Automattic/jetpack-backup/compare/v4.2.0...v4.2.1
+[4.2.0]: https://github.com/Automattic/jetpack-backup/compare/v4.1.2...v4.2.0
+[4.1.2]: https://github.com/Automattic/jetpack-backup/compare/v4.1.1...v4.1.2
+[4.1.1]: https://github.com/Automattic/jetpack-backup/compare/v4.1.0...v4.1.1
+[4.1.0]: https://github.com/Automattic/jetpack-backup/compare/v4.0.22...v4.1.0
+[4.0.22]: https://github.com/Automattic/jetpack-backup/compare/v4.0.21...v4.0.22
+[4.0.21]: https://github.com/Automattic/jetpack-backup/compare/v4.0.20...v4.0.21
+[4.0.20]: https://github.com/Automattic/jetpack-backup/compare/v4.0.19...v4.0.20
 [4.0.19]: https://github.com/Automattic/jetpack-backup/compare/v4.0.18...v4.0.19
 [4.0.18]: https://github.com/Automattic/jetpack-backup/compare/v4.0.17...v4.0.18
 [4.0.17]: https://github.com/Automattic/jetpack-backup/compare/v4.0.16...v4.0.17

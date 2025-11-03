@@ -12,7 +12,6 @@ use Automattic\Jetpack\Current_Plan;
 use Automattic\Jetpack\Publicize\Jetpack_Social_Settings\Settings;
 use Automattic\Jetpack\Publicize\Publicize_Utils as Utils;
 use Automattic\Jetpack\Publicize\Services as Publicize_Services;
-use Automattic\Jetpack\Status;
 use Automattic\Jetpack\Status\Host;
 use Jetpack_Options;
 
@@ -68,10 +67,6 @@ class Publicize_Script_Data {
 		}
 
 		$data['site']['wpcom']['blog_id'] = Manager::get_site_id( true );
-		$data['site']['suffix']           = ( new Status() )->get_site_suffix();
-		if ( ! isset( $data['site']['host'] ) ) {
-			$data['site']['host'] = ( new Host() )->get_known_host_guess( false );
-		}
 
 		self::set_wpcom_user_data( $data['user']['current_user'] );
 
@@ -118,6 +113,7 @@ class Publicize_Script_Data {
 
 		$basic_data = array(
 			'api_paths'            => self::get_api_paths(),
+			'assets_url'           => plugins_url( '/build/', __DIR__ ),
 			'is_publicize_enabled' => Utils::is_publicize_active(),
 			'feature_flags'        => self::get_feature_flags(),
 			'supported_services'   => array(),
@@ -213,7 +209,7 @@ class Publicize_Script_Data {
 
 		// get_post_share_status is not available on WPCOM yet.
 		if ( Utils::should_block_editor_have_social() && $post && self::has_feature_flag( 'share-status' ) ) {
-			$share_status[ $post->ID ] = self::publicize()->get_post_share_status( $post->ID );
+			$share_status[ $post->ID ] = Share_Status::get_post_share_status( $post->ID );
 		}
 
 		$should_have_connections = self::has_feature_flag( 'connections-management' ) || self::has_feature_flag( 'editor-preview' );

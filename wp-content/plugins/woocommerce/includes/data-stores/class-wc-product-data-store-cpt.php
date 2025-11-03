@@ -486,6 +486,7 @@ class WC_Product_Data_Store_CPT extends WC_Data_Store_WP implements WC_Object_Da
 
 		$set_props['category_ids']      = $this->get_term_ids( $product, 'product_cat' );
 		$set_props['tag_ids']           = $this->get_term_ids( $product, 'product_tag' );
+		$set_props['brand_ids']         = $this->get_term_ids( $product, 'product_brand' );
 		$set_props['shipping_class_id'] = current( $this->get_term_ids( $product, 'product_shipping_class' ) );
 		$set_props['gallery_image_ids'] = array_filter( explode( ',', $set_props['gallery_image_ids'] ?? '' ) );
 
@@ -919,6 +920,9 @@ class WC_Product_Data_Store_CPT extends WC_Data_Store_WP implements WC_Object_Da
 		if ( $force || array_key_exists( 'tag_ids', $changes ) ) {
 			wp_set_post_terms( $product->get_id(), $product->get_tag_ids( 'edit' ), 'product_tag', false );
 		}
+		if ( $force || array_key_exists( 'brand_ids', $changes ) ) {
+			wp_set_post_terms( $product->get_id(), $product->get_brand_ids( 'edit' ), 'product_brand', false );
+		}
 		if ( $force || array_key_exists( 'shipping_class_id', $changes ) ) {
 			wp_set_post_terms( $product->get_id(), array( $product->get_shipping_class_id( 'edit' ) ), 'product_shipping_class', false );
 		}
@@ -1020,6 +1024,15 @@ class WC_Product_Data_Store_CPT extends WC_Data_Store_WP implements WC_Object_Da
 			}
 			// Note, we use wp_slash to add extra level of escaping. See https://codex.wordpress.org/Function_Reference/update_post_meta#Workaround.
 			$this->update_or_delete_post_meta( $product, '_product_attributes', wp_slash( $meta_values ) );
+
+			/**
+			 * Fires after WooCommerce product attributes have been updated.
+			 *
+			 * @since 10.2.0
+			 * @param WC_Product $product The product object whose attributes were updated.
+			 * @param bool $force Indicates if the update was forced.
+			 */
+			do_action( 'woocommerce_product_attributes_updated', $product, $force );
 		}
 	}
 
@@ -1925,25 +1938,27 @@ class WC_Product_Data_Store_CPT extends WC_Data_Store_WP implements WC_Object_Da
 				$search_terms = array( $term_group );
 			}
 
-			$term_group_query = '';
-			$searchand        = '';
+			$term_group_query = array();
 
 			foreach ( $search_terms as $search_term ) {
 				$like = '%' . $wpdb->esc_like( $search_term ) . '%';
 
+				// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- an array of placeholders is a valid arg.
+				$term_query = $wpdb->prepare(
+					'( posts.post_title LIKE %s ) OR ( posts.post_excerpt LIKE %s ) OR ( posts.post_content LIKE %s ) OR ( wc_product_meta_lookup.sku LIKE %s )',
+					array_fill( 0, 4, $like )
+				);
+
 				// Variations should also search the parent's meta table for fallback fields.
 				if ( $include_variations ) {
-					$variation_query = $wpdb->prepare( " OR ( wc_product_meta_lookup.sku = '' AND parent_wc_product_meta_lookup.sku LIKE %s ) ", $like );
-				} else {
-					$variation_query = '';
+					$term_query .= $wpdb->prepare( " OR ( wc_product_meta_lookup.sku = '' AND parent_wc_product_meta_lookup.sku LIKE %s )", $like );
 				}
 
-				$term_group_query .= $wpdb->prepare( " {$searchand} ( ( posts.post_title LIKE %s) OR ( posts.post_excerpt LIKE %s) OR ( posts.post_content LIKE %s ) OR ( wc_product_meta_lookup.sku LIKE %s ) $variation_query)", $like, $like, $like, $like ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$searchand         = ' AND ';
+				$term_group_query[] = "( {$term_query} )";
 			}
 
 			if ( $term_group_query ) {
-				$search_queries[] = $term_group_query;
+				$search_queries[] = implode( ' AND ', $term_group_query );
 			}
 		}
 

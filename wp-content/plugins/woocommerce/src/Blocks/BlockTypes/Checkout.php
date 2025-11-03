@@ -2,13 +2,14 @@
 declare( strict_types = 1);
 namespace Automattic\WooCommerce\Blocks\BlockTypes;
 
+use Automattic\Block_Scanner;
 use Automattic\WooCommerce\StoreApi\Utilities\LocalPickupUtils;
 use Automattic\WooCommerce\Blocks\Utils\CartCheckoutUtils;
-use Automattic\WooCommerce\Admin\Features\Features;
 use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFields;
 use Automattic\WooCommerce\Blocks\Package;
 use Automattic\WooCommerce\StoreApi\Utilities\PaymentUtils;
 use Automattic\WooCommerce\Blocks\Domain\Services\CheckoutFieldsSchema\Validation;
+use Automattic\WooCommerce\Internal\AddressProvider\AddressProviderController;
 
 /**
  * Checkout class.
@@ -59,6 +60,8 @@ class Checkout extends AbstractBlock {
 	 */
 	public function dequeue_woocommerce_core_scripts() {
 		wp_dequeue_script( 'wc-checkout' );
+		wp_dequeue_script( 'wc-address-autocomplete' );
+		wp_dequeue_style( 'wc-address-autocomplete' );
 		wp_dequeue_script( 'wc-password-strength-meter' );
 		wp_dequeue_script( 'selectWoo' );
 		wp_dequeue_style( 'select2' );
@@ -165,12 +168,10 @@ class Checkout extends AbstractBlock {
 			$dependencies[] = 'zxcvbn-async';
 		}
 
-		if ( Features::is_enabled( 'experimental-blocks' ) ) {
-			$checkout_fields = Package::container()->get( CheckoutFields::class );
-			// Load schema parser asynchronously if we need it.
-			if ( Validation::has_field_schema( $checkout_fields->get_additional_fields() ) ) {
-				$dependencies[] = 'wc-schema-parser';
-			}
+		$checkout_fields = Package::container()->get( CheckoutFields::class );
+		// Load schema parser asynchronously if we need it.
+		if ( Validation::has_field_schema( $checkout_fields->get_additional_fields() ) ) {
+			$dependencies[] = 'wc-schema-parser';
 		}
 
 		$script = [
@@ -226,7 +227,7 @@ class Checkout extends AbstractBlock {
 		if ( $this->is_checkout_endpoint() ) {
 			// Note: Currently the block only takes care of the main checkout form -- if an endpoint is set, refer to the
 			// legacy shortcode instead and do not render block.
-			return wc_current_theme_is_fse_theme() ? do_shortcode( '[woocommerce_checkout]' ) : '[woocommerce_checkout]';
+			return wp_is_block_theme() ? do_shortcode( '[woocommerce_checkout]' ) : '[woocommerce_checkout]';
 		}
 
 		// Dequeue the core scripts when rendering this block.
@@ -356,8 +357,7 @@ class Checkout extends AbstractBlock {
 			return;
 		}
 
-		$post_blocks = parse_blocks( $post->post_content );
-		$title       = $this->find_local_pickup_text_in_checkout_block( $post_blocks );
+		$title = $this->find_local_pickup_text_in_checkout_block( $post->post_content );
 
 		// Set the title to be an empty string if it isn't a string. This will make it fall back to the default value of "Pickup".
 		if ( ! is_string( $title ) ) {
@@ -369,28 +369,24 @@ class Checkout extends AbstractBlock {
 	}
 
 	/**
-	 * Recurse through the blocks to find the shipping methods block, then get the value of the localPickupText attribute from it.
+	 * Find the shipping methods block, then get the value of the localPickupText attribute from it.
 	 *
-	 * @param array $blocks The block(s) to search for the local pickup text.
-	 * @return null|string  The local pickup text if found, otherwise void.
+	 * @param string $post_content The post content to search through.
+	 * @return null|string The local pickup text if found, otherwise null.
 	 */
-	private function find_local_pickup_text_in_checkout_block( $blocks ) {
-		if ( ! is_array( $blocks ) ) {
-			return null;
-		}
-		foreach ( $blocks as $block ) {
-			if ( ! empty( $block['blockName'] ) && 'woocommerce/checkout-shipping-method-block' === $block['blockName'] ) {
-				if ( ! empty( $block['attrs']['localPickupText'] ) ) {
-					return $block['attrs']['localPickupText'];
-				}
-			}
-			if ( ! empty( $block['innerBlocks'] ) ) {
-				$answer = $this->find_local_pickup_text_in_checkout_block( $block['innerBlocks'] );
-				if ( $answer ) {
-					return $answer;
+	private function find_local_pickup_text_in_checkout_block( $post_content ) {
+		$scanner = Block_Scanner::create( $post_content );
+
+		while ( $scanner->next_delimiter() ) {
+			if ( $scanner->opens_block( 'woocommerce/checkout-shipping-method-block' ) ) {
+				$attributes = $scanner->allocate_and_return_parsed_attributes();
+				if ( isset( $attributes['localPickupText'] ) ) {
+					return $attributes['localPickupText'];
 				}
 			}
 		}
+
+		return null;
 	}
 
 	/**
@@ -415,6 +411,22 @@ class Checkout extends AbstractBlock {
 			$country_data[ $country_code ]['format'] = $format;
 		}
 
+		$providers_payload = [];
+		if ( class_exists( AddressProviderController::class ) && 'no' !== get_option( 'woocommerce_address_autocomplete_enabled', 'no' ) ) {
+			$controller        = wc_get_container()->get( AddressProviderController::class );
+			$providers         = $controller->get_providers();
+			$providers_payload = array_map(
+				static function ( $provider ) {
+					return array(
+						'id'            => (string) $provider->id,
+						'name'          => sanitize_text_field( (string) $provider->name ),
+						'branding_html' => wp_kses_post( (string) $provider->branding_html ),
+					);
+				},
+				(array) $providers
+			);
+		}
+		$this->asset_data_registry->add( 'addressAutocompleteProviders', $providers_payload );
 		$this->asset_data_registry->add( 'countryData', $country_data );
 		$this->asset_data_registry->add( 'defaultAddressFormat', $address_formats['default'] );
 		$this->asset_data_registry->add(
@@ -441,7 +453,7 @@ class Checkout extends AbstractBlock {
 		$this->asset_data_registry->add( 'shippingEnabled', wc_shipping_enabled() );
 		$this->asset_data_registry->add( 'hasDarkEditorStyleSupport', current_theme_supports( 'dark-editor-style' ) );
 		$this->asset_data_registry->register_page_id( isset( $attributes['cartPageId'] ) ? $attributes['cartPageId'] : 0 );
-		$this->asset_data_registry->add( 'isBlockTheme', wc_current_theme_is_fse_theme() );
+		$this->asset_data_registry->add( 'isBlockTheme', wp_is_block_theme() );
 		$this->asset_data_registry->add( 'isCheckoutBlock', true );
 
 		$pickup_location_settings = LocalPickupUtils::get_local_pickup_settings();
@@ -451,7 +463,7 @@ class Checkout extends AbstractBlock {
 		$this->asset_data_registry->add( 'localPickupText', $pickup_location_settings['title'] );
 		$this->asset_data_registry->add( 'localPickupCost', $pickup_location_settings['cost'] );
 		$this->asset_data_registry->add( 'collectableMethodIds', $local_pickup_method_ids );
-		$this->asset_data_registry->add( 'shippingMethodsExist', CartCheckoutUtils::shipping_methods_exist() > 0 );
+		$this->asset_data_registry->add( 'shippingMethodsExist', CartCheckoutUtils::shipping_methods_exist() );
 
 		$is_block_editor = $this->is_block_editor();
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Module Name: Jetpack Stats
- * Module Description: Collect valuable traffic stats and insights.
+ * Module Description: Clear, concise traffic insights right in your WordPress dashboard.
  * Sort Order: 1
  * Recommendation Order: 2
  * First Introduced: 1.1
@@ -16,7 +16,6 @@
 
 use Automattic\Jetpack\Admin_UI\Admin_Menu;
 use Automattic\Jetpack\Connection\Client;
-use Automattic\Jetpack\Connection\XMLRPC_Async_Call;
 use Automattic\Jetpack\Redirect;
 use Automattic\Jetpack\Stats\Main as Stats;
 use Automattic\Jetpack\Stats\Options as Stats_Options;
@@ -28,6 +27,10 @@ use Automattic\Jetpack\Stats_Admin\Dashboard as Stats_Dashboard;
 use Automattic\Jetpack\Stats_Admin\Main as Stats_Main;
 use Automattic\Jetpack\Status\Host;
 use Automattic\Jetpack\Tracking;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
 
 if ( defined( 'STATS_DASHBOARD_SERVER' ) ) {
 	return;
@@ -249,9 +252,7 @@ function stats_admin_menu() {
 		add_action( "load-$hook", 'stats_reports_load' );
 	} else {
 		// Enable the new Odyssey Stats experience.
-		$stats_dashboard = new Stats_Dashboard();
-		$hook            = Admin_Menu::add_menu( __( 'Stats', 'jetpack' ), __( 'Stats', 'jetpack' ), 'view_stats', 'stats', array( $stats_dashboard, 'render' ), 1 );
-		add_action( "load-$hook", array( $stats_dashboard, 'admin_init' ) );
+		Stats_Dashboard::init();
 	}
 }
 
@@ -821,22 +822,6 @@ function stats_admin_bar_menu( &$wp_admin_bar ) {
 	);
 
 	$wp_admin_bar->add_menu( $menu );
-}
-
-/**
- *
- * Deprecated. The stats module should not update blog details. This is handled by Sync.
- *
- * Stats Update Blog.
- *
- * @access public
- * @return void
- *
- * @deprecated since 10.3.
- */
-function stats_update_blog() {
-	_deprecated_function( __METHOD__, 'jetpack-10.3' );
-	XMLRPC_Async_Call::add_call( 'jetpack.updateBlog', 0, stats_get_blog() );
 }
 
 /**

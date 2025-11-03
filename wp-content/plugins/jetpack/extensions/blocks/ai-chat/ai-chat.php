@@ -17,6 +17,10 @@ use Automattic\Jetpack\Status;
 use Automattic\Jetpack\Status\Host;
 use Jetpack_Gutenberg;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 /**
  * Registers our block for use in Gutenberg
  * This is done via an action so that we can disable
@@ -94,4 +98,4 @@ function add_ai_chat_block_data() {
 		'before'
 	);
 }
-add_action( 'enqueue_block_assets', __NAMESPACE__ . '\add_ai_chat_block_data' );
+add_action( 'enqueue_block_assets', __NAMESPACE__ . '\add_ai_chat_block_data', 11 );

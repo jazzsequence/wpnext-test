@@ -404,7 +404,7 @@ function gutenberg_register_packages_styles( $styles ) {
 		array( 'wp-components' ),
 		$version
 	);
-	$styles->add_data( 'wp-list-reusable-block', 'rtl', 'replace' );
+	$styles->add_data( 'wp-list-reusable-blocks', 'rtl', 'replace' );
 
 	gutenberg_override_style(
 		$styles,
@@ -618,15 +618,33 @@ add_action( 'wp_default_scripts', 'gutenberg_register_vendor_scripts' );
  */
 function gutenberg_default_script_modules() {
 	/*
-	 * Expects multidimensional array like:
-	 *
-	 *     'interactivity/index.min.js' => array('dependencies' => array(…), 'version' => '…'),
-	 *     'interactivity/debug.min.js' => array('dependencies' => array(…), 'version' => '…'),
-	 *     'interactivity-router/index.min.js' => …
+	 * Load individual asset files for esbuild-built packages.
+	 * Follows the same pattern as regular scripts in gutenberg_register_packages_scripts().
+	 * Uses RecursiveDirectoryIterator to find all *.min.js files at any nesting depth.
 	 */
-	$assets = include gutenberg_dir_path() . '/build-module/assets.php';
+	$all_assets       = array();
+	$build_module_dir = gutenberg_dir_path() . 'build-module';
+	if ( is_dir( $build_module_dir ) ) {
+		$iterator = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator( $build_module_dir, RecursiveDirectoryIterator::SKIP_DOTS )
+		);
+		foreach ( $iterator as $file ) {
+			if ( $file->isFile() && preg_match( '/\.min\.js$/', $file->getFilename() ) ) {
+				$path       = $file->getPathname();
+				$asset_file = substr( $path, 0, -3 ) . '.asset.php';
+				if ( ! file_exists( $asset_file ) ) {
+					continue;
+				}
 
-	foreach ( $assets as $file_name => $script_module_data ) {
+				$asset                    = require $asset_file;
+				$file_name                = str_replace( gutenberg_dir_path() . 'build-module/', '', $path );
+				$asset['dependencies']    = $asset['module_dependencies'] ?? array();
+				$all_assets[ $file_name ] = $asset;
+			}
+		}
+	}
+
+	foreach ( $all_assets as $file_name => $script_module_data ) {
 		/*
 		 * Build the WordPress Script Module ID from the file name.
 		 * Prepend `@wordpress/` and remove extensions and `/index` if present:
@@ -653,14 +671,33 @@ function gutenberg_default_script_modules() {
 				break;
 		}
 
+		/*
+		 * All script modules in Gutenberg are (currently) related to the Interactivity API which prioritizes server-side rendering.
+		 * Therefore, the modules should be fetched with a low priority to avoid network contention with any LCP element resource.
+		 * For allowing a block to opt-in to another fetchpriority, see <https://github.com/WordPress/gutenberg/issues/71366>.
+		 *
+		 * Also, the @wordpress/a11y script module is intended to be used as a dynamic import dependency, in which case
+		 * the fetchpriority is irrelevant. See <https://make.wordpress.org/core/2024/10/14/updates-to-script-modules-in-6-7/>.
+		 * However, in case it is added as a static import dependency, the fetchpriority is explicitly set to be 'low'
+		 * since the module should not be involved in the critical rendering path, and if it is, its fetchpriority will
+		 * be bumped to match the fetchpriority of the dependent script.
+		 */
+		$args = array(
+			'fetchpriority' => 'low',
+		);
+
+		if ( str_starts_with( $script_module_id, '@wordpress/block-library' ) && method_exists( 'WP_Interactivity_API', 'add_client_navigation_support_to_script_module' ) ) {
+			wp_interactivity()->add_client_navigation_support_to_script_module( $script_module_id );
+		}
+
 		$path = gutenberg_url( "build-module/{$file_name}" );
-		wp_register_script_module( $script_module_id, $path, $script_module_data['dependencies'], $script_module_data['version'] );
+		wp_register_script_module( $script_module_id, $path, $script_module_data['dependencies'], $script_module_data['version'], $args ); // The $args parameter is new as of WP 6.9 per <https://core.trac.wordpress.org/ticket/61734>.
 	}
 }
 remove_action( 'wp_default_scripts', 'wp_default_script_modules' );
 add_action( 'wp_default_scripts', 'gutenberg_default_script_modules' );
 
-/*
+/**
  * Always remove the Core action hook while gutenberg_enqueue_stored_styles() exists to avoid styles being printed twice.
  * This is also because gutenberg_enqueue_stored_styles uses the Style Engine's `gutenberg_*` functions and `_Gutenberg` classes,
  * which are in continuous development and generally ahead of Core.
@@ -671,3 +708,8 @@ remove_action( 'wp_footer', 'wp_enqueue_stored_styles', 1 );
 // Enqueue stored styles.
 add_action( 'wp_enqueue_scripts', 'gutenberg_enqueue_stored_styles' );
 add_action( 'wp_footer', 'gutenberg_enqueue_stored_styles', 1 );
+
+add_action( 'enqueue_block_editor_assets', 'gutenberg_enqueue_latex_to_mathml_loader' );
+function gutenberg_enqueue_latex_to_mathml_loader() {
+	wp_enqueue_script_module( '@wordpress/latex-to-mathml/loader' );
+}

@@ -1,14 +1,14 @@
 <?php
 /**
- * This file is part of the MailPoet plugin.
+ * This file is part of the WooCommerce Email Editor package
  *
- * @package MailPoet\EmailEditor
+ * @package Automattic\WooCommerce\EmailEditor
  */
 
 declare(strict_types = 1);
-namespace MailPoet\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors;
+namespace Automattic\WooCommerce\EmailEditor\Engine\Renderer\ContentRenderer\Preprocessors;
 
-use MailPoet\EmailEditor\Engine\Settings_Controller;
+use Automattic\WooCommerce\EmailEditor\Engine\Settings_Controller;
 
 /**
  * This preprocessor is responsible for setting default typography values for blocks.
@@ -92,6 +92,9 @@ class Typography_Preprocessor implements Preprocessor {
 		$email_attrs = array();
 		if ( isset( $block['attrs']['style']['color']['text'] ) ) {
 			$email_attrs['color'] = $block['attrs']['style']['color']['text'];
+		}
+		if ( isset( $block['attrs']['textColor'] ) && ! isset( $email_attrs['color'] ) ) {
+			$email_attrs['color'] = $this->settings_controller->translate_slug_to_color( $block['attrs']['textColor'] );
 		}
 		// In case the fontSize is set via a slug (small, medium, large, etc.) we translate it to a number
 		// The font size slug is set in $block['attrs']['fontSize'] and value in $block['attrs']['style']['typography']['fontSize'].

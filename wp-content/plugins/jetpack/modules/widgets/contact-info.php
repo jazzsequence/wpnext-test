@@ -5,6 +5,10 @@
 use Automattic\Jetpack\Assets;
 use Automattic\Jetpack\Redirect;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 if ( ! class_exists( 'Jetpack_Contact_Info_Widget' ) ) {
 
 	/**
@@ -232,7 +236,7 @@ if ( ! class_exists( 'Jetpack_Contact_Info_Widget' ) ) {
 		 *
 		 * @param array $instance Instance configuration.
 		 *
-		 * @return void
+		 * @return string|void
 		 */
 		public function form( $instance ) {
 			$instance = wp_parse_args( $instance, $this->defaults() );

@@ -35,6 +35,7 @@ class Util {
 
 		add_action( 'init', '\Automattic\Jetpack\Forms\ContactForm\Contact_Form_Plugin::init', 9 );
 		add_action( 'grunion_scheduled_delete', '\Automattic\Jetpack\Forms\ContactForm\Util::grunion_delete_old_spam' );
+		add_action( 'grunion_scheduled_delete_temp', '\Automattic\Jetpack\Forms\ContactForm\Util::grunion_delete_old_temp_feedback' );
 		add_action( 'grunion_pre_message_sent', '\Automattic\Jetpack\Forms\ContactForm\Util::jetpack_tracks_record_grunion_pre_message_sent', 12, 3 );
 	}
 
@@ -46,12 +47,12 @@ class Util {
 		register_block_pattern_category( $category_slug, array( 'label' => __( 'Forms', 'jetpack-forms' ) ) );
 
 		$patterns = array(
-			'contact-form'      => array(
+			'contact-form'         => array(
 				'title'      => __( 'Contact Form', 'jetpack-forms' ),
 				'blockTypes' => array( 'jetpack/contact-form' ),
 				'categories' => array( $category_slug ),
-				'content'    => '<!-- wp:jetpack/contact-form {"style":{"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
-                    <div class="wp-block-jetpack-contact-form" style="padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px">
+				'content'    => '<!-- wp:jetpack/contact-form -->
+                    <div class="wp-block-jetpack-contact-form">
                         <!-- wp:jetpack/field-name {"required":true} /-->
                         <!-- wp:jetpack/field-email {"required":true} /-->
                         <!-- wp:jetpack/field-textarea /-->
@@ -59,12 +60,12 @@ class Util {
                     </div>
                     <!-- /wp:jetpack/contact-form -->',
 			),
-			'newsletter-form'   => array(
+			'newsletter-form'      => array(
 				'title'      => __( 'Lead Capture Form', 'jetpack-forms' ),
 				'blockTypes' => array( 'jetpack/contact-form' ),
 				'categories' => array( $category_slug ),
-				'content'    => '<!-- wp:jetpack/contact-form {"style":{"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
-                    <div class="wp-block-jetpack-contact-form" style="padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px">
+				'content'    => '<!-- wp:jetpack/contact-form -->
+                    <div class="wp-block-jetpack-contact-form">
                         <!-- wp:jetpack/field-name {"required":true} /-->
                         <!-- wp:jetpack/field-email {"required":true} /-->
                         <!-- wp:jetpack/field-consent /-->
@@ -72,12 +73,12 @@ class Util {
                     </div>
                     <!-- /wp:jetpack/contact-form -->',
 			),
-			'rsvp-form'         => array(
+			'rsvp-form'            => array(
 				'title'      => __( 'RSVP Form', 'jetpack-forms' ),
 				'blockTypes' => array( 'jetpack/contact-form' ),
 				'categories' => array( $category_slug ),
-				'content'    => '<!-- wp:jetpack/contact-form {"subject":"A new RSVP from your website","style":{"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
-                    <div class="wp-block-jetpack-contact-form" style="padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px">
+				'content'    => '<!-- wp:jetpack/contact-form {"subject":"A new RSVP from your website"} -->
+                    <div class="wp-block-jetpack-contact-form">
                         <!-- wp:jetpack/field-name {"required":true} /-->
                         <!-- wp:jetpack/field-email {"required":true} /-->
                         <!-- wp:jetpack/field-radio {"label":"Attending?","required":true,"options":["Yes","No"]} /-->
@@ -86,12 +87,12 @@ class Util {
                     </div>
                     <!-- /wp:jetpack/contact-form -->',
 			),
-			'registration-form' => array(
+			'registration-form'    => array(
 				'title'      => __( 'Registration Form', 'jetpack-forms' ),
 				'blockTypes' => array( 'jetpack/contact-form' ),
 				'categories' => array( $category_slug ),
-				'content'    => '<!-- wp:jetpack/contact-form {"subject":"A new registration from your website","style":{"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
-                    <div class="wp-block-jetpack-contact-form" style="padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px">
+				'content'    => '<!-- wp:jetpack/contact-form {"subject":"A new registration from your website"} -->
+                    <div class="wp-block-jetpack-contact-form">
                         <!-- wp:jetpack/field-name {"required":true} /-->
                         <!-- wp:jetpack/field-email {"required":true} /-->
                         <!-- wp:jetpack/field-telephone {"label":"Phone Number"} /-->
@@ -101,12 +102,12 @@ class Util {
                     </div>
                     <!-- /wp:jetpack/contact-form -->',
 			),
-			'appointment-form'  => array(
+			'appointment-form'     => array(
 				'title'      => __( 'Appointment Form', 'jetpack-forms' ),
 				'blockTypes' => array( 'jetpack/contact-form' ),
 				'categories' => array( $category_slug ),
-				'content'    => '<!-- wp:jetpack/contact-form {"subject":"A new appointment booked from your website","style":{"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
-                    <div class="wp-block-jetpack-contact-form" style="padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px">
+				'content'    => '<!-- wp:jetpack/contact-form {"subject":"A new appointment booked from your website"} -->
+                    <div class="wp-block-jetpack-contact-form">
                         <!-- wp:jetpack/field-name {"required":true} /-->
                         <!-- wp:jetpack/field-email {"required":true} /-->
                         <!-- wp:jetpack/field-telephone {"required":true} /-->
@@ -117,19 +118,38 @@ class Util {
                     </div>
                     <!-- /wp:jetpack/contact-form -->',
 			),
-			'feedback-form'     => array(
+			'feedback-form'        => array(
 				'title'      => __( 'Feedback Form', 'jetpack-forms' ),
 				'blockTypes' => array( 'jetpack/contact-form' ),
 				'categories' => array( $category_slug ),
-				'content'    => '<!-- wp:jetpack/contact-form {"subject":"New feedback received from your website","style":{"spacing":{"padding":{"top":"16px","right":"16px","bottom":"16px","left":"16px"}}}} -->
-                    <div class="wp-block-jetpack-contact-form" style="padding-top:16px;padding-right:16px;padding-bottom:16px;padding-left:16px">
+				'content'    => '<!-- wp:jetpack/contact-form {"subject":"New feedback received from your website"} -->
+                    <div class="wp-block-jetpack-contact-form">
                         <!-- wp:jetpack/field-name {"required":true} /-->
                         <!-- wp:jetpack/field-email {"required":true} /-->
-                        <!-- wp:jetpack/field-radio {"label":"Please rate our website","required":true,"options":["1 - Very Bad","2 - Poor","3 - Average","4 - Good","5 - Excellent"]} /-->
+                        <!-- wp:jetpack/field-rating {"required":true} -->
+							<div><!-- wp:jetpack/label {"label":"Please rate our website"} /-->
+						<!-- wp:jetpack/input-rating /--></div>
+						<!-- /wp:jetpack/field-rating -->
                         <!-- wp:jetpack/field-textarea {"label":"How could we improve?"} /-->
                         <!-- wp:jetpack/button {"element":"button","text":"Send Feedback","lock":{"remove":true}} /-->
                     </div>
                     <!-- /wp:jetpack/contact-form -->',
+			),
+			'salesforce-lead-form' => array(
+				'title'      => __( 'Salesforce Lead Form', 'jetpack-forms' ),
+				'blockTypes' => array( 'jetpack/contact-form' ),
+				'categories' => array( $category_slug ),
+				'content'    => '<!-- wp:jetpack/contact-form {"formTitle":"Salesforce Lead Form"} -->
+					<div class="wp-block-jetpack-contact-form">
+						<!-- wp:jetpack/field-name {"label":"First Name","required":true,"id":"first_name"} /-->
+						<!-- wp:jetpack/field-name {"label":"Last Name","required":true,"id":"last_name"} /-->
+						<!-- wp:jetpack/field-email {"label":"Email","required":true,"id":"email"} /-->
+						<!-- wp:jetpack/field-telephone {"label":"Phone","id":"phone"} /-->
+						<!-- wp:jetpack/field-text {"label":"Company","id":"company"} /-->
+						<!-- wp:jetpack/field-text {"label":"Job Title","id":"title"} /-->
+						<!-- wp:jetpack/button {"element":"button","text":"Submit","lock":{"remove":true}} /-->
+					</div>
+					<!-- /wp:jetpack/contact-form -->',
 			),
 		);
 
@@ -151,6 +171,10 @@ class Util {
 	 */
 	public static function grunion_contact_form_set_block_template_attribute( $template ) {
 		global $_wp_current_template_content;
+		if ( ! is_string( $template ) ) {
+			return $template;
+		}
+
 		if ( 'template-canvas.php' === basename( $template ) ) {
 			Contact_Form::style_on();
 			$_wp_current_template_content = self::grunion_contact_form_apply_block_attribute(
@@ -183,7 +207,8 @@ class Util {
 	 * @return string
 	 */
 	public static function grunion_contact_form_unset_block_template_part_id_global( $content, $block ) {
-		if ( 'core/template-part' === $block['blockName']
+		if ( isset( $block['blockName'] )
+			&& 'core/template-part' === $block['blockName']
 			&& isset( $GLOBALS['grunion_block_template_part_id'] ) ) {
 			unset( $GLOBALS['grunion_block_template_part_id'] );
 		}
@@ -260,6 +285,60 @@ class Util {
 	}
 
 	/**
+	 * Deletes old temp feedback to keep the posts table size under control.
+	 *
+	 * @since 6.5.0
+	 */
+	public static function grunion_delete_old_temp_feedback() {
+		global $wpdb;
+
+		$grunion_delete_limit = 100;
+
+		$now_gmt = current_time( 'mysql', 1 );
+		$sql     = $wpdb->prepare(
+			"
+			SELECT `ID`
+			FROM $wpdb->posts
+			WHERE DATE_SUB( %s, INTERVAL 1 DAY ) > `post_date_gmt`
+				AND `post_type` = 'feedback'
+				AND `post_status` = 'jp-temp-feedback'
+			LIMIT %d
+		",
+			$now_gmt,
+			$grunion_delete_limit
+		);
+
+		// The SQL query is already prepared with $wpdb->prepare() above, and direct query is needed for performance-critical cleanup operation
+		$post_ids = $wpdb->get_col( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		foreach ( (array) $post_ids as $post_id ) {
+			// force a full delete, skip the trash
+			wp_delete_post( $post_id, true );
+		}
+
+		if (
+			/**
+			 * Filter if the module run OPTIMIZE TABLE on the core WP tables.
+			 *
+			 * @module contact-form
+			 *
+			 * @since 6.5.0
+			 *
+			 * @param bool $filter Should Jetpack optimize the table, defaults to false.
+			 */
+			apply_filters( 'grunion_optimize_table', false )
+		) {
+			// OPTIMIZE TABLE is a MySQL-specific maintenance command that cannot be prepared and is only run when explicitly enabled via filter
+			$wpdb->query( "OPTIMIZE TABLE $wpdb->posts" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+
+		// if we hit the max then schedule another run
+		if ( count( $post_ids ) >= $grunion_delete_limit ) {
+			wp_schedule_single_event( time() + 700, 'grunion_scheduled_delete_temp' );
+		}
+	}
+
+	/**
 	 * Send an event to Tracks on form submission.
 	 *
 	 * @param int   $post_id - the post_id for the CPT that is created.
@@ -309,6 +388,11 @@ class Util {
 	 * @return string
 	 */
 	public static function grunion_contact_form_apply_block_attribute( $content, $new_attr ) {
+		if ( ! is_string( $content ) ) {
+			// If the content is not a string, we cannot process it.
+			return $content;
+		}
+
 		if ( false === stripos( $content, 'wp:jetpack/contact-form' ) ) {
 			return $content;
 		}
@@ -338,5 +422,26 @@ class Util {
 			},
 			$content
 		);
+	}
+
+	/**
+	 * Get a filename for export tasks
+	 *
+	 * @param string $source The filtered source for exported data.
+	 * @return string The filename without source nor date suffix.
+	 */
+	public static function get_export_filename( $source = '' ) {
+		return $source === ''
+			? sprintf(
+				/* translators: Site title, used to craft the export filename, eg "MySite - Jetpack Form Responses" */
+				__( '%s - Jetpack Form Responses', 'jetpack-forms' ),
+				sanitize_file_name( get_bloginfo( 'name' ) )
+			)
+			: sprintf(
+				/* translators: 1: Site title; 2: post title. Used to craft the export filename, eg "MySite - Jetpack Form Responses - Contact" */
+				__( '%1$s - Jetpack Form Responses - %2$s', 'jetpack-forms' ),
+				sanitize_file_name( get_bloginfo( 'name' ) ),
+				sanitize_file_name( $source )
+			);
 	}
 }

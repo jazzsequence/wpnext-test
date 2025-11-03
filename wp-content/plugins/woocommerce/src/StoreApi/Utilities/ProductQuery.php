@@ -6,6 +6,7 @@ namespace Automattic\WooCommerce\StoreApi\Utilities;
 use Automattic\WooCommerce\Enums\ProductStatus;
 use Automattic\WooCommerce\Enums\ProductType;
 use Automattic\WooCommerce\Enums\CatalogVisibility;
+use Automattic\WooCommerce\Internal\ProductFilters\Interfaces\QueryClausesGenerator;
 use WC_Tax;
 
 /**
@@ -13,7 +14,7 @@ use WC_Tax;
  *
  * Helper class to handle product queries for the API.
  */
-class ProductQuery {
+class ProductQuery implements QueryClausesGenerator {
 	/**
 	 * Prepare query args to pass to WP_Query for a REST API request.
 	 *
@@ -322,6 +323,10 @@ class ProductQuery {
 	public function get_objects( $request ) {
 		$results = $this->get_results( $request );
 
+		if ( is_callable( '_prime_post_caches' ) ) {
+			_prime_post_caches( $results['results'] );
+		}
+
 		return array(
 			'objects' => array_map( 'wc_get_product', $results['results'] ),
 			'total'   => $results['total'],
@@ -337,17 +342,19 @@ class ProductQuery {
 	public function get_last_modified() {
 		global $wpdb;
 
-		return strtotime( $wpdb->get_var( "SELECT MAX( post_modified_gmt ) FROM {$wpdb->posts} WHERE post_type IN ( 'product', 'product_variation' );" ) );
+		$last_modified = $wpdb->get_var( "SELECT MAX( post_modified_gmt ) FROM {$wpdb->posts} WHERE post_type IN ( 'product', 'product_variation' );" );
+
+		return $last_modified ? strtotime( $last_modified ) : null;
 	}
 
 	/**
 	 * Add in conditional search filters for products.
 	 *
 	 * @param array     $args Query args.
-	 * @param \WC_Query $wp_query WC_Query object.
+	 * @param \WP_Query $wp_query WP_Query object.
 	 * @return array
 	 */
-	public function add_query_clauses( $args, $wp_query ) {
+	public function add_query_clauses( array $args, \WP_Query $wp_query ): array {
 		global $wpdb;
 
 		if ( $wp_query->get( 'search' ) ) {

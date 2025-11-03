@@ -1,5 +1,9 @@
 <?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 // phpcs:disable Universal.Files.SeparateFunctionsFromOO.Mixed -- TODO: Move classes to appropriately-named class files.
 
 add_action( 'widgets_init', 'jetpack_gravatar_profile_widget_init' );
@@ -322,6 +326,7 @@ class Jetpack_Gravatar_Profile_Widget extends WP_Widget {
 	 * Outputs the widget settings form.
 	 *
 	 * @param array $instance Current settings.
+	 * @return string|void
 	 */
 	public function form( $instance ) {
 		$title               = isset( $instance['title'] ) ? $instance['title'] : '';

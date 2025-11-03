@@ -58,9 +58,7 @@ class Renderer {
 			1
 		);
 		add_filter( 'render_block_core/query-pagination', array( $this, 'add_navigation_link_directives' ), 10, 3 );
-
-		// Provide location context into block's context.
-		add_filter( 'render_block_context', array( $this, 'provide_location_context_for_inner_blocks' ), 11, 1 );
+		add_filter( 'render_block_context', array( $this, 'extend_context_for_inner_blocks' ), 11, 1 );
 	}
 
 	/**
@@ -129,18 +127,25 @@ class Renderer {
 
 			$collection                     = $block['attrs']['collection'] ?? '';
 			$is_enhanced_pagination_enabled = ! ( $block['attrs']['forcePageReload'] ?? false );
+			$context                        = array(
+				'notices'                 => array(),
+				// Next/Previous Buttons block context.
+				'hideNextPreviousButtons' => false,
+				'isDisabledPrevious'      => true,
+				'isDisabledNext'          => false,
+				'ariaLabelPrevious'       => __( 'Scroll products left', 'woocommerce' ),
+				'ariaLabelNext'           => __( 'Scroll products right', 'woocommerce' ),
+			);
+
+			if ( $collection ) {
+				$context['collection'] = $collection;
+			}
 
 			$p = new \WP_HTML_Tag_Processor( $block_content );
 			if ( $p->next_tag( array( 'class_name' => 'wp-block-woocommerce-product-collection' ) ) ) {
 				$p->set_attribute( 'data-wp-interactive', 'woocommerce/product-collection' );
 				$p->set_attribute( 'data-wp-init', 'callbacks.onRender' );
-				$p->set_attribute(
-					'data-wp-context',
-					$collection ? wp_json_encode(
-						array( 'collection' => $collection ),
-						JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
-					) : '{}'
-				);
+				$p->set_attribute( 'data-wp-context', wp_json_encode( $context, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP ) );
 
 				if ( $is_enhanced_pagination_enabled && isset( $this->parsed_block ) ) {
 					$p->set_attribute(
@@ -167,7 +172,7 @@ class Renderer {
 	 * @return string The updated block content.
 	 */
 	private function add_store_notices_fallback( $block_content ) {
-		return preg_replace( '/(<div[^>]+>)/', '$1' . $this->render_interactivity_notices_region(), $block_content, 1 ) . '</div>';
+		return preg_replace( '/(<div[^>]+>)/', '$1' . $this->render_interactivity_notices_region(), $block_content, 1 );
 	}
 
 	/**
@@ -177,44 +182,45 @@ class Renderer {
 	 * @return string The rendered store notices HTML.
 	 */
 	protected function render_interactivity_notices_region() {
-		// Remove this extra div wrapper once we can use two context
-		// directives in the top level div (https://github.com/WordPress/gutenberg/discussions/62720).
+		wp_interactivity_state(
+			'woocommerce/store-notices',
+			array(
+				'notices' => array(),
+			)
+		);
+
 		ob_start();
 		?>
-		<div data-wp-context='woocommerce/store-notices::{"notices":[]}' style="display: contents;">
-			<div data-wp-interactive="woocommerce/store-notices" class="wc-block-components-notices alignwide">
-				<template
-					data-wp-each--notice="context.notices"
-					data-wp-each-key="context.notice.id"
+		<div data-wp-interactive="woocommerce/store-notices" class="wc-block-components-notices alignwide">
+			<template data-wp-each--notice="state.notices" data-wp-each-key="context.notice.id">
+				<div
+					class="wc-block-components-notice-banner"
+					data-wp-init="callbacks.scrollIntoView"
+					data-wp-class--is-error="state.isError"
+					data-wp-class--is-success ="state.isSuccess"
+					data-wp-class--is-info="state.isInfo"
+					data-wp-class--is-dismissible="context.notice.dismissible"
+					data-wp-bind--role="state.role"
 				>
-					<div
-						class="wc-block-components-notice-banner"
-						data-wp-init="callbacks.scrollIntoView"
-						data-wp-class--is-error="state.isError"
-						data-wp-class--is-success ="state.isSuccess"
-						data-wp-class--is-info="state.isInfo"
-						data-wp-class--is-dismissible="context.notice.dismissible"
-						data-wp-bind--role="state.role"
-					>
-						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
-							<path data-wp-bind--d="state.iconPath"></path>
-						</svg>
-						<div class="wc-block-components-notice-banner__content">
-							<span data-wp-init="callbacks.renderNoticeContent"></span>
-						</div>
-						<button
-							data-wp-bind--hidden="!context.notice.dismissible"
-							class="wc-block-components-button wp-element-button wc-block-components-notice-banner__dismiss contained"
-							aria-label="<?php esc_attr_e( 'Dismiss this notice', 'woocommerce' ); ?>"
-							data-wp-on--click="actions.removeNotice"
-						>
-							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-								<path d="M13 11.8l6.1-6.3-1-1-6.1 6.2-6.1-6.2-1 1 6.1 6.3-6.5 6.7 1 1 6.5-6.6 6.5 6.6 1-1z" />
-							</svg>
-						</button>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+						<path data-wp-bind--d="state.iconPath"></path>
+					</svg>
+					<div class="wc-block-components-notice-banner__content">
+						<span data-wp-init="callbacks.renderNoticeContent" aria-live="assertive" aria-atomic="true"></span>
 					</div>
-				</template>
-			</div>
+					<button
+						data-wp-bind--hidden="!context.notice.dismissible"
+						class="wc-block-components-button wp-element-button wc-block-components-notice-banner__dismiss contained"
+						aria-label="<?php esc_attr_e( 'Dismiss this notice', 'woocommerce' ); ?>"
+						data-wp-on--click="actions.removeNotice"
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+							<path d="M13 11.8l6.1-6.3-1-1-6.1 6.2-6.1-6.2-1 1 6.1 6.3-6.5 6.7 1 1 6.5-6.6 6.5 6.6 1-1z" />
+						</svg>
+					</button>
+				</div>
+			</template>
+		</div>
 		<?php
 		return ob_get_clean();
 	}
@@ -228,7 +234,7 @@ class Renderer {
 	protected function get_list_styles( $fixed_width ) {
 		$style = '';
 
-		if ( isset( $fixed_width ) ) {
+		if ( isset( $fixed_width ) && ! empty( $fixed_width ) ) {
 			$style .= sprintf( 'width:%s;', esc_attr( $fixed_width ) );
 			$style .= 'margin: 0 auto;';
 		}
@@ -329,12 +335,15 @@ class Renderer {
 	 *     }
 	 * }
 	 */
-	public function provide_location_context_for_inner_blocks( $context ) {
+	public function extend_context_for_inner_blocks( $context ) {
 		// Run only on frontend.
 		// This is needed to avoid SSR renders while in editor. @see https://github.com/woocommerce/woocommerce/issues/45181.
 		if ( is_admin() || \WC()->is_rest_api_request() ) {
 			return $context;
 		}
+
+		// Add iapi/provider to inner blocks so they can run this store's Interactivity API actions.
+		$context['iapi/provider'] = 'woocommerce/product-collection';
 
 		// Target only product collection's inner blocks that use the 'query' context.
 		if ( ! isset( $context['query'] ) || ! isset( $context['query']['isProductCollectionBlock'] ) || ! $context['query']['isProductCollectionBlock'] ) {

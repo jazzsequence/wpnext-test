@@ -143,7 +143,13 @@ class Person extends Abstract_Schema_Piece {
 		}
 
 		$data['name'] = $this->helpers->schema->html->smart_strip_tags( $user_data->display_name );
-		$data         = $this->add_image( $data, $user_data, $add_hash );
+
+		$pronouns = $this->helpers->schema->html->smart_strip_tags( \get_the_author_meta( 'wpseo_pronouns', $user_id ) );
+		if ( ! empty( $pronouns ) ) {
+			$data['pronouns'] = $pronouns;
+		}
+
+		$data = $this->add_image( $data, $user_data, $add_hash );
 
 		if ( ! empty( $user_data->description ) ) {
 			$data['description'] = $this->helpers->schema->html->smart_strip_tags( $user_data->description );
@@ -198,7 +204,7 @@ class Person extends Abstract_Schema_Piece {
 	 * @param array<string|string[]> $data      The Person schema.
 	 * @param string                 $schema_id The string used in the `@id` for the schema.
 	 * @param bool                   $add_hash  Whether or not the person's image url hash should be added to the image id.
-	 * @param WP_User                $user_data User data.
+	 * @param WP_User|null           $user_data User data.
 	 *
 	 * @return array<string|string[]> The Person schema.
 	 */
@@ -261,7 +267,7 @@ class Person extends Abstract_Schema_Piece {
 	/**
 	 * Checks the site is represented by the same person as this indexable.
 	 *
-	 * @param WP_User $user_data User data.
+	 * @param WP_User|null $user_data User data.
 	 *
 	 * @return bool True when the site is represented by the same person as this indexable.
 	 */
@@ -277,7 +283,7 @@ class Person extends Abstract_Schema_Piece {
 			&& $this->helpers->schema->article->is_author_supported( $this->context->indexable->object_sub_type )
 			&& $this->context->schema_article_type !== 'None'
 		) {
-			$user_id = ( ( ! \is_null( $user_data ) ) && ( isset( $user_data->ID ) ) ) ? $user_data->ID : $this->context->indexable->author_id;
+			$user_id = ( $user_data instanceof WP_User && isset( $user_data->ID ) ) ? $user_data->ID : $this->context->indexable->author_id;
 
 			return $this->context->site_user_id === $user_id;
 		}

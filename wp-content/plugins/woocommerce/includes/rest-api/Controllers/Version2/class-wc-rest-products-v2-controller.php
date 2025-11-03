@@ -854,6 +854,9 @@ class WC_REST_Products_V2_Controller extends WC_REST_CRUD_Controller {
 				case 'categories':
 					$base_data['categories'] = $this->get_taxonomy_terms( $product );
 					break;
+				case 'brands':
+					$base_data['brands'] = $this->get_taxonomy_terms( $product, 'brand' );
+					break;
 				case 'tags':
 					$base_data['tags'] = $this->get_taxonomy_terms( $product, 'tag' );
 					break;
@@ -1929,7 +1932,7 @@ class WC_REST_Products_V2_Controller extends WC_REST_CRUD_Controller {
 				),
 				'stock_quantity'        => array(
 					'description' => __( 'Stock quantity.', 'woocommerce' ),
-					'type'        => has_filter( 'woocommerce_stock_amount', 'intval' ) ? 'integer' : 'number',
+					'type'        => wc_is_stock_amount_integer() ? 'integer' : 'number',
 					'context'     => array( 'view', 'edit' ),
 				),
 				'in_stock'              => array(

@@ -5,6 +5,10 @@
  * @package automattic/jetpack
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit( 0 );
+}
+
 if ( ! class_exists( 'Jetpack_Media_Summary' ) ) {
 	require_once JETPACK__PLUGIN_DIR . '_inc/lib/class.media-summary.php';
 }
@@ -139,9 +143,11 @@ function enhanced_og_video( $tags ) {
 			$secure_video_url = 'https://www.youtube.com/embed/' . $id;
 		} elseif ( strstr( $video_url, 'vimeo' ) ) {
 			preg_match( '|vimeo\.com/(\d+)/?$|i', $video_url, $match );
-			$id               = (int) $match[1];
-			$video_url        = 'http://vimeo.com/moogaloop.swf?clip_id=' . $id;
-			$secure_video_url = 'https://vimeo.com/moogaloop.swf?clip_id=' . $id;
+			if ( isset( $match[1] ) ) {
+				$id               = (int) $match[1];
+				$video_url        = 'http://vimeo.com/moogaloop.swf?clip_id=' . $id;
+				$secure_video_url = 'https://vimeo.com/moogaloop.swf?clip_id=' . $id;
+			}
 		}
 	}
 
