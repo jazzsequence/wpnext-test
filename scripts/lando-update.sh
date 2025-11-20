@@ -8,6 +8,10 @@ wp_version=$(get_latest_wp_release)
 
 get_lando
 
+pull_db() {
+	lando pull -c none -f dev -d dev
+}
+
 update_plugins() {
 	echo "Updating Plugins..."
 	$wp plugin update --all
@@ -34,6 +38,9 @@ update_all() {
 	update_plugins
 	update_themes
 }
+
+echo "Pulling latest database from Pantheon..."
+pull_db
 
 read -p "Enter the type of update you would like to perform (c or core, p or plugin, t or theme, a or all): " -r UPDATE_TYPE
 
