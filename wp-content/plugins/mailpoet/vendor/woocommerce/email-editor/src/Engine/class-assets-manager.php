@@ -52,23 +52,6 @@ class Assets_Manager {
  $post_id = $edited_item instanceof \WP_Post ? $edited_item->ID : $edited_item->id;
  $email_editor_assets_path = rtrim( $this->assets_path, '/' ) . '/';
  $email_editor_assets_url = rtrim( $this->assets_url, '/' ) . '/';
- // Email editor rich text JS - Because the Personalization Tags depend on Gutenberg 19.8.0 and higher
- // the following code replaces used Rich Text for the version containing the necessary changes.
- $rich_text_assets_file = $email_editor_assets_path . 'assets/rich-text.asset.php';
- if ( ! file_exists( $rich_text_assets_file ) ) {
- $this->logger->error( 'Rich Text assets file does not exist.', array( 'path' => $rich_text_assets_file ) );
- } else {
- $rich_text_assets = require $rich_text_assets_file;
- wp_deregister_script( 'wp-rich-text' );
- wp_enqueue_script(
- 'wp-rich-text',
- $email_editor_assets_url . 'assets/rich-text.js',
- $rich_text_assets['dependencies'],
- $rich_text_assets['version'],
- true
- );
- }
- // End of replacing Rich Text package.
  $assets_file = $email_editor_assets_path . 'style.asset.php';
  if ( ! file_exists( $assets_file ) ) {
  $this->logger->error( 'Email editor assets file does not exist.', array( 'path' => $assets_file ) );
@@ -96,14 +79,14 @@ class Assets_Manager {
  // See: https://github.com/WordPress/WordPress/blob/753817d462955eb4e40a89034b7b7c375a1e43f3/wp-admin/edit-form-blocks.php#L116-L120.
  wp_add_inline_script(
  'wp-blocks',
- sprintf( 'wp.blocks.setCategories( %s );', wp_json_encode( get_block_categories( $context ) ) ),
+ sprintf( 'wp.blocks.setCategories( %s );', wp_json_encode( get_block_categories( $context ), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ) ),
  'after'
  );
  // Preload server-registered block schemas to avoid warning about missing block titles.
  // See: https://github.com/WordPress/WordPress/blob/753817d462955eb4e40a89034b7b7c375a1e43f3/wp-admin/edit-form-blocks.php#L144C1-L148C3.
  wp_add_inline_script(
  'wp-blocks',
- sprintf( 'wp.blocks.unstable__bootstrapServerSideBlockDefinitions( %s );', wp_json_encode( get_block_editor_server_block_settings() ) )
+ sprintf( 'wp.blocks.unstable__bootstrapServerSideBlockDefinitions( %s );', wp_json_encode( get_block_editor_server_block_settings(), JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ) )
  );
  $localization_data = array(
  'current_post_type' => $post_type,
@@ -116,6 +99,7 @@ class Assets_Manager {
  'listings' => admin_url( 'admin.php?page=wc-settings&tab=email' ),
  'send' => admin_url( 'admin.php?page=wc-settings&tab=email' ),
  'back' => admin_url( 'admin.php?page=wc-settings&tab=email' ),
+ 'createCoupon' => admin_url( 'post-new.php?post_type=shop_coupon' ),
  ),
  );
  wp_localize_script(
@@ -156,7 +140,7 @@ class Assets_Manager {
  'wp-blocks',
  sprintf(
  'wp.apiFetch.use( wp.apiFetch.createPreloadingMiddleware( %s ) );',
- wp_json_encode( $preload_data )
+ wp_json_encode( $preload_data, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES )
  )
  );
  }

@@ -237,8 +237,6 @@
   /* stylelint-enable */
   top: 0;
   left: 0;
-  height: 60px;
-  width: 60px;
   z-index: 100;
 }
 .woocommerce-email-editor__view-mode-toggle .components-button {
@@ -268,8 +266,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -301,6 +299,10 @@
   right: 0;
   bottom: 0;
   left: 0;
+}
+
+.components-button[aria-controls="edit-site:global-styles"] {
+  display: none !important;
 }
 
 .components-notice.woocommerce-email-editor-validation-errors {
@@ -379,6 +381,7 @@
 .woocommerce-email-editor-styles-panel .components-navigator-provider,
 .woocommerce-email-editor-styles-panel .components-navigator-screen {
   height: 100%;
+  padding: 0;
 }
 .woocommerce-email-editor-styles-panel .components-navigator-screen {
   overflow: hidden auto;
@@ -418,6 +421,9 @@
 .woocommerce-email-editor-styles-panel .interface-complementary-area-header__small {
   display: none;
 }
+.woocommerce-email-editor-styles-panel .edit-site-global-styles-screen-root {
+  box-shadow: none;
+}
 
 /* Move the less specific selector before the more specific one */
 .block-editor-block-patterns-list__item .block-editor-block-preview__container {
@@ -452,6 +458,11 @@
 .email-editor-pattern__list-item .block-editor-block-patterns-list__item-title {
   font-size: unset !important;
   padding-left: 1rem;
+}
+
+.block-editor-block-patterns-explorer.no-sidebar .block-editor-block-patterns-explorer__list {
+  margin-left: 0;
+  padding-left: 2rem;
 }
 
 .email-editor-modal-footer {

@@ -1,10 +1,10 @@
 === Jetpack - WP Security, Backup, Speed, & Growth ===
 Contributors: automattic, adamkheckler, adrianmoldovanwp, aduth, akirk, allendav, alternatekev, andy, annamcphee, annezazu, apeatling, arcangelini, arsihasi, azaozz, barry, batmoo, beaulebens, bindlegirl, biskobe, bjorsch, blobaugh, brbrr, brileyhooper, cainm, cena, cfinke, cgastrell, chaselivingston, chellycat, clickysteve, csonnek, danielbachhuber, daniloercoli, davoraltman, delawski, designsimply, dkmyta, dllh, drawmyface, dsmart, dun2mis, dzver, ebinnion, egregor, eliorivero, enej, eoigal, erania-pinnera, ethitter, fgiannar, gcorne, georgestephanis, gibrown, goldsounds, hew, hugobaeta, hypertextranch, iammattthomas, iandunn, joen, jblz, jeffgolenski, jeherve, jenhooks, jenia, jessefriedman, jgs, jkudish, jmdodd, joanrho, johnjamesjacoby, jshreve, kbrownkd, keoshi, koke, kraftbj, lancewillett, leogermani, lhkowalski, lschuyler, macmanx, martinremy, matt, mattwiebe, matveb, maverick3x6, mcsf, mdawaffe, mdbitz, MichaelArestad, migueluy, miguelxavierpenha, mikeyarce, mkaz, nancythanki, nickmomrik, njweller, nunyvega, obenland, oskosk, pento, professor44, rachelsquirrel, rdcoll, renatoagds, retrofox, richardmtl, richardmuscat, robertbpugh, roccotripaldi, ryancowles, samhotchkiss, samiff, scarstocea, scottsweb, sdixon194, sdquirk, sermitr, simison, stephdau, thehenridev, tmoorewp, tyxla, Viper007Bond, westi, williamvianas, wpkaren, yoavf, zinigor
 Tags: Security, backup, malware, scan, performance
-Stable tag: 15.1.1
-Requires at least: 6.7
+Stable tag: 15.6
+Requires at least: 6.8
 Requires PHP: 7.2
-Tested up to: 6.8
+Tested up to: 6.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -326,48 +326,56 @@ Jetpack Backup can do a full website migration to a new host, migrate theme file
 
 
 == Changelog ==
-### 15.1.1 - 2025-10-10
-#### Bug fixes
-- Asset CDN: avoid errors when we do not receive valid information about a plugin from WordPress.org.
-
-### 15.1 - 2025-10-08
-
-- Testimonials: Prevent warning when custom post type is not registered.
-
+### 15.6 - 2026-03-03
 #### Enhancements
-- Forms: Add hidden field.
-- Forms: Add hidden input field block.
-- Forms: Add integrations permissions check.
-- Forms: Add new block toggle to skip saving form submisions on WP Admin.
-- Forms: Add preloaded config endpoint.
-- Forms: Add scheduled deletion for submissions that skip the submission's inbox and are stored as temporary feedback.
-- Forms: Add setting to enable or disable email notifications for form submissions.
-- Forms: Allow enabling integration by default.
-- Forms: Improve preloading for endpoints.
-- Forms: Improve supported integrations filter.
-- Forms: Make rating and slider fields available to self-hosted users.
-- Forms: Phone field can now contain a country selector combobox.
-- Forms: Rename 'Manage responses' forms sidebar block panel to 'Responses storage'.
-- Forms: Return integration titles from endpoint.
-- Forms: Use localized number format for number of responses shown.
-
-#### Improved compatibility
-- Change the location of the Jetpack -> Stats submenu item to a new top-level admin menu item called "Stats".
-- Cookie Consent Block: Ensure we always have a default set of colors to style the block when theme colors are not available.
-- Forms: Add integrations feature flag.
-- Site Accelerator (Image CDN): Add support for images added via Breakdance blocks.
+- AI Assistant: Add `jetpack_ai_assistant_generation_complete` action hook for cross-package communication.
+- AI Sidebar: Add `jetpack.ai.imageGenerationHandler` filter to allow external plugins (e.g. Image Studio) to replace the built-in AI image generation flow for the "Get Featured Image" entry point.
+- Block Editor: Make Jetpack logo display behavior consistent across SEO and AI panels. Logo now appears in global contexts (document settings, pre-publish, post-publish) but not in the Jetpack sidebar.
+- Form Notifications: Add new HTML email template design with respondent info header, metadata section, and improved action buttons.
+- Forms: Allow Accordion, Details, and Icon blocks in forms, and Icon block to be added inside the file upload dropzone.
+- Forms: Allow customizing other option in radio field.
+- Forms: Allow filtering Forms dashboard URL.
+- Forms: Create new forms in same tab.
+- Forms: Render images from image select fields on email notifications.
+- Forms: Replace dashicon with SVG icon and add tooltip to admin bar "Form Responses" link.
+- Forms: Update response sidebar styles.
+- Forms: Use integer format for response count in dataviews.
+- Image Studio: Add Image Studio plugin support to block editor and media library.
+- Post Images: Add `jetpack-ignore-thumbnail` CSS class and `jetpack_postimages_exclude_image` filter to exclude specific images from post image discovery.
+- Reader: Add Discover card to Reader settings page to highlight feature benefits.
+- SEO: Add Canonical URLs module for archive pages to prevent duplicate content in search engines.
+- SEO: Add social link previews to the SEO tools UI.
+- Site: Ensure `is_garden` is included in default site fields for server-side rendering.
+- Social: Add visual dot to active connection in preview modal.
+- Sync: Add `clear-queue` REST endpoint to allow clearing a Sync queue.
+- Update external menu links to display an arrow indicator for improved performance and a more modern appearance.
+- VideoPress: Accept SRT subtitle files for upload alongside VTT.
+- WordPress.com Reader: Add new option to show a link to the WordPress.com Reader in the admin bar.
+- WordPress.com Reader: Automatically enable the admin bar link on sites newly connected to WordPress.com.
 
 #### Bug fixes
-- AI Assistant: Fix spacing on Forms block.
-- Cookie Consent Widget: Ensure the default widget text can be translated.
-- Forms: Don't override field labels on transforms.
-- Forms: Fix MailPoet string warning.
-- Forms: Fix missing REST attributes.
-- Forms: Fix slider min/max editing.
-- Forms: Fix slider value position.
-- Resolve conflict with WordPress 6.7.3.
-- Sharing: Fix Facebook sharing URL.
-- Widget Visibility: Prevent PHP error under specific block conditions.
+- AI Assistant: Restore Jetpack logo in pre-publish panel where branding is not otherwise apparent.
+- Block Editor Assets: Fix Gutenberg asset detection when assets are served from a CDN.
+- Forms: Create new form pages without a placeholder title.
+- Forms: Fix duplicate title in plain text form submission notification emails.
+- Forms: Fix extra margin on badges in the forms dashboard.
+- Forms: Fix IP address lookup link in response inspector.
+- Forms: Prevent fatal error when rendering image-select fields with invalid image payloads.
+- Full Sync: Fix chunk size adjustment when sync is stuck to correctly preserve adjusted chunk size and stuck count across invocations.
+- Image Studio: Fix console warnings.
+- Sharing: Fix LinkedIn sharing by updating to the current share URL endpoint.
+- Sharing: Remove Pocket sharing button.
+- Shortcode embeds: Improve handling of YouTube shorts in embeds.
+- Slideshow: Fix an issue with sizing when images are lazily loaded.
+- Slideshow: Fix doubled navigation arrows.
+- Slideshow block: Fix further issues with aspect ratio.
+- Social: Fix Threads social preview for posts with gallery.
+- Social: Fix Tumblr preview to prioritize custom message when it is set.
+- Social: Refresh plan features on post-checkout redirect.
+- Social Icons: Update documentation links for available icons.
+- Subscriptions: Stop appending the “View post … subscribe” message to post excerpts in subscription emails.
+- Subscriptions Block: Make excerpt filter more broad.
+- Sync: Fix sync health check to verify queue size and lag before allowing status to be set to `in_sync`.
 
 --------
 

@@ -5,8 +5,10 @@ namespace MailPoet\Config;
 if (!defined('ABSPATH')) exit;
 
 
+use MailPoet\Cron\ActionScheduler\Actions\DaemonTrigger;
 use MailPoet\Cron\ActionScheduler\ActionScheduler as CronActionScheduler;
 use MailPoet\Cron\CronTrigger;
+use MailPoet\Cron\DaemonActionSchedulerRunner;
 use MailPoet\InvalidStateException;
 use MailPoet\Migrator\Migrator;
 use MailPoet\Settings\SettingsController;
@@ -36,13 +38,17 @@ class Activator {
   /** @var CronActionScheduler */
   private $cronActionSchedulerRunner;
 
+  /** @var DaemonActionSchedulerRunner */
+  private $daemonActionSchedulerRunner;
+
   public function __construct(
     Connection $connection,
     SettingsController $settings,
     Populator $populator,
     WPFunctions $wp,
     Migrator $migrator,
-    CronActionScheduler $cronActionSchedulerRunner
+    CronActionScheduler $cronActionSchedulerRunner,
+    DaemonActionSchedulerRunner $daemonActionSchedulerRunner
   ) {
     $this->connection = $connection;
     $this->settings = $settings;
@@ -50,6 +56,7 @@ class Activator {
     $this->wp = $wp;
     $this->migrator = $migrator;
     $this->cronActionSchedulerRunner = $cronActionSchedulerRunner;
+    $this->daemonActionSchedulerRunner = $daemonActionSchedulerRunner;
   }
 
   public function activate() {
@@ -77,6 +84,7 @@ class Activator {
   private function processActivate(): void {
     $this->migrator->run();
     $this->deactivateCronActions();
+    $this->reactivateCronActions();
     $this->populator->up();
     $this->updateDbVersion();
 
@@ -111,6 +119,21 @@ class Activator {
       return;
     }
     $this->cronActionSchedulerRunner->unscheduleAllCronActions();
+  }
+
+  private function reactivateCronActions(): void {
+    $this->daemonActionSchedulerRunner->clearDeactivationFlag();
+    $currentMethod = $this->settings->get(CronTrigger::SETTING_NAME . '.method');
+    if ($currentMethod !== CronTrigger::METHOD_ACTION_SCHEDULER) {
+      return;
+    }
+    if (!$this->cronActionSchedulerRunner->hasScheduledAction(DaemonTrigger::NAME)) {
+      $this->cronActionSchedulerRunner->scheduleRecurringAction(
+        $this->wp->currentTime('timestamp', true),
+        DaemonTrigger::TRIGGER_RUN_INTERVAL,
+        DaemonTrigger::NAME
+      );
+    }
   }
 
   public function updateDbVersion() {

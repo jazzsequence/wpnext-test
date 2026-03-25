@@ -6,6 +6,7 @@ use Automattic\WooCommerce\EmailEditor\Engine\Logger\Email_Editor_Logger;
 use Automattic\WooCommerce\EmailEditor\Engine\Renderer\Css_Inliner;
 use Automattic\WooCommerce\EmailEditor\Engine\Theme_Controller;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Fallback;
+use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Post_Content;
 use WP_Block_Template;
 use WP_Block_Type_Registry;
 use WP_Post;
@@ -14,13 +15,14 @@ class Content_Renderer {
  private Theme_Controller $theme_controller;
  const CONTENT_STYLES_FILE = 'content.css';
  private WP_Block_Type_Registry $block_type_registry;
- private Css_Inliner $css_inliner;
  private $backup_template_content;
  private $backup_template_id;
  private $backup_post;
  private $backup_query;
  private Fallback $fallback_renderer;
  private Email_Editor_Logger $logger;
+ private $backup_post_content_callback;
+ private Css_Inliner $css_inliner;
  public function __construct(
  Process_Manager $preprocess_manager,
  Css_Inliner $css_inliner,
@@ -28,8 +30,8 @@ class Content_Renderer {
  Email_Editor_Logger $logger
  ) {
  $this->process_manager = $preprocess_manager;
- $this->theme_controller = $theme_controller;
  $this->css_inliner = $css_inliner;
+ $this->theme_controller = $theme_controller;
  $this->logger = $logger;
  $this->block_type_registry = WP_Block_Type_Registry::get_instance();
  $this->fallback_renderer = new Fallback();
@@ -38,22 +40,48 @@ class Content_Renderer {
  add_filter( 'render_block', array( $this, 'render_block' ), 10, 2 );
  add_filter( 'block_parser_class', array( $this, 'block_parser' ) );
  add_filter( 'woocommerce_email_blocks_renderer_parsed_blocks', array( $this, 'preprocess_parsed_blocks' ) );
+ // Swap core/post-content render callback for email rendering.
+ // This prevents issues with WordPress's static $seen_ids array when rendering
+ // multiple emails in a single request (e.g., MailPoet batch processing).
+ $post_content_type = $this->block_type_registry->get_registered( 'core/post-content' );
+ if ( $post_content_type ) {
+ // Save the original callback (may be null or WordPress's default).
+ $this->backup_post_content_callback = $post_content_type->render_callback;
+ // Replace with our stateless renderer.
+ $post_content_renderer = new Post_Content();
+ $post_content_type->render_callback = array( $post_content_renderer, 'render_stateless' );
+ }
  }
  public function render( WP_Post $post, WP_Block_Template $template ): string {
+ $result = $this->render_without_css_inline( $post, $template );
+ $styles = '<style>' . $result['styles'] . '</style>';
+ $html = $this->css_inliner->from_html( $styles . $result['html'] )->inline_css()->render();
+ return $this->process_manager->postprocess( $html );
+ }
+ public function render_without_css_inline( WP_Post $post, WP_Block_Template $template ): array {
  $this->set_template_globals( $post, $template );
  $this->initialize();
+ try {
+ do_action( 'woocommerce_email_editor_render_start' );
  $rendered_html = get_the_block_template_html();
+ } finally {
  $this->reset();
- return $this->process_manager->postprocess( $this->inline_styles( $rendered_html, $post, $template ) );
+ }
+ return array(
+ 'html' => $rendered_html,
+ 'styles' => $this->collect_styles( $post, $template ),
+ );
  }
  public function block_parser() {
  return 'Automattic\WooCommerce\EmailEditor\Engine\Renderer\ContentRenderer\Blocks_Parser';
  }
  public function preprocess_parsed_blocks( array $parsed_blocks ): array {
- return $this->process_manager->preprocess( $parsed_blocks, $this->theme_controller->get_layout_settings(), $this->theme_controller->get_styles() );
+ $styles = $this->theme_controller->get_styles();
+ return $this->process_manager->preprocess( $parsed_blocks, $this->theme_controller->get_layout_settings(), $styles );
  }
  public function render_block( string $block_content, array $parsed_block ): string {
- $context = new Rendering_Context( $this->theme_controller->get_theme() );
+ $email_context = apply_filters( 'woocommerce_email_editor_rendering_email_context', array() );
+ $context = new Rendering_Context( $this->theme_controller->get_theme(), $email_context );
  $block_type = $this->block_type_registry->get_registered( $parsed_block['blockName'] );
  try {
  if ( $block_type && isset( $block_type->render_email_callback ) && is_callable( $block_type->render_email_callback ) ) {
@@ -81,7 +109,7 @@ class Content_Renderer {
  $this->backup_template_content = $_wp_current_template_content;
  $this->backup_template_id = $_wp_current_template_id;
  $this->backup_query = $wp_query;
- $this->backup_post = $email_post;
+ $this->backup_post = $post;
  $_wp_current_template_id = $template->id;
  $_wp_current_template_content = $template->content;
  $wp_query = new \WP_Query( array( 'p' => $email_post->ID ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- We need to set the query for correct rendering the blocks.
@@ -91,6 +119,13 @@ class Content_Renderer {
  remove_filter( 'render_block', array( $this, 'render_block' ) );
  remove_filter( 'block_parser_class', array( $this, 'block_parser' ) );
  remove_filter( 'woocommerce_email_blocks_renderer_parsed_blocks', array( $this, 'preprocess_parsed_blocks' ) );
+ // Restore the original core/post-content render callback.
+ // Note: We always restore it, even if it was null originally.
+ $post_content_type = $this->block_type_registry->get_registered( 'core/post-content' );
+ if ( $post_content_type ) {
+ // @phpstan-ignore-next-line -- WordPress core allows null for render_callback despite type definition.
+ $post_content_type->render_callback = $this->backup_post_content_callback;
+ }
  // Restore globals to their original values.
  global $_wp_current_template_content, $_wp_current_template_id, $wp_query, $post;
  $_wp_current_template_content = $this->backup_template_content;
@@ -98,7 +133,7 @@ class Content_Renderer {
  $wp_query = $this->backup_query; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restoring of the query.
  $post = $this->backup_post; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restoring of the post.
  }
- private function inline_styles( $html, WP_Post $post, $template = null ) {
+ private function collect_styles( WP_Post $post, $template = null ): string {
  $styles = (string) file_get_contents( __DIR__ . '/' . self::CONTENT_STYLES_FILE );
  $styles .= (string) file_get_contents( __DIR__ . '/../../content-shared.css' );
  // Apply default contentWidth to constrained blocks.
@@ -136,7 +171,6 @@ class Content_Renderer {
  $block_support_styles
  );
  $styles .= $block_support_styles;
- $styles = '<style>' . wp_strip_all_tags( (string) apply_filters( 'woocommerce_email_content_renderer_styles', $styles, $post ) ) . '</style>';
- return $this->css_inliner->from_html( $styles . $html )->inline_css()->render();
+ return wp_strip_all_tags( (string) apply_filters( 'woocommerce_email_content_renderer_styles', $styles, $post ) );
  }
 }

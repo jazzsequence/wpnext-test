@@ -1,5 +1,13 @@
 [ unreleased ]
 
+#### 1.4.1 / 2025-12-09
+* add hardening to `get_core_versions()`
+* account for `update_core` transient as `false`
+
+#### 1.4.0 / 2025-11-17
+* return rollback offer with `update_core` transient
+* update POT GitHub Action
+
 #### 1.3.7 / 2024-12-02
 * start in `init` hook
 * add GitHub Action to generate POT

@@ -83,11 +83,17 @@ class Universal {
 				window.wcAnalytics = window.wcAnalytics || {};
 				const wcAnalytics = window.wcAnalytics;
 
+				// Set the assets URL for webpack to find the split assets.
+				wcAnalytics.assets_url = '<?php echo esc_url( plugins_url( '../build/', __DIR__ . '/class-woocommerce-analytics.php' ) ); ?>';
+
+				// Set the REST API tracking endpoint URL.
+				wcAnalytics.trackEndpoint = '<?php echo esc_url( rest_url( 'woocommerce-analytics/v1/track' ) ); ?>';
+
 				// Set common properties for all events.
-				wcAnalytics.commonProps = <?php echo wp_json_encode( $common_properties ); ?>;
+				wcAnalytics.commonProps = <?php echo wp_json_encode( $common_properties, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP ); ?>;
 
 				// Set the event queue.
-				wcAnalytics.eventQueue = <?php echo wp_json_encode( WC_Analytics_Tracking::get_event_queue() ); ?>;
+				wcAnalytics.eventQueue = <?php echo wp_json_encode( WC_Analytics_Tracking::get_event_queue(), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP ); ?>;
 
 				// Features.
 				wcAnalytics.features = {
@@ -96,7 +102,7 @@ class Universal {
 					proxy: <?php echo $is_proxy_tracking_enabled ? 'true' : 'false'; ?>,
 				};
 
-				wcAnalytics.breadcrumbs = <?php echo wp_json_encode( $this->get_breadcrumb_titles() ); ?>;
+				wcAnalytics.breadcrumbs = <?php echo wp_json_encode( $this->get_breadcrumb_titles(), JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP ); ?>;
 
 				// Page context flags.
 				wcAnalytics.pages = {
@@ -283,19 +289,12 @@ class Universal {
 	/**
 	 * After the order processed, fire an event for each item in the order
 	 *
-	 * @param string|WC_Order $order_id_or_order Order Id or Order object.
+	 * @param int|string|WC_Order $order_id_or_order Order Id or Order object.
 	 */
 	public function order_process( $order_id_or_order ) {
-		if ( is_string( $order_id_or_order ) ) {
-			$order = wc_get_order( $order_id_or_order );
-		} else {
-			$order = $order_id_or_order;
-		}
+		$order = wc_get_order( $order_id_or_order );
 
-		if (
-			! $order
-			|| ! $order instanceof WC_Order
-		) {
+		if ( ! $order ) {
 			return;
 		}
 
@@ -331,10 +330,8 @@ class Universal {
 
 		$order_source = $order->get_created_via();
 		if ( 'store-api' === $order_source ) {
-			$checkout_page_contains_checkout_block     = '1';
-			$checkout_page_contains_checkout_shortcode = '0';
+			$checkout_page_contains_checkout_block = '1';
 		} elseif ( 'checkout' === $order_source ) {
-			$checkout_page_contains_checkout_block     = '0';
 			$checkout_page_contains_checkout_shortcode = '1';
 		}
 
@@ -598,10 +595,8 @@ class Universal {
 		$checkout_page_contains_checkout_shortcode = '0';
 
 		if ( 'store-api' === $order_source ) {
-			$checkout_page_contains_checkout_block     = '1';
-			$checkout_page_contains_checkout_shortcode = '0';
+			$checkout_page_contains_checkout_block = '1';
 		} elseif ( 'checkout' === $order_source ) {
-			$checkout_page_contains_checkout_block     = '0';
 			$checkout_page_contains_checkout_shortcode = '1';
 		}
 

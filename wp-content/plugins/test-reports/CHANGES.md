@@ -1,5 +1,8 @@
 [unreleased]
 
+#### 1.2.1 / 2025-11-11
+* add GAs for releases and make-pot
+
 #### 1.2.0 / 2024-11-01
 * remove hook for Beta Tester's Report a Bug, no longer present
 * composer update

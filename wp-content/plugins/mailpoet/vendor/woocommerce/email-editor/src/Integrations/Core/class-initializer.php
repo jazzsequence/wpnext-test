@@ -10,6 +10,7 @@ use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Button;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Buttons;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Column;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Columns;
+use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Cover;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Embed;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Fallback;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Gallery;
@@ -18,7 +19,7 @@ use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Image;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\List_Block;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\List_Item;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Media_Text;
-use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Cover;
+use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Post_Content;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Quote;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Video;
 use Automattic\WooCommerce\EmailEditor\Integrations\Core\Renderer\Blocks\Social_Link;
@@ -52,11 +53,16 @@ class Initializer {
  'core/embed',
  'core/cover',
  'core/video',
+ 'core/post-title',
  );
  private array $renderers = array();
  public function initialize(): void {
  add_filter( 'woocommerce_email_editor_theme_json', array( $this, 'adjust_theme_json' ), 10, 1 );
  add_filter( 'safe_style_css', array( $this, 'allow_styles' ) );
+ add_action( 'woocommerce_email_editor_render_start', array( $this, 'reset_renderers' ) );
+ }
+ public function reset_renderers(): void {
+ $this->renderers = array();
  }
  public function adjust_theme_json( \WP_Theme_JSON $editor_theme_json ): \WP_Theme_JSON {
  $theme_json = (string) file_get_contents( __DIR__ . '/theme.json' );
@@ -102,6 +108,7 @@ class Initializer {
  case 'core/heading':
  case 'core/paragraph':
  case 'core/site-title':
+ case 'core/post-title':
  $renderer = new Text();
  break;
  case 'core/column':
