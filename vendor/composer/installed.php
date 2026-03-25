@@ -3,7 +3,7 @@
         'name' => 'pantheon/wptest',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '95dba9ad6e8cc511ba48a6831762b8e56f661827',
+        'reference' => 'd1a503265b774e7253adc1bf5e5b85827cd5aaf0',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -222,7 +222,7 @@
         'pantheon/wptest' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '95dba9ad6e8cc511ba48a6831762b8e56f661827',
+            'reference' => 'd1a503265b774e7253adc1bf5e5b85827cd5aaf0',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

@@ -25,11 +25,11 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
     );
 
     public static $prefixLengthsPsr4 = array (
-        'c' => 
+        'c' =>
         array (
             'cweagans\\Composer\\' => 18,
         ),
-        'S' => 
+        'S' =>
         array (
             'Symfony\\Polyfill\\Php81\\' => 23,
             'Symfony\\Polyfill\\Php80\\' => 23,
@@ -54,7 +54,7 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
             'Symfony\\Component\\Config\\' => 25,
             'Symfony\\Component\\BrowserKit\\' => 29,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\Http\\Message\\' => 17,
             'Psr\\EventDispatcher\\' => 20,
@@ -63,7 +63,7 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
             'PantheonSystems\\PantheonWordPressUpstreamTests\\Behat\\' => 53,
             'PantheonSystems\\CustomerSecrets\\' => 32,
         ),
-        'G' => 
+        'G' =>
         array (
             'GuzzleHttp\\Psr7\\' => 16,
             'GuzzleHttp\\Promise\\' => 19,
@@ -71,20 +71,20 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
             'GrahamCampbell\\ResultType\\' => 26,
             'Goutte\\' => 7,
         ),
-        'E' => 
+        'E' =>
         array (
             'ExtCPTs\\Tests\\' => 14,
             'ExtCPTs\\' => 8,
         ),
-        'D' => 
+        'D' =>
         array (
             'Dotenv\\' => 7,
         ),
-        'C' => 
+        'C' =>
         array (
             'Composer\\Installers\\' => 20,
         ),
-        'B' => 
+        'B' =>
         array (
             'Behat\\Transliterator\\' => 21,
             'Behat\\Testwork\\' => 15,
@@ -94,208 +94,208 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
             'Behat\\Hook\\' => 11,
             'Behat\\Behat\\' => 12,
         ),
-        'A' => 
+        'A' =>
         array (
             'Args\\' => 5,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'cweagans\\Composer\\' => 
+        'cweagans\\Composer\\' =>
         array (
             0 => __DIR__ . '/..' . '/cweagans/composer-patches/src',
         ),
-        'Symfony\\Polyfill\\Php81\\' => 
+        'Symfony\\Polyfill\\Php81\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php81',
         ),
-        'Symfony\\Polyfill\\Php80\\' => 
+        'Symfony\\Polyfill\\Php80\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
         ),
-        'Symfony\\Polyfill\\Php73\\' => 
+        'Symfony\\Polyfill\\Php73\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php73',
         ),
-        'Symfony\\Polyfill\\Mbstring\\' => 
+        'Symfony\\Polyfill\\Mbstring\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
         ),
-        'Symfony\\Polyfill\\Intl\\Normalizer\\' => 
+        'Symfony\\Polyfill\\Intl\\Normalizer\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer',
         ),
-        'Symfony\\Polyfill\\Intl\\Idn\\' => 
+        'Symfony\\Polyfill\\Intl\\Idn\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-idn',
         ),
-        'Symfony\\Polyfill\\Intl\\Grapheme\\' => 
+        'Symfony\\Polyfill\\Intl\\Grapheme\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-intl-grapheme',
         ),
-        'Symfony\\Polyfill\\Ctype\\' => 
+        'Symfony\\Polyfill\\Ctype\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-ctype',
         ),
-        'Symfony\\Contracts\\Translation\\' => 
+        'Symfony\\Contracts\\Translation\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/translation-contracts',
         ),
-        'Symfony\\Contracts\\Service\\' => 
+        'Symfony\\Contracts\\Service\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/service-contracts',
         ),
-        'Symfony\\Contracts\\EventDispatcher\\' => 
+        'Symfony\\Contracts\\EventDispatcher\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/event-dispatcher-contracts',
         ),
-        'Symfony\\Component\\Yaml\\' => 
+        'Symfony\\Component\\Yaml\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/yaml',
         ),
-        'Symfony\\Component\\Translation\\' => 
+        'Symfony\\Component\\Translation\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/translation',
         ),
-        'Symfony\\Component\\String\\' => 
+        'Symfony\\Component\\String\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/string',
         ),
-        'Symfony\\Component\\Filesystem\\' => 
+        'Symfony\\Component\\Filesystem\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/filesystem',
         ),
-        'Symfony\\Component\\EventDispatcher\\' => 
+        'Symfony\\Component\\EventDispatcher\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/event-dispatcher',
         ),
-        'Symfony\\Component\\DomCrawler\\' => 
+        'Symfony\\Component\\DomCrawler\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/dom-crawler',
         ),
-        'Symfony\\Component\\DependencyInjection\\' => 
+        'Symfony\\Component\\DependencyInjection\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/dependency-injection',
         ),
-        'Symfony\\Component\\CssSelector\\' => 
+        'Symfony\\Component\\CssSelector\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/css-selector',
         ),
-        'Symfony\\Component\\Console\\' => 
+        'Symfony\\Component\\Console\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/console',
         ),
-        'Symfony\\Component\\Config\\' => 
+        'Symfony\\Component\\Config\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/config',
         ),
-        'Symfony\\Component\\BrowserKit\\' => 
+        'Symfony\\Component\\BrowserKit\\' =>
         array (
             0 => __DIR__ . '/..' . '/symfony/browser-kit',
         ),
-        'Psr\\Http\\Message\\' => 
+        'Psr\\Http\\Message\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Psr\\EventDispatcher\\' => 
+        'Psr\\EventDispatcher\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/event-dispatcher/src',
         ),
-        'Psr\\Container\\' => 
+        'Psr\\Container\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
         ),
-        'PhpOption\\' => 
+        'PhpOption\\' =>
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
         ),
-        'PantheonSystems\\PantheonWordPressUpstreamTests\\Behat\\' => 
+        'PantheonSystems\\PantheonWordPressUpstreamTests\\Behat\\' =>
         array (
             0 => __DIR__ . '/..' . '/pantheon-systems/pantheon-wordpress-upstream-tests/features/bootstrap',
         ),
-        'PantheonSystems\\CustomerSecrets\\' => 
+        'PantheonSystems\\CustomerSecrets\\' =>
         array (
             0 => __DIR__ . '/..' . '/pantheon-systems/customer-secrets-php-sdk/src',
         ),
-        'GuzzleHttp\\Psr7\\' => 
+        'GuzzleHttp\\Psr7\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
         ),
-        'GuzzleHttp\\Promise\\' => 
+        'GuzzleHttp\\Promise\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/promises/src',
         ),
-        'GuzzleHttp\\' => 
+        'GuzzleHttp\\' =>
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/guzzle/src',
         ),
-        'GrahamCampbell\\ResultType\\' => 
+        'GrahamCampbell\\ResultType\\' =>
         array (
             0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
         ),
-        'Goutte\\' => 
+        'Goutte\\' =>
         array (
             0 => __DIR__ . '/..' . '/fabpot/goutte/Goutte',
         ),
-        'ExtCPTs\\Tests\\' => 
+        'ExtCPTs\\Tests\\' =>
         array (
             0 => __DIR__ . '/..' . '/johnbillion/extended-cpts/tests/integration',
         ),
-        'ExtCPTs\\' => 
+        'ExtCPTs\\' =>
         array (
             0 => __DIR__ . '/..' . '/johnbillion/extended-cpts/src',
         ),
-        'Dotenv\\' => 
+        'Dotenv\\' =>
         array (
             0 => __DIR__ . '/..' . '/vlucas/phpdotenv/src',
         ),
-        'Composer\\Installers\\' => 
+        'Composer\\Installers\\' =>
         array (
             0 => __DIR__ . '/..' . '/composer/installers/src/Composer/Installers',
         ),
-        'Behat\\Transliterator\\' => 
+        'Behat\\Transliterator\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/transliterator/src/Behat/Transliterator',
         ),
-        'Behat\\Testwork\\' => 
+        'Behat\\Testwork\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/behat/src/Behat/Testwork',
         ),
-        'Behat\\Step\\' => 
+        'Behat\\Step\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/behat/src/Behat/Step',
         ),
-        'Behat\\Mink\\Driver\\' => 
+        'Behat\\Mink\\Driver\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/mink-goutte-driver/src',
             1 => __DIR__ . '/..' . '/behat/mink-browserkit-driver/src',
         ),
-        'Behat\\Mink\\' => 
+        'Behat\\Mink\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/mink/src',
         ),
-        'Behat\\Hook\\' => 
+        'Behat\\Hook\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/behat/src/Behat/Hook',
         ),
-        'Behat\\Behat\\' => 
+        'Behat\\Behat\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/behat/src/Behat/Behat',
         ),
-        'Args\\' => 
+        'Args\\' =>
         array (
             0 => __DIR__ . '/..' . '/johnbillion/args/src',
         ),
     );
 
     public static $prefixesPsr0 = array (
-        'B' => 
+        'B' =>
         array (
-            'Behat\\MinkExtension' => 
+            'Behat\\MinkExtension' =>
             array (
                 0 => __DIR__ . '/..' . '/behat/mink-extension/src',
             ),
-            'Behat\\Gherkin' => 
+            'Behat\\Gherkin' =>
             array (
                 0 => __DIR__ . '/..' . '/behat/gherkin/src',
             ),
