@@ -1,4 +1,4 @@
-name: Check for WordPress update
+name: Update WordPress
 
 on:
   schedule:
@@ -6,53 +6,72 @@ on:
   workflow_dispatch:
 
 permissions:
-  issues: write
+  contents: write
 
 jobs:
-  check-for-update:
-    name: Check for WordPress update
+  update-wordpress:
+    name: Update WordPress to latest Beta/RC
     runs-on: ubuntu-latest
+    env:
+      TERMINUS_SITE: wpnext-test
+      TERMINUS_OR_LANDO: t
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+      - name: Configure Git
+        run: |
+          git config --global user.name "Pantheon Robot"
+          git config --global user.email "bot@getpantheon.com"
 
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
+
       - name: Configure Pantheon Host Key
         run: |
           echo "Host *.drush.in HostKeyAlgorithms +ssh-rsa" >> ~/.ssh/config
           echo "Host *.drush.in PubkeyAcceptedKeyTypes +ssh-rsa" >> ~/.ssh/config
           echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
+      - name: Add Pantheon git remote
+        run: git remote add pantheon ${{ secrets.GIT_REPO }}
+
       - name: Install Terminus
         uses: pantheon-systems/terminus-github-actions@v1
         with:
           pantheon-machine-token: ${{ secrets.TERMINUS_TOKEN }}
 
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
       - name: Check for WordPress update
+        id: check_update
         env:
           TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
-          GITHUB_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
           LATEST_WP_VERSION=$(composer check-latest-wp)
-          CURRENT_WP_VERSION=$(terminus wp -- wpnext-test.dev core version)
-
+          CURRENT_WP_VERSION=$(terminus wp -- ${{ env.TERMINUS_SITE }}.dev core version)
           echo "Latest version: ${LATEST_WP_VERSION}"
           echo "Current version: ${CURRENT_WP_VERSION}"
-          # Compare versions and create an issue if an update is available
           if [ "$LATEST_WP_VERSION" != "$CURRENT_WP_VERSION" ]; then
-            echo "WordPress update available: $LATEST_WP_VERSION (current: $CURRENT_WP_VERSION)"
-            # Create an issue or take any other action you want
-            # For example, using the GitHub CLI to create an issue:
-            gh issue create --title "[Automation] WordPress Update Available (${LATEST_WP_VERSION})" --body "A new version of WordPress (${LATEST_WP_VERSION}) is available. Current version: $CURRENT_WP_VERSION. Run \`composer wordpress-update\` to update." --assignee jazzsequence --label "update"
+            echo "WordPress update available: ${LATEST_WP_VERSION} (current: ${CURRENT_WP_VERSION})"
+            echo "update_available=true" >> $GITHUB_OUTPUT
           else
             echo "No WordPress update available."
+            echo "update_available=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Switch Pantheon dev to SFTP mode
+        if: steps.check_update.outputs.update_available == 'true'
+        run: terminus connection:set ${{ env.TERMINUS_SITE }}.dev sftp
+
+      - name: Update WordPress
+        if: steps.check_update.outputs.update_available == 'true'
+        env:
+          TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
+        run: bash scripts/wordpress-update.sh
