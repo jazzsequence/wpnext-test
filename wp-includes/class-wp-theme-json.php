@@ -3715,22 +3715,45 @@ class WP_Theme_JSON {
 					}
 				}
 			}
-			if ( isset( $theme_json['styles']['blocks'][ $name ]['elements'] ) ) {
-				foreach ( $theme_json['styles']['blocks'][ $name ]['elements'] as $element => $node ) {
+			/*
+			 * Elements can be styled outside any breakpoint, inside one, or both,
+			 * so collect the names from all of those places before looping. An
+			 * element styled only inside a breakpoint still needs a node.
+			 */
+			$block_node    = $theme_json['styles']['blocks'][ $name ] ?? array();
+			$element_names = array_keys( $block_node['elements'] ?? array() );
+			foreach ( array_keys( $responsive_media_queries ) as $breakpoint ) {
+				$element_names = array_merge(
+					$element_names,
+					array_keys( $block_node[ $breakpoint ]['elements'] ?? array() )
+				);
+			}
+			$element_names = array_unique( $element_names );
+
+			if ( ! empty( $element_names ) ) {
+				foreach ( $element_names as $element ) {
 					$element_path = array( 'styles', 'blocks', $name, 'elements', $element );
 					if ( $include_node_paths_only ) {
-						$nodes[] = array(
-							'path' => $element_path,
-						);
+						if ( isset( $block_node['elements'][ $element ] ) ) {
+							$nodes[] = array(
+								'path' => $element_path,
+							);
+						}
+						continue;
+					}
+
+					if ( ! isset( $selectors[ $name ]['elements'][ $element ] ) ) {
 						continue;
 					}
 
 					$element_selector = $selectors[ $name ]['elements'][ $element ];
 
-					$nodes[] = array(
-						'path'     => $element_path,
-						'selector' => $element_selector,
-					);
+					if ( isset( $block_node['elements'][ $element ] ) ) {
+						$nodes[] = array(
+							'path'     => $element_path,
+							'selector' => $element_selector,
+						);
+					}
 
 					// Responsive element nodes: one node per breakpoint that has
 					// styles for this element. Cascade: a{} → @media{a{}}
@@ -3747,42 +3770,26 @@ class WP_Theme_JSON {
 					// Handle any pseudo selectors for the element.
 					if ( isset( static::VALID_ELEMENT_PSEUDO_SELECTORS[ $element ] ) ) {
 						foreach ( static::VALID_ELEMENT_PSEUDO_SELECTORS[ $element ] as $pseudo_selector ) {
-							// Create element pseudo node if default or any responsive breakpoint has the pseudo.
-							$has_element_pseudo = isset( $theme_json['styles']['blocks'][ $name ]['elements'][ $element ][ $pseudo_selector ] );
-							if ( ! $has_element_pseudo ) {
-								foreach ( array_keys( $responsive_media_queries ) as $bp ) {
-									if ( isset( $theme_json['styles']['blocks'][ $name ][ $bp ]['elements'][ $element ][ $pseudo_selector ] ) ) {
-										$has_element_pseudo = true;
-										break;
-									}
-								}
-							}
-
-							if ( $has_element_pseudo ) {
-								$element_pseudo_path = array( 'styles', 'blocks', $name, 'elements', $element );
-								if ( $include_node_paths_only ) {
-									$nodes[] = array(
-										'path' => $element_pseudo_path,
-									);
-									continue;
-								}
-
+							// Emit the default pseudo node only when the default state styles
+							// the pseudo. Otherwise get_styles_for_block() falls back to the
+							// element's base styles, outputting a rule the theme never defined.
+							if ( isset( $theme_json['styles']['blocks'][ $name ]['elements'][ $element ][ $pseudo_selector ] ) ) {
 								$nodes[] = array(
-									'path'     => $element_pseudo_path,
+									'path'     => array( 'styles', 'blocks', $name, 'elements', $element ),
 									'selector' => static::append_to_selector( $element_selector, $pseudo_selector ),
 								);
+							}
 
-								// Responsive element pseudo nodes: one node per breakpoint
-								// that has this pseudo state for this element.
-								// Cascade: a:hover{} → @media{a:hover{}}
-								foreach ( array_keys( $responsive_media_queries ) as $breakpoint ) {
-									if ( isset( $theme_json['styles']['blocks'][ $name ][ $breakpoint ]['elements'][ $element ][ $pseudo_selector ] ) ) {
-										$nodes[] = array(
-											'path'        => array( 'styles', 'blocks', $name, $breakpoint, 'elements', $element ),
-											'selector'    => static::append_to_selector( $element_selector, $pseudo_selector ),
-											'media_query' => $responsive_media_queries[ $breakpoint ],
-										);
-									}
+							// Responsive element pseudo nodes: one node per breakpoint
+							// that has this pseudo state for this element.
+							// Cascade: a:hover{} → @media{a:hover{}}
+							foreach ( array_keys( $responsive_media_queries ) as $breakpoint ) {
+								if ( isset( $theme_json['styles']['blocks'][ $name ][ $breakpoint ]['elements'][ $element ][ $pseudo_selector ] ) ) {
+									$nodes[] = array(
+										'path'        => array( 'styles', 'blocks', $name, $breakpoint, 'elements', $element ),
+										'selector'    => static::append_to_selector( $element_selector, $pseudo_selector ),
+										'media_query' => $responsive_media_queries[ $breakpoint ],
+									);
 								}
 							}
 						}
@@ -3873,8 +3880,18 @@ class WP_Theme_JSON {
 				// Only store if the variation has blockGap defined.
 				if ( isset( $style_variation_node['spacing']['blockGap'] ) ) {
 					// Append block selector to the variation selector for proper targeting.
-					$variation_metadata_with_selector                                = $style_variation;
-					$variation_metadata_with_selector['selector']                    = $style_variation['selector'] . $block_metadata['css'];
+					$variation_metadata_with_selector             = $style_variation;
+					$variation_metadata_with_selector['selector'] = $style_variation['selector'] . $block_metadata['css'];
+
+					/*
+					 * `get_layout_styles()` reads `name` as a block name, to check that the block
+					 * supports layout at all. A variation node's `name` is the variation slug,
+					 * which is never a registered block, so the check fails and every variation
+					 * gap rule is discarded. Pass the block the variation belongs to, so the
+					 * support check answers the question it is actually asking.
+					 */
+					$variation_metadata_with_selector['name'] = $block_name;
+
 					$style_variation_layout_metadata[ $style_variation['selector'] ] = array(
 						'metadata' => $variation_metadata_with_selector,
 						'node'     => $style_variation_node,
@@ -3930,7 +3947,11 @@ class WP_Theme_JSON {
 					if ( isset( $breakpoint_node['spacing']['blockGap'] ) ) {
 						$variation_layout_metadata             = $style_variation;
 						$variation_layout_metadata['selector'] = $style_variation['selector'] . $block_metadata['css'];
-						$variation_responsive_css             .= $this->get_layout_styles(
+
+						// The variation slug is not a block name here either. See above.
+						$variation_layout_metadata['name'] = $block_name;
+
+						$variation_responsive_css .= $this->get_layout_styles(
 							$variation_layout_metadata,
 							array(
 								'node'        => $breakpoint_node,

@@ -767,12 +767,17 @@ $_old_files = array(
 	'wp-includes/blocks/query/style.min.css',
 	'wp-includes/blocks/query/style-rtl.css',
 	'wp-includes/blocks/query/style.css',
-	'wp-admin/images/about-header-privacy.svg',
 	'wp-admin/images/about-header-about.svg',
-	'wp-admin/images/about-header-credits.svg',
-	'wp-admin/images/about-header-freedoms.svg',
 	'wp-admin/images/about-header-contribute.svg',
 	'wp-admin/images/about-header-background.svg',
+	/*
+	 * Restored in WordPress 7.1
+	 *
+	 * 'wp-admin/images/about-header-privacy.svg',
+	 * 'wp-admin/images/about-header-credits.svg',
+	 * 'wp-admin/images/about-header-freedoms.svg',
+	 */
+
 	// 6.6
 	'wp-includes/blocks/block/editor.css',
 	'wp-includes/blocks/block/editor.min.css',
@@ -900,12 +905,8 @@ $_old_files = array(
 	// 7.0.2
 	'wp-includes/collaboration',
 	'wp-includes/collaboration.php',
-	/*
-	 * Restored in WordPress 7.1.
-	 *
-	 * 'wp-includes/js/dist/sync.js',
-	 * 'wp-includes/js/dist/sync.min.js',
-	 */
+	'wp-includes/js/dist/sync.js',
+	'wp-includes/js/dist/sync.min.js',
 	// 7.1
 	'wp-includes/images/icon-library/accordion-heading.svg',
 	'wp-includes/images/icon-library/accordion-item.svg',
@@ -1150,6 +1151,17 @@ $_old_files = array(
 	'wp-includes/images/icon-library/widget.svg',
 	'wp-includes/images/icon-library/word-count.svg',
 	'wp-includes/images/icon-library/wordpress.svg',
+	'wp-admin/images/about-header-credits.webp',
+	'wp-admin/images/about-header-credits-rtl.webp',
+	'wp-admin/images/about-header-default.webp',
+	'wp-admin/images/about-header-default-rtl.webp',
+	'wp-admin/images/about-header-freedoms.webp',
+	'wp-admin/images/about-header-freedoms-rtl.webp',
+	'wp-admin/images/about-header-get-involved.webp',
+	'wp-admin/images/about-header-get-involved-rtl.webp',
+	'wp-admin/images/about-header-privacy.webp',
+	'wp-admin/images/about-header-privacy-rtl.webp',
+	'wp-admin/images/about-release-logo.svg',
 );
 
 /**
