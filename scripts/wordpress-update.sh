@@ -7,10 +7,16 @@ wp_version=$(get_latest_wp_release)
 TYPE="core"
 
 echo "Updating WordPress $TYPE to $wp_version..."
-terminus wp -- "$TERMINUS_SITE".dev $TYPE update --version="$wp_version" --force
+# get_latest_wp_release resolves a nightly build identifier (e.g. "7.2-alpha-63903"),
+# which is not itself a downloadable package -- WP-CLI only knows how to fetch nightly
+# builds via the literal "nightly" keyword (it maps that to
+# https://wordpress.org/nightly-builds/wordpress-latest.zip). $wp_version is still
+# used below for logging and the commit message, and for comparing against
+# `wp core version` in the calling workflow.
+terminus wp -- "$TERMINUS_SITE".dev $TYPE update --version=nightly --force
 
 # Wait for the update to be done done
-terminus workflow:wait "$TERMINUS_SITE" --max=15
+terminus workflow:wait "$TERMINUS_SITE".dev --max=15
 
 # Commit the changes and capture output
 COMMIT_OUTPUT=$(terminus env:commit "$TERMINUS_SITE".dev --message="Updating WordPress ${TYPE} to ${wp_version}" 2>&1)
