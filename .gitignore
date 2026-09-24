@@ -27,6 +27,25 @@ wp-content/backups/
 # created from this upstream
 pantheon.upstream.yml
 
+# Composer #
+############
+# This file embeds the root package's own current git commit hash
+# ('reference'), which Composer regenerates from HEAD on every `composer
+# install` -- including a no-op install where no packages actually change.
+# That makes it impossible to keep committed without a spurious diff on
+# every single commit, forever (confirmed: two consecutive `composer
+# install` runs against an unchanged lock file only ever touch this one
+# file, nothing else in vendor/). That diff was blocking
+# merge_updates_from_pantheon_to_github's `git checkout main` in CI.
+# Nothing in this codebase reads Composer\InstalledVersions against the
+# root vendor/ (only individual bundled plugins call it against their own
+# self-contained vendor/ directories), so this is safe to stop tracking.
+# The rest of vendor/ is intentionally still committed -- this site has no
+# Pantheon-side build step (pantheon.yml: build_step: false), and
+# .github/workflows/deploy-to-pantheon.yml pushes a freshly `composer
+# install`-built vendor/ straight to Pantheon.
+vendor/composer/installed.php
+
 # Packages #
 ############
 *.7z
