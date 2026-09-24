@@ -28,7 +28,7 @@ update_themes() {
 
 update_core() {
 	echo "Updating WordPress Core..."
-	$wp core update --version="$wp_version" --force
+	$wp core update --version=nightly --force
 	git add .
 	git commit -m "Updating WordPress core $wp_version"
 }

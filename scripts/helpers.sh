@@ -1,131 +1,28 @@
 #!/bin/bash
 
 get_latest_wp_release() {
-    # URL of the WordPress News RSS feed
-    feed_url="https://wordpress.org/news/category/releases/feed/"
-    # URL of Make/core RSS feed
-    make_feed_url="https://make.wordpress.org/core/tag/releases/feed/"
+    local api_url="https://api.wordpress.org/core/version-check/1.7/?channel=development&locale=en_US"
+    local response
+    response=$(curl -s "$api_url")
 
-    # Fetch the RSS feed
-    rss_content=$(curl -s "$feed_url")
-    make_rss_content=$(curl -s "$make_feed_url")
-
-    if [ -z "$rss_content" ] && [ -z "$make_rss_content" ]; then
-        echo "Failed to fetch content from RSS feeds." >&2
+    if [ -z "$response" ]; then
+        echo "Failed to fetch a response from the WordPress.org version-check API ($api_url)." >&2
         exit 1
     fi
 
-    # Extract all Beta and Release Candidate items
-    all_versions=$(echo "$rss_content" | sed 's/&nbsp;/ /g' | grep -Eo 'WordPress [0-9]+\.[0-9]+(\.[0-9]+)? *(Beta|Release Candidate|RC) *[0-9]*' | sed 's/WordPress //g')
-    make_versions=$(echo "$make_rss_content" | sed 's/&nbsp;/ /g' | grep -Eo 'WordPress [0-9]+\.[0-9]+(\.[0-9]+)? *(Beta|Release Candidate|RC) *[0-9]*' | sed 's/WordPress //g')
+    local dev_version
+    dev_version=$(echo "$response" | jq -r '[.offers[]? | select(.response == "development")][0].version // empty')
 
-    # Combine raw versions before normalizing
-    combined_raw_versions=$(echo -e "${all_versions}\n${make_versions}")
-
-    # Normalize ALL version strings
-    normalized_versions=$(normalize_versions "$combined_raw_versions")
-
-    if [ -z "$normalized_versions" ]; then
-        echo "No Beta/RC versions found."
+    if [ -z "$dev_version" ]; then
+        # Fail loudly rather than silently falling back to a different channel or a stale value
+        echo "The WordPress.org version-check API did not return a 'development' channel offer for channel=development. This is unexpected for a site configured to track that channel -- refusing to guess a fallback version. Response was:" >&2
+        echo "$response" >&2
         exit 1
     fi
 
-    # Sort the combined, normalized versions:
-    # -k1,1Vr: Sort by version string (field 1), version sort (V), reverse (r) -> newest version first
-    # -k2,2n:  Then by priority (field 2), numeric (n) -> RC (1) before Beta (2)
-    # -k3,3nr: Then by suffix number (field 3), numeric (n), reverse (r) -> RC4 before RC3, Beta2 before Beta1
-    sorted_versions=$(echo "$normalized_versions" | grep . | sort -k1,1Vr -k2,2n -k3,3nr)
-    release_version=$(echo "$sorted_versions" | head -1)
-
-    if [ -z "$release_version" ]; then
-        echo "Could not determine latest release version after sorting." >&2
-        exit 1
-    fi
-
-    # normalize_versions uses an internal formatting for RC and beta release priorities. We need to change these back to standard -beta/-RC versions
-    formatted_version=$(echo "$release_version" | awk '{
-        suffix = ($2 == 1 ? "RC" : "beta");
-        # Default suffix number 0 (meaning none found) to 1, otherwise use the found number
-        suffix_num = ($3 == "0" ? "1" : $3);
-        printf "%s-%s%s\n", $1, suffix, suffix_num
-    }')
-
-    # Extract the download link for the latest version using sed
-    download_url="https://wordpress.org/wordpress-${formatted_version}.zip"
-
-    # Check if the download URL exists
-    if ! curl --head --silent --fail "$download_url" > /dev/null; then
-        echo "No download found for version $formatted_version." >&2
-        exit 1
-    fi
-
-    # Only output the version number
-    echo "$formatted_version"
-}
- 
-normalize_versions() {
-    source_content=$1
-
-    if [ -z "$source_content" ]; then
-        # Return empty string, let caller handle it
-        echo ""
-        return
-    fi
-
-    echo "$source_content" | awk '
-    {
-        # Match version pattern like X.Y or X.Y.Z at the beginning
-        if (match($1, /^[0-9]+\.[0-9]+(\.[0-9]+)?/)) {
-            major_minor_patch = substr($1, RSTART, RLENGTH)
-        } else {
-            next # Skip lines not starting with a version number
-        }
-
-        suffix = tolower($2);
-        if (suffix == "release") {
-            suffix = "rc"; # Normalize to lowercase "rc"
-        } else if (suffix == "candidate") {
-            # This handles "Release Candidate" where "Candidate" is $3
-            # We already processed "Release" as $2, just make sure suffix is rc
-            # A bit redundant if grep already works, but safe.
-            if (tolower($1) == "release") { # Check if previous word was release
-                suffix = "rc"
-            } else {
-                next; # Skip the standalone "Candidate" line
-            }
-        } else if (suffix == "beta") {
-            suffix = "beta"; # Ensure lowercase
-        } else {
-            next; # Skip if not beta or rc/release candidate
-        }
-
-        # Find the number following Beta/RC if present, otherwise default to 0
-        num_candidate = $3 # Check field 3 first
-        if (num_candidate ~ /^[0-9]+$/) {
-            suffix_number = num_candidate
-        } else {
-            num_candidate = $4 # Check field 4 (for Release Candidate N)
-            if (num_candidate ~ /^[0-9]+$/) {
-                suffix_number = num_candidate
-            } else {
-                suffix_number = "0"; # Default if no number found
-            }
-        }
-
-
-        # Assign priority numbers for sorting (RC > beta)
-        priority=99 # Default unlikely priority
-        if (suffix == "rc") {
-            priority = 1;
-        } else if (suffix == "beta") {
-            priority = 2;
-        } else {
-            next # Skip if priority was not set (should not happen with checks above)
-        }
-
-        # Print normalized version: major_minor_patch priority suffix_number
-        printf "%s %d %s\n", major_minor_patch, priority, suffix_number;
-    }'
+    # Only output the version number (e.g. "7.2-alpha-63903"). 
+    # Note: this is a nightly build identifier, not a downloadable package name.
+    echo "$dev_version"
 }
 
 get_lando() {
