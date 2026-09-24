@@ -523,10 +523,10 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 			 *
 			 * @since 4.7.0
 			 *
-			 * @param bool $allow_anonymous Whether to allow anonymous comments to
-			 *                              be created. Default `false`.
-			 * @param WP_REST_Request $request Request used to generate the
-			 *                                 response.
+			 * @param bool            $allow_anonymous Whether to allow anonymous comments to
+			 *                                         be created. Default `false`.
+			 * @param WP_REST_Request $request         Request used to generate the
+			 *                                         response.
 			 */
 			$allow_anonymous = apply_filters( 'rest_allow_anonymous_comments', false, $request );
 
@@ -2166,6 +2166,8 @@ class WP_REST_Comments_Controller extends WP_REST_Controller {
 
 	/**
 	 * Check if post type supports notes.
+	 *
+	 * @since 6.9.0
 	 *
 	 * @param string $post_type Post type name.
 	 * @return bool True if post type supports notes, false otherwise.

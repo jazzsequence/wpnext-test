@@ -615,6 +615,7 @@ EditAttachments = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.EditAtta
 
 	/**
 	 * Rerender the view.
+	 * @param {wp.media.model.Attachment} model The attachment model to render.
 	 */
 	rerender: function( model ) {
 		this.stopListening( this.model );
@@ -693,6 +694,8 @@ EditAttachments = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.EditAtta
 	 * Respond to the keyboard events: Alt + right arrow, Alt + left arrow,
 	 * except when focus is in a form field. Requires the Alt modifier key to
 	 * avoid interfering with screen reader navigation.
+	 *
+	 * @param {Event} event The keyboard event.
 	 */
 	keyEvent: function( event ) {
 		if ( ( 'INPUT' === event.target.nodeName || 'TEXTAREA' === event.target.nodeName || 'SELECT' === event.target.nodeName ) && ! event.target.disabled ) {
@@ -756,6 +759,8 @@ var MediaFrame = wp.media.view.MediaFrame,
  */
 Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype */{
 	/**
+	 * Initializes the manage frame.
+	 *
 	 * @constructs
 	 */
 	initialize: function() {
@@ -820,6 +825,9 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 		wp.media.frames.browse = this;
 	},
 
+	/**
+	 * Binds the search input to the grid router.
+	 */
 	bindSearchHandler: function() {
 		var search = this.$( '#media-search-input' ),
 			searchView = this.browserView.toolbar.get( 'search' ).$el,
@@ -856,7 +864,7 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 	},
 
 	/**
-	 * Create the default states for the frame.
+	 * Creates the default states for the frame.
 	 */
 	createStates: function() {
 		var options = this.options;
@@ -881,7 +889,7 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 	},
 
 	/**
-	 * Bind region mode activation events to proper handlers.
+	 * Binds region mode activation events to proper handlers.
 	 */
 	bindRegionModeHandlers: function() {
 		this.on( 'content:create:browse', this.browseContent, this );
@@ -893,6 +901,11 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 		this.on( 'select:deactivate', this.unbindKeydown, this );
 	},
 
+	/**
+	 * Handles keydown events for the frame.
+	 *
+	 * @param {JQuery.Event} e The keydown event.
+	 */
 	handleKeydown: function( e ) {
 		if ( 27 === e.which ) {
 			e.preventDefault();
@@ -900,14 +913,23 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 		}
 	},
 
+	/**
+	 * Binds the keydown event for the frame.
+	 */
 	bindKeydown: function() {
 		this.$body.on( 'keydown.select', _.bind( this.handleKeydown, this ) );
 	},
 
+	/**
+	 * Unbinds the keydown event for the frame.
+	 */
 	unbindKeydown: function() {
 		this.$body.off( 'keydown.select' );
 	},
 
+	/**
+	 * Fixes the position of the attachments browser when scrolling the page.
+	 */
 	fixPosition: function() {
 		var $browser, $toolbar;
 		if ( ! this.isModeActive( 'select' ) ) {
@@ -929,6 +951,8 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 
 	/**
 	 * Click handler for the `Add New` button.
+	 *
+	 * @param {Event} event The click event.
 	 */
 	addNewClickHandler: function( event ) {
 		event.preventDefault();
@@ -940,7 +964,9 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 	},
 
 	/**
-	 * Open the Edit Attachment modal.
+	 * Opens the Edit Attachment modal.
+	 *
+	 * @param {wp.media.model.Attachment} model The attachment model to edit.
 	 */
 	openEditAttachmentModal: function( model ) {
 		// Create a new EditAttachment frame, passing along the library and the attachment model.
@@ -957,11 +983,11 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 	},
 
 	/**
-	 * Create an attachments browser view within the content region.
+	 * Creates an attachments browser view within the content region.
 	 *
 	 * @param {Object} contentRegion Basic object with a `view` property, which
 	 *                               should be set with the proper region view.
-	 * @this wp.media.controller.Region
+	 * @this {wp.media.controller.Region}
 	 */
 	browseContent: function( contentRegion ) {
 		var state = this.state();
@@ -993,10 +1019,16 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 		this.errors.on( 'add remove reset', this.sidebarVisibility, this );
 	},
 
+	/**
+	 * Handles the visibility of the sidebar
+	 */
 	sidebarVisibility: function() {
 		this.browserView.$( '.media-sidebar' ).toggle( !! this.errors.length );
 	},
 
+	/**
+	 * Binds the deferred object of the browser view to the startHistory method.
+	 */
 	bindDeferred: function() {
 		if ( ! this.browserView.dfd ) {
 			return;
@@ -1004,6 +1036,9 @@ Manage = MediaFrame.extend(/** @lends wp.media.view.MediaFrame.Manage.prototype 
 		this.browserView.dfd.done( _.bind( this.startHistory, this ) );
 	},
 
+	/**
+	 * Starts the history for the frame, if supported.
+	 */
 	startHistory: function() {
 		// Verify pushState support and activate.
 		if ( window.history && window.history.pushState ) {

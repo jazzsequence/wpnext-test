@@ -593,7 +593,7 @@ body.trashing #publish-settings {
 #customize-theme-controls .accordion-section-title:after,
 #customize-outer-theme-controls .accordion-section-title:after {
 	content: "\f341";
-	content: "\f345" / '';
+	content: "\f341" / '';
 	color: #a7aaad;
 	pointer-events: none;
 }
@@ -917,7 +917,7 @@ h3.customize-section-title {
 .customize-section-back:before {
 	font: normal 20px/72px dashicons;
 	content: "\f345";
-	content: "\f341" / '';
+	content: "\f345" / '';
 	position: relative;
 	right: 9px;
 }
@@ -2494,12 +2494,20 @@ body.cheatin p {
  * Widgets and Menus common styles
  */
 
+.customize-control-nav_menu-buttons,
+.customize-control-widgets-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 8px;
+}
+
 /* higher specificity than .wp-core-ui .button */
 #customize-theme-controls .add-new-widget,
 #customize-theme-controls .add-new-menu-item {
 	cursor: pointer;
-	float: left;
-	margin: 0 10px 0 0;
+	margin: 0;
 	transition: all 0.2s;
 	-webkit-user-select: none;
 	user-select: none;
@@ -2531,7 +2539,6 @@ body.cheatin p {
 
 /* Reordering */
 .reorder-toggle {
-	float: left;
 	padding: 5px 8px;
 	text-decoration: none;
 	cursor: pointer;

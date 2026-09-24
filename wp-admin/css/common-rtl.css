@@ -2554,7 +2554,7 @@ h1.nav-tab-wrapper, /* Back-compat for pre-4.4 */
 	position: absolute;
 	left: 10px;
 	right: auto;
-	color: #787c82;
+	color: #50575e;
 	border-radius: 50px;
 	top: 50%;
 	transform: translateY(-50%);
@@ -3373,7 +3373,7 @@ img {
 .bulk-action-notice .toggle-indicator::before {
 	line-height: 16px;
 	vertical-align: top;
-	color: #787c82;
+	color: #50575e;
 }
 
 .postbox .handle-order-higher:focus,
@@ -3467,7 +3467,7 @@ img {
 }
 [role="treeitem"][aria-expanded="false"] > .folder-label .icon:after {
 	content: "\f141";
-	content: "\f139" / '';
+	content: "\f141" / '';
 }
 [role="treeitem"][aria-expanded="true"] > .folder-label .icon:after {
 	content: "\f140";
@@ -4256,9 +4256,6 @@ img {
 		margin-bottom: 0;
 	}
 
-	#wpfooter {
-		display: none;
-	}
 
 	#comments-form .checkforspam {
 		display: none;
