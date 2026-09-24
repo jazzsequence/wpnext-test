@@ -31,9 +31,6 @@ terminus connection:set "$TERMINUS_SITE".test-base sftp -y
 # Only update to the latest release if we're not already on the latest version
 if [ "$wp_version" != "$remote_wp_version" ]; then
 	echo "WordPress is not the latest version. Updating to $wp_version..."
-	# $wp_version is a nightly build identifier (e.g. "7.2-alpha-63903"), not a
-	# downloadable package -- WP-CLI only fetches nightly builds via the literal
-	# "nightly" keyword. See scripts/helpers.sh::get_latest_wp_release.
 	terminus wp -- "$TERMINUS_SITE".test-base core update --version=nightly --force
 	terminus env:commit "$TERMINUS_SITE".test-base --message="WordPress core update $wp_version"
 	terminus workflow:wait "$TERMINUS_SITE".test-base --max=30

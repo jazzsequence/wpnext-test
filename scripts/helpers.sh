@@ -1,17 +1,6 @@
 #!/bin/bash
 
 get_latest_wp_release() {
-    # This site's WordPress Beta Tester plugin is configured for the "development"
-    # channel (bleeding-edge trunk/nightly builds) -- see the `channel` value in the
-    # `wp_beta_tester` site option. That is a distinct concept from "latest Beta/RC
-    # announcement," which is what this function used to scrape from WordPress.org's
-    # release-announcement RSS feeds. That RSS-scraping approach silently went stale
-    # once WordPress shipped stable (it kept re-surfacing an already-superseded RC
-    # because the feed's newer items -- the stable release posts -- don't contain the
-    # word "Beta" or "RC" and so never matched the filter), which caused a real
-    # downgrade incident. Query WordPress.org's own core update-check API instead,
-    # with the same `channel=development` value the Beta Tester plugin itself sends,
-    # so this script tracks exactly what the site is actually configured to track.
     local api_url="https://api.wordpress.org/core/version-check/1.7/?channel=development&locale=en_US"
     local response
     response=$(curl -s "$api_url")
@@ -25,24 +14,14 @@ get_latest_wp_release() {
     dev_version=$(echo "$response" | jq -r '[.offers[]? | select(.response == "development")][0].version // empty')
 
     if [ -z "$dev_version" ]; then
-        # Fail loudly rather than silently falling back to a different channel or a
-        # stale value -- a silent no-op here is exactly the failure mode that caused
-        # the original incident (a script that quietly returns something wrong/stale
-        # instead of erroring when it can't determine the real answer).
+        # Fail loudly rather than silently falling back to a different channel or a stale value
         echo "The WordPress.org version-check API did not return a 'development' channel offer for channel=development. This is unexpected for a site configured to track that channel -- refusing to guess a fallback version. Response was:" >&2
         echo "$response" >&2
         exit 1
     fi
 
-    # Only output the version number (e.g. "7.2-alpha-63903"). Note: this is a nightly
-    # build identifier, not a downloadable package name -- wordpress.org does not
-    # publish per-build zips for nightlies the way it does for tagged Beta/RC
-    # releases. Callers must use `wp core update --version=nightly` (WP-CLI's special
-    # keyword for the rolling https://wordpress.org/nightly-builds/wordpress-latest.zip
-    # download), NOT `--version="$dev_version"`, which would 404. This resolved
-    # version string is still the right thing to use for logging and for comparing
-    # against `wp core version` (nightly builds set $wp_version in
-    # wp-includes/version.php to this exact same string).
+    # Only output the version number (e.g. "7.2-alpha-63903"). 
+    # Note: this is a nightly build identifier, not a downloadable package name.
     echo "$dev_version"
 }
 

@@ -28,9 +28,6 @@ update_themes() {
 
 update_core() {
 	echo "Updating WordPress Core..."
-	# $wp_version is a nightly build identifier (e.g. "7.2-alpha-63903"), not a
-	# downloadable package -- WP-CLI only fetches nightly builds via the literal
-	# "nightly" keyword. See scripts/helpers.sh::get_latest_wp_release.
 	$wp core update --version=nightly --force
 	git add .
 	git commit -m "Updating WordPress core $wp_version"
