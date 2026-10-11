@@ -108,6 +108,7 @@ var wp;
     getHeicUnsupportedMessage: () => getHeicUnsupportedMessage,
     isClientSideMediaSupported: () => isClientSideMediaSupported,
     isHeicCanvasSupported: () => isHeicCanvasSupported,
+    isHeicFile: () => isHeicFile,
     store: () => store
   });
 
@@ -260,7 +261,18 @@ var wp;
               status: ItemStatus.Processing,
               error: void 0,
               retryCount: (item.retryCount ?? 0) + 1,
-              abortController: new AbortController()
+              abortController: new AbortController(),
+              /*
+               * The failed operation is still recorded on
+               * the item: nothing finishes it when it
+               * fails, and while the item waits out the
+               * backoff that is what keeps it out of the
+               * concurrency pools. Clear it now that the
+               * item is about to run again, so processItem
+               * does not mistake it for an operation still
+               * in flight and skip the retry.
+               */
+              currentOperation: void 0
             } : item
           )
         };
@@ -665,6 +677,54 @@ var wp;
       }
     }
     return false;
+  }
+  var FILE_TYPE_BOX_BYTES = 64;
+  var HEIC_BRANDS = [
+    "heic",
+    "heix",
+    "heim",
+    "heis",
+    "hevc",
+    "hevx",
+    "hevm",
+    "hevs",
+    "mif1",
+    "msf1"
+  ];
+  var AVIF_BRANDS = ["avif", "avis"];
+  function isHeicBuffer(buffer) {
+    const view = new Uint8Array(buffer);
+    const readBrand = (offset) => String.fromCharCode(...view.subarray(offset, offset + 4));
+    if (view.length < 12 || readBrand(4) !== "ftyp") {
+      return false;
+    }
+    const boxEnd = Math.min(
+      view.length,
+      new DataView(buffer).getUint32(0)
+    );
+    const brands = [readBrand(8)];
+    for (let offset = 16; offset + 4 <= boxEnd; offset += 4) {
+      brands.push(readBrand(offset));
+    }
+    if (brands.some((brand) => AVIF_BRANDS.includes(brand))) {
+      return false;
+    }
+    return brands.some((brand) => HEIC_BRANDS.includes(brand));
+  }
+  async function isHeicFile(file) {
+    if (HEIC_MIME_TYPES.includes(file.type)) {
+      return true;
+    }
+    if (file.type && !file.type.startsWith("image/")) {
+      return false;
+    }
+    try {
+      return isHeicBuffer(
+        await file.slice(0, FILE_TYPE_BOX_BYTES).arrayBuffer()
+      );
+    } catch {
+      return false;
+    }
   }
 
   // packages/upload-media/build-module/store/utils/index.mjs
@@ -1579,6 +1639,13 @@ var wp;
   }
   function readItemData(buffer, loc, idatOffset) {
     const baseOffset = loc.constructionMethod === 1 ? idatOffset : 0;
+    for (const ext of loc.extents) {
+      if (baseOffset + ext.offset + ext.length > buffer.byteLength) {
+        throw new Error(
+          "HEIC item data extends past the end of the file"
+        );
+      }
+    }
     if (loc.extents.length === 1) {
       const ext = loc.extents[0];
       const start = baseOffset + ext.offset;
@@ -2067,6 +2134,9 @@ var wp;
   }
 
   // packages/upload-media/build-module/canvas-utils.mjs
+  var IMAGE_DECODER_TIMEOUT = 15e3;
+  var HeicUnsupportedError = class extends Error {
+  };
   async function canvasConvertToJpeg(file, quality = 0.82) {
     const baseName = getFileBasename(file.name);
     try {
@@ -2097,8 +2167,34 @@ var wp;
           type: file.type,
           data: file.stream()
         });
+        let videoFrame;
+        let timeoutId;
+        let timedOut = false;
         try {
-          const { image: videoFrame } = await decoder.decode();
+          const decoded = await Promise.race([
+            decoder.decode(),
+            new Promise((_resolve, reject) => {
+              timeoutId = setTimeout(() => {
+                timedOut = true;
+                decoder.close();
+                reject(
+                  new Error("ImageDecoder decode timed out")
+                );
+              }, IMAGE_DECODER_TIMEOUT);
+            })
+          ]);
+          videoFrame = decoded.image;
+        } catch (error) {
+          if (!timedOut) {
+            throw error;
+          }
+        } finally {
+          clearTimeout(timeoutId);
+          if (!timedOut) {
+            decoder.close();
+          }
+        }
+        if (videoFrame) {
           try {
             const canvas = new OffscreenCanvas(
               videoFrame.displayWidth,
@@ -2119,56 +2215,60 @@ var wp;
           } finally {
             videoFrame.close();
           }
-        } finally {
-          decoder.close();
         }
       }
     }
+    let heicData;
+    try {
+      heicData = parseHeic(await file.arrayBuffer());
+    } catch (error) {
+      throw new Error("The HEIC file could not be parsed", {
+        cause: error
+      });
+    }
     if (typeof VideoDecoder !== "undefined") {
+      let supported = false;
       try {
-        const heicData = parseHeic(await file.arrayBuffer());
         const support = await VideoDecoder.isConfigSupported({
           codec: heicData.codecString
         });
-        if (support.supported) {
-          const canvas = new OffscreenCanvas(
-            heicData.outputWidth,
-            heicData.outputHeight
-          );
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            throw new Error("Could not get canvas 2d context");
-          }
-          for (const tile of heicData.tiles) {
-            const frame = await decodeHevcFrame(
-              heicData.codecString,
-              heicData.description,
-              heicData.tileWidth,
-              heicData.tileHeight,
-              tile.data
-            );
-            try {
-              ctx.drawImage(frame, tile.x, tile.y);
-            } finally {
-              frame.close();
-            }
-          }
-          const outputCanvas = heicData.rotation !== 0 ? applyRotation(canvas, heicData.rotation) : applyExifOrientation(
-            canvas,
-            heicData.exifOrientation
-          );
-          const jpegBlob = await outputCanvas.convertToBlob({
-            type: "image/jpeg",
-            quality
-          });
-          return new File([jpegBlob], `${baseName}.jpg`, {
-            type: "image/jpeg"
-          });
-        }
+        supported = support.supported === true;
       } catch {
       }
+      if (supported) {
+        const canvas = new OffscreenCanvas(
+          heicData.outputWidth,
+          heicData.outputHeight
+        );
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          throw new Error("Could not get canvas 2d context");
+        }
+        for (const tile of heicData.tiles) {
+          const frame = await decodeHevcFrame(
+            heicData.codecString,
+            heicData.description,
+            heicData.tileWidth,
+            heicData.tileHeight,
+            tile.data
+          );
+          try {
+            ctx.drawImage(frame, tile.x, tile.y);
+          } finally {
+            frame.close();
+          }
+        }
+        const outputCanvas = heicData.rotation !== 0 ? applyRotation(canvas, heicData.rotation) : applyExifOrientation(canvas, heicData.exifOrientation);
+        const jpegBlob = await outputCanvas.convertToBlob({
+          type: "image/jpeg",
+          quality
+        });
+        return new File([jpegBlob], `${baseName}.jpg`, {
+          type: "image/jpeg"
+        });
+      }
     }
-    throw new Error(getHeicUnsupportedMessage());
+    throw new HeicUnsupportedError(getHeicUnsupportedMessage());
   }
   function applyRotation(source, rotation) {
     if (rotation === 0) {
@@ -2540,6 +2640,9 @@ var wp;
       if (!item) {
         return;
       }
+      if (item.currentOperation) {
+        return;
+      }
       const {
         attachment,
         onChange,
@@ -2819,11 +2922,14 @@ var wp;
         }
       }
       let heicJpeg = null;
-      const isImage = file.type.startsWith("image/");
-      const isVipsSupported = CLIENT_SIDE_SUPPORTED_MIME_TYPES.includes(
-        file.type
-      );
-      const isHeic = HEIC_MIME_TYPES.includes(file.type);
+      const isHeic = await isHeicFile(file);
+      const isMisnamedHeic = isHeic && !HEIC_MIME_TYPES.includes(file.type);
+      const isImage = file.type.startsWith("image/") || isHeic;
+      const isVipsSupported = !isHeic && CLIENT_SIDE_SUPPORTED_MIME_TYPES.includes(file.type);
+      const heicFile = isMisnamedHeic ? new File([file], `${getFileBasename(file.name)}.heic`, {
+        type: HEIC_MIME_TYPES[0],
+        lastModified: file.lastModified
+      }) : file;
       let tooLargeForClient = false;
       if (isImage && isVipsSupported) {
         const dimensions = await getImageDimensions(file);
@@ -2831,7 +2937,7 @@ var wp;
           tooLargeForClient = true;
         }
       }
-      if (file.type === "image/jpeg" && !tooLargeForClient) {
+      if (file.type === "image/jpeg" && !isHeic && !tooLargeForClient) {
         operations.push(OperationType.DetectUltraHdr);
       }
       if (isImage && isVipsSupported && !tooLargeForClient) {
@@ -2843,16 +2949,20 @@ var wp;
       } else if (isImage && isHeic) {
         try {
           heicJpeg = await canvasConvertToJpeg(
-            file,
+            heicFile,
             settings.imageQuality ?? DEFAULT_OUTPUT_QUALITY
           );
-        } catch {
+        } catch (error) {
+          const unsupported = error instanceof HeicUnsupportedError;
           dispatch.cancelItem(
             id,
             new UploadError({
-              code: ErrorCode.HEIC_DECODE_ERROR,
-              message: getHeicUnsupportedMessage(),
-              file
+              code: unsupported ? ErrorCode.HEIC_DECODE_ERROR : ErrorCode.IMAGE_TRANSCODING_ERROR,
+              message: unsupported ? getHeicUnsupportedMessage() : (0, import_i18n7.__)(
+                "This HEIC image could not be converted. Try converting it to JPEG before uploading."
+              ),
+              file,
+              cause: error instanceof Error ? error : void 0
             })
           );
           return;
@@ -2876,7 +2986,7 @@ var wp;
         updates = {
           file: heicJpeg,
           sourceFile: heicJpeg,
-          originalHeicFile: item.file,
+          originalHeicFile: heicFile,
           additionalData: {
             ...item.additionalData,
             generate_sub_sizes: !vipsAvailable,
