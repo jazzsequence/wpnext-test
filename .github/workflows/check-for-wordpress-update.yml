@@ -56,8 +56,22 @@ jobs:
         run: |
           LATEST_WP_VERSION=$(composer check-latest-wp)
           CURRENT_WP_VERSION=$(terminus wp -- ${{ env.TERMINUS_SITE }}.dev core version)
+          # Version of WordPress committed to this repo. This can lag behind Pantheon
+          # dev (e.g. a previous run updated dev but never synced it back to GitHub).
+          REPO_WP_VERSION=$(sed -n "s/^\$wp_version = '\(.*\)';/\1/p" wp-includes/version.php)
           echo "Latest version: ${LATEST_WP_VERSION}"
           echo "Current version: ${CURRENT_WP_VERSION}"
+          echo "Repo version: ${REPO_WP_VERSION}"
+          if [ -z "$REPO_WP_VERSION" ]; then
+            echo "Could not read the WordPress version from wp-includes/version.php" >&2
+            exit 1
+          fi
+          if [ "$CURRENT_WP_VERSION" != "$REPO_WP_VERSION" ]; then
+            echo "Pantheon dev (${CURRENT_WP_VERSION}) differs from the repo (${REPO_WP_VERSION}); sync needed."
+            echo "sync_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "sync_needed=false" >> $GITHUB_OUTPUT
+          fi
           if [ "$LATEST_WP_VERSION" != "$CURRENT_WP_VERSION" ]; then
             echo "WordPress update available: ${LATEST_WP_VERSION} (current: ${CURRENT_WP_VERSION})"
             echo "update_available=true" >> $GITHUB_OUTPUT
@@ -75,3 +89,10 @@ jobs:
         env:
           TERMINUS_TOKEN: ${{ secrets.TERMINUS_TOKEN }}
         run: bash scripts/wordpress-update.sh
+
+      # Dev can be ahead of GitHub without an update being available, e.g. a
+      # previous run's commit landed on Pantheon after the script gave up on it.
+      # (The Update WordPress step already syncs after it commits.)
+      - name: Sync Pantheon dev to GitHub
+        if: steps.check_update.outputs.update_available != 'true' && steps.check_update.outputs.sync_needed == 'true'
+        run: bash scripts/sync-from-pantheon.sh
