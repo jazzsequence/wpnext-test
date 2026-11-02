@@ -50,6 +50,16 @@ get_lando() {
 merge_updates_from_pantheon_to_github() {
     local TYPE=$1
 
+    # `vendor/` is committed, and the workflow runs `composer install` earlier in
+    # the job, which rewrites tracked files and adds untracked ones (e.g. a newer
+    # behat/gherkin than the one committed on main). Either makes the checkouts
+    # below abort with "local changes would be overwritten". The runner is
+    # throwaway, so discard that state -- but only in CI, never on a dev machine.
+    if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+        git reset --hard HEAD
+        git clean -fdq -- vendor
+    fi
+
     # Pull down the latest `main` from GitHub
     git checkout main && git pull
 
