@@ -1991,6 +1991,10 @@ p.auto-update-status {
 	line-height: 2.35;
 }
 
+.additional-settings-prefs {
+	margin-top: 14px;
+}
+
 /* This ID appears to be unused in Core. */
 #number-of-columns {
 	display: inline-block;
@@ -2285,6 +2289,11 @@ html.wp-toolbar {
 .postbox .handle-order-lower {
 	color: #646970;
 	width: 1.62rem;
+}
+
+.js.meta-box-reordering-disabled .postbox .handle-order-higher,
+.js.meta-box-reordering-disabled .postbox .handle-order-lower {
+	display: none;
 }
 
 /* Post box order buttons in the block editor meta boxes area. */
@@ -2939,7 +2948,8 @@ div.action-links {
 
 #plugin-information-tabs a:active,
 #plugin-information-tabs a:focus {
-	outline: none;
+	/* Only visible in Windows High Contrast mode */
+	outline: 2px solid transparent;
 }
 
 #plugin-information-content {
@@ -3469,6 +3479,7 @@ img {
 	display: inline;
 	font-family: dashicons;
 	font-size: 20px;
+	line-height: 1;
 	position: absolute;
 	pointer-events: none;
 }
