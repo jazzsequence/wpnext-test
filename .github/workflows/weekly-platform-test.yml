@@ -7,8 +7,16 @@ on:
 
 jobs:
   run-behat-tests:
-    name: Run Behat Tests
+    name: Run Behat Tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    strategy:
+      # Every run prepares and tears down the same `behat` multidev, so the
+      # versions must run one at a time or they will trample each other.
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        # Only versions that still receive upstream support (8.1 and older are EOL).
+        php: ['8.3', '8.4', '8.5']
 
     steps:
       - name: Checkout code
@@ -17,7 +25,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3' # Adjust PHP version as needed
+          php-version: ${{ matrix.php }}
           extensions: mbstring, intl
           tools: composer
 
