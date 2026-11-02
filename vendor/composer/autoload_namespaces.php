@@ -7,5 +7,4 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Behat\\MinkExtension' => array($vendorDir . '/behat/mink-extension/src'),
-    'Behat\\Gherkin' => array($vendorDir . '/behat/gherkin/src'),
 );

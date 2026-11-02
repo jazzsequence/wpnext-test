@@ -92,6 +92,7 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
             'Behat\\Mink\\Driver\\' => 18,
             'Behat\\Mink\\' => 11,
             'Behat\\Hook\\' => 11,
+            'Behat\\Gherkin\\' => 14,
             'Behat\\Behat\\' => 12,
         ),
         'A' =>
@@ -278,6 +279,10 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
         array (
             0 => __DIR__ . '/..' . '/behat/behat/src/Behat/Hook',
         ),
+        'Behat\\Gherkin\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/behat/gherkin/src',
+        ),
         'Behat\\Behat\\' =>
         array (
             0 => __DIR__ . '/..' . '/behat/behat/src/Behat/Behat',
@@ -294,10 +299,6 @@ class ComposerStaticInit4d73a639a4a32765c6986f200cf20048
             'Behat\\MinkExtension' =>
             array (
                 0 => __DIR__ . '/..' . '/behat/mink-extension/src',
-            ),
-            'Behat\\Gherkin' =>
-            array (
-                0 => __DIR__ . '/..' . '/behat/gherkin/src',
             ),
         ),
     );

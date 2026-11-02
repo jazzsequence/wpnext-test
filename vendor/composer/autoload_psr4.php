@@ -50,6 +50,7 @@ return array(
     'Behat\\Mink\\Driver\\' => array($vendorDir . '/behat/mink-goutte-driver/src', $vendorDir . '/behat/mink-browserkit-driver/src'),
     'Behat\\Mink\\' => array($vendorDir . '/behat/mink/src'),
     'Behat\\Hook\\' => array($vendorDir . '/behat/behat/src/Behat/Hook'),
+    'Behat\\Gherkin\\' => array($vendorDir . '/behat/gherkin/src'),
     'Behat\\Behat\\' => array($vendorDir . '/behat/behat/src/Behat/Behat'),
     'Args\\' => array($vendorDir . '/johnbillion/args/src'),
 );
