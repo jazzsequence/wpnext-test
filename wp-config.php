@@ -77,7 +77,7 @@ if ( ! defined( 'WP_DEBUG' ) ) {
 		case 'dev':
 			define( 'WP_DEBUG', true );
 			define( 'WP_DEBUG_DISPLAY', true );
-			define( 'WP_DEBUG_LOG', true );
+			define( 'WP_DEBUG_LOG', __DIR__ . '/wp-content/uploads/private/debug.log' ); // was true; private path keeps the log off the web (2026-11-04)
 			break;
 		case 'test':
 			define('WP_DEBUG', true);
